@@ -6,10 +6,16 @@
       "use": "@vercel/next"
     }
   ],
-  "buildCommand": "npm run build",
-  "installCommand": "npm ci",
-  "devCommand": "npm run dev",
-  "framework": "nextjs",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -32,10 +38,5 @@
         }
       ]
     }
-  ],
-  "functions": {
-    "pages/api/**/*.ts": {
-      "maxDuration": 30
-    }
-  }
+  ]
 } 
