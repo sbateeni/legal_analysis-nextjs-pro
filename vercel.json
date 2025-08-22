@@ -6,17 +6,10 @@
       "use": "@vercel/next"
     }
   ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1"
-    }
-  ],
-
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
+  "devCommand": "npm run dev",
+  "framework": "nextjs",
   "headers": [
     {
       "source": "/(.*)",
@@ -39,5 +32,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "pages/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
 } 

@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   images: {
     domains: [],
     formats: ['image/webp', 'image/avif'],
+    unoptimized: true,
   },
   
   // إعدادات الأمان
@@ -37,12 +38,14 @@ const nextConfig: NextConfig = {
     },
   ],
   
-
-  
   // إعدادات التطوير
   devIndicators: {
     position: 'bottom-right',
   },
+  
+  // إعدادات الإنتاج
+  output: 'standalone',
+  trailingSlash: false,
 };
 
 export default nextConfig;
