@@ -11,7 +11,7 @@ const nextConfig = {
   },
 
   // إعدادات الإنتاج
-  output: 'export',
+  output: 'standalone',
   trailingSlash: false,
 
   // إعدادات الأمان
