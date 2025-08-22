@@ -5,14 +5,15 @@
   "private": true,
   "scripts": {
     "dev": "cd frontend/pages && npm run dev",
-    "build": "cd frontend/pages && npm run build",
+    "build": "cd frontend/pages && npm install && npm run build",
     "start": "cd frontend/pages && npm run start",
     "lint": "cd frontend/pages && npm run lint",
     "test": "cd frontend/pages && npm run test",
     "test:watch": "cd frontend/pages && npm run test:watch",
     "install-deps": "cd frontend/pages && npm install",
     "clean": "rm -rf .next && rm -rf node_modules && cd frontend && rm -rf .next && rm -rf node_modules",
-    "setup": "npm run install-deps"
+    "setup": "npm run install-deps",
+    "vercel-build": "cd frontend/pages && npm install && npm run build"
   },
   "keywords": [
     "legal",
@@ -28,10 +29,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/legal_analysis-nextjs-pro.git"
+    "url": "https://github.com/sbateeni/legal_analysis-nextjs-pro.git"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": "22.x"
   }
 } 

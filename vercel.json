@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "buildCommand": "cd frontend/pages && npm install && npm run build",
+  "outputDirectory": "frontend/pages/.next",
+  "installCommand": "cd frontend/pages && npm install",
+  "devCommand": "cd frontend/pages && npm run dev",
+  "framework": "nextjs",
+  "functions": {
+    "frontend/pages/pages/api/**/*.ts": {
+      "runtime": "nodejs22.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
+} 
