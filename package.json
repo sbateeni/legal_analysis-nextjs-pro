@@ -1,6 +1,7 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "legal-analysis-nextjs-pro",
+  "version": "1.0.0",
+  "description": "منصة التحليل القانوني الذكي - تطبيق Next.js متقدم للتحليل القانوني الفلسطيني",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -8,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run --reporter=verbose",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "clean": "rm -rf .next && rm -rf node_modules",
+    "setup": "npm install"
   },
   "dependencies": {
     "@fontsource/tajawal": "^5.2.6",
@@ -41,5 +44,24 @@
     "sharp": "^0.34.3",
     "typescript": "^5",
     "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "legal",
+    "analysis",
+    "nextjs",
+    "react",
+    "typescript",
+    "palestinian-law",
+    "ai",
+    "gemini"
+  ],
+  "author": "Legal Analysis Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sbateeni/legal_analysis-nextjs-pro.git"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
