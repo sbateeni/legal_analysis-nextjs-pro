@@ -1,4 +1,5 @@
--- إعداد سريع لقاعدة البيانات
+-- إعداد سريع لقاعدة البيانات للمشروع الجديد
+-- Project: https://edwzbiaqarojxtdzraxz.supabase.co
 -- انسخ هذا الملف والصقه في Supabase SQL Editor
 
 -- إنشاء جدول المكاتب
