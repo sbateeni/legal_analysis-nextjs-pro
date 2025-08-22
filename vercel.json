@@ -8,6 +8,6 @@
   ],
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": ".next",
+  "outputDirectory": "out",
   "framework": "nextjs"
 } 
