@@ -1,0 +1,10 @@
+__turbopack_load_page_chunks__("/register", [
+  "static/chunks/node_modules_next_81f7a3f1._.js",
+  "static/chunks/node_modules_react_1cad9b0b._.js",
+  "static/chunks/node_modules_react-dom_cjs_react-dom_development_ab7e073c.js",
+  "static/chunks/node_modules_react-dom_f14d0471._.js",
+  "static/chunks/node_modules_3c087b77._.js",
+  "static/chunks/[root-of-the-server]__792afe64._.js",
+  "static/chunks/pages_register_5771e187._.js",
+  "static/chunks/pages_register_5a3e016d._.js"
+])

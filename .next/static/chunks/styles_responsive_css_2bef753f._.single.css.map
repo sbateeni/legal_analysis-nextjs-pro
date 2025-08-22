@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/styles/responsive.css"],"sourcesContent":["/* ملف CSS للتخطيط المتجاوب */\r\n@media (max-width: 768px) {\r\n  .header-nav {\r\n    flex-direction: column !important;\r\n    gap: 8px !important;\r\n  }\r\n  \r\n  .header-nav > div {\r\n    width: 100% !important;\r\n    max-width: 200px !important;\r\n  }\r\n  \r\n  .header-nav button,\r\n  .header-nav a {\r\n    width: 100% !important;\r\n    max-width: 200px !important;\r\n    text-align: center !important;\r\n    padding: 8px 16px !important;\r\n  }\r\n}\r\n\r\n@media (max-width: 480px) {\r\n  .header-nav > div {\r\n    max-width: 180px !important;\r\n  }\r\n  \r\n  .header-nav button,\r\n  .header-nav a {\r\n    max-width: 180px !important;\r\n    font-size: 13px !important;\r\n    padding: 6px 12px !important;\r\n  }\r\n}\r\n\r\n/* تحسين التخطيط للشاشات المتوسطة */\r\n@media (min-width: 769px) and (max-width: 1024px) {\r\n  .header-nav {\r\n    flex-wrap: wrap !important;\r\n    gap: 12px !important;\r\n  }\r\n  \r\n  .header-nav > div {\r\n    flex: 0 0 auto !important;\r\n  }\r\n}\r\n"],"names":[],"mappings":"AACA;EACE;;;;;EAKA;;;;;EAKA;;;;;;;;AASF;EACE;;;;EAIA;;;;;;;AASF;EACE;;;;;EAKA"}}]
+}

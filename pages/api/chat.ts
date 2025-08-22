@@ -1,0 +1,228 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { sanitizeText } from '../../utils/validation';
+import { checkRateLimit } from '../../utils/cache';
+import stages from '../../stages';
+import { ChatModelResponseSchema, ChatRequestSchema, ChatModelResponse } from '../../utils/schemas';
+import { chatCacheGet, chatCacheSet, makeChatCacheKey } from '../../utils/chatCache';
+import { isWithinPalestinianJurisdiction, sanitizeAnswer } from '../../utils/safety';
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+}
+
+const STAGE_TITLES: string[] = Object.keys(stages);
+
+// دالة إنشاء prompt للـ chatbot
+function buildChatPrompt(
+  userMessage: string, 
+  conversationHistory: ChatMessage[],
+  context?: {
+    caseType?: string;
+    currentStage?: number;
+    previousAnalysis?: string;
+  }
+): string {
+  const contextInfo = context ? `
+السياق الحالي:
+- نوع القضية: ${context.caseType || 'غير محدد'}
+- المرحلة الحالية: ${context.currentStage || 'لم تبدأ بعد'}
+- التحليل السابق: ${context.previousAnalysis ? 'متوفر' : 'غير متوفر'}
+` : '';
+
+  const history = conversationHistory.length > 0 ? `
+المحادثة السابقة:
+${conversationHistory.slice(-5).map(msg => `${msg.role === 'user' ? 'المستخدم' : 'المساعد'}: ${msg.content}`).join('\n')}
+` : '';
+
+  const stagesList = STAGE_TITLES.length ? `
+منهجية العمل (12 مرحلة فلسطينية):
+- ${STAGE_TITLES.join('\n- ')}
+` : '';
+
+  // نطلب من النموذج إخراج JSON منظم
+  const jsonSpec = `
+أخرج نتيجتك حصراً بصيغة JSON صالحة وفق المخطط التالي دون أي نص إضافي خارج JSON:
+{
+  "answer": string,              // إجابة نصية عربية فصحى
+  "suggestions": string[],       // حتى 5 اقتراحات قصيرة
+  "nextSteps": string[],         // حتى 5 خطوات عملية قصيرة
+  "confidence": number           // بين 0 و 1
+}
+`;
+
+  return `
+أنت مساعد قانوني فلسطيني متخصص حصراً بالقوانين والأنظمة الفلسطينية وما يقدمه المستشار القانوني في فلسطين. أي إجابة يجب أن تكون ضمن الإطار القانوني الفلسطيني فقط.
+
+${contextInfo}
+${stagesList}
+${history}
+
+${jsonSpec}
+رسالة المستخدم: ${userMessage}
+
+تعليمات صارمة:
+1. أجب باللغة العربية الفصحى وبلغة مهنية واضحة.
+2. التزم حصراً بما هو نافذ ومُطبَّق في القضاء الفلسطيني (التشريعات واللوائح والقرارات القضائية النافذة في فلسطين). لا تذكر قوانين غير مطبّقة في فلسطين.
+3. عند الإمكان، اذكر المراجع القانونية الفلسطينية أو النصوص النافذة المعمول بها في فلسطين (اسم القانون، رقم/عنوان المادة، الجهة القضائية أو السنة).
+4. اربط الإجابة بمنهجية المراحل الاثنتي عشرة أعلاه: حدد المرحلة/المراحل ذات الصلة صراحة (مثال: "المرحلة الثالثة: تحليل النصوص القانونية").
+5. تحقّق من صحة أي معلومة قانونية قبل عرضها؛ إن لم تتوفر معلومة مؤكَّدة فاذكر حدود المعرفة أو اطلب معلومات إضافية بدلاً من التخمين.
+6. لا تقدّم معلومات مضللة، وميّز بين الرأي القانوني العام والمتطلبات الإجرائية الرسمية.
+7. إخلاء مسؤولية: هذه المعلومات للتثقيف والدعم وليست بديلاً عن استشارة محامٍ مرخّص في فلسطين عند الحاجة.
+`;
+}
+
+// دالة استخراج الاقتراحات من الإجابة (احتياطية للفشل في JSON)
+function extractSuggestions(response: string): string[] {
+  const suggestions: string[] = [];
+  const suggestionPatterns = [
+    /اقترح\s+(.+?)(?=\n|$)/g,
+    /يمكنك\s+(.+?)(?=\n|$)/g,
+    /يُنصح\s+(.+?)(?=\n|$)/g,
+    /من الأفضل\s+(.+?)(?=\n|$)/g
+  ];
+  suggestionPatterns.forEach(pattern => {
+    const matches = response.match(pattern);
+    if (matches) {
+      suggestions.push(...matches.map(match => match.replace(/^(اقترح|يمكنك|يُنصح|من الأفضل)\s+/, '')));
+    }
+  });
+  return suggestions.slice(0, 3);
+}
+
+// دالة استخراج الخطوات التالية (احتياطية)
+function extractNextSteps(response: string): string[] {
+  const steps: string[] = [];
+  const stepPatterns = [
+    /الخطوة\s+\d+[:\s]+(.+?)(?=\n|$)/g,
+    /أولاً\s+(.+?)(?=\n|$)/g,
+    /ثانياً\s+(.+?)(?=\n|$)/g,
+    /ثالثاً\s+(.+?)(?=\n|$)/g
+  ];
+  stepPatterns.forEach(pattern => {
+    const matches = response.match(pattern);
+    if (matches) {
+      steps.push(...matches.map(match => match.replace(/^(الخطوة\s+\d+[:\s]+|أولاً\s+|ثانياً\s+|ثالثاً\s+)/, '')));
+    }
+  });
+  return steps.slice(0, 3);
+}
+
+// دالة حساب مستوى الثقة
+function calculateConfidence(response: string): number {
+  let confidence = 0.7;
+  if (response.includes('قانون') || response.includes('قانوني')) confidence += 0.1;
+  if (response.includes('فلسطيني') || response.includes('فلسطين')) confidence += 0.1;
+  if (response.includes('محكمة') || response.includes('قضائية')) confidence += 0.1;
+  if (response.length > 200) confidence += 0.1;
+  return Math.min(confidence, 1.0);
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    // التحقق من المدخلات بـZod
+    const parsed = ChatRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ 
+        code: 'VALIDATION_ERROR',
+        message: 'طلب غير صالح',
+        details: parsed.error.flatten()
+      });
+    }
+
+    const { message, apiKey, conversationHistory = [], context } = parsed.data;
+
+    // تنظيف الرسالة
+    const cleanMessage = sanitizeText(message);
+
+    // Cache مفتاح
+    const prevHash = (context?.previousAnalysis || '').slice(-256);
+    const cacheKey = makeChatCacheKey({
+      message: cleanMessage,
+      caseType: context?.caseType,
+      currentStage: context?.currentStage,
+      previousAnalysisHash: prevHash,
+    });
+
+    const cached = chatCacheGet(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
+    // Rate limiting
+    const rateLimit = checkRateLimit(apiKey);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: `تم تجاوز الحد المسموح من الطلبات. يرجى المحاولة بعد ${Math.ceil((rateLimit.resetTime - Date.now()) / 1000)} ثانية`
+      });
+    }
+
+    // بناء prompt وطلب JSON
+    const prompt = buildChatPrompt(cleanMessage, conversationHistory as ChatMessage[], context);
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const rawText = response.text();
+
+    let modelJson: ChatModelResponse | null = null;
+    try {
+      const candidate = JSON.parse(rawText);
+      const validated = ChatModelResponseSchema.parse(candidate);
+      modelJson = validated;
+    } catch {
+      modelJson = {
+        answer: rawText,
+        suggestions: extractSuggestions(rawText),
+        nextSteps: extractNextSteps(rawText),
+        confidence: calculateConfidence(rawText),
+      };
+    }
+
+    // حارس اختصاص
+    if (!isWithinPalestinianJurisdiction(modelJson.answer)) {
+      modelJson.answer = 'أعتذر، هذا السؤال أو جزء من الإجابة يبدو خارج نطاق ما هو نافذ ومطبّق في القضاء الفلسطيني. يرجى إعادة صياغة السؤال ضمن الإطار القانوني الفلسطيني.';
+      modelJson.suggestions = [];
+      modelJson.nextSteps = [];
+      modelJson.confidence = 0.4;
+    }
+
+    modelJson.answer = sanitizeAnswer(modelJson.answer);
+
+    const chatResponse = {
+      message: modelJson.answer,
+      suggestions: modelJson.suggestions || [],
+      nextSteps: modelJson.nextSteps || [],
+      confidence: typeof modelJson.confidence === 'number' ? modelJson.confidence : calculateConfidence(modelJson.answer),
+      timestamp: Date.now()
+    };
+
+    // تخزين مؤقت قصير
+    chatCacheSet(cacheKey, chatResponse);
+
+    return res.status(200).json(chatResponse);
+
+  } catch (error: unknown) {
+    console.error('Error in chat API:', error);
+    let message = 'حدث خطأ في معالجة الرسالة';
+    const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف';
+    if (errorMessage.includes('API_KEY')) {
+      message = 'مفتاح API غير صحيح أو منتهي الصلاحية';
+    } else if (errorMessage.includes('quota')) {
+      message = 'تم استنفاذ الحد المسموح من طلبات API';
+    }
+    return res.status(500).json({
+      code: 'API_ERROR',
+      message,
+      details: errorMessage
+    });
+  }
+} 
