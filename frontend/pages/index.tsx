@@ -5,7 +5,6 @@ import { set as idbSet } from 'idb-keyval';
 import { isMobile } from '../utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
 import WelcomeHeader from '../components/WelcomeHeader';
-import AuthCallToAction from '../components/AuthCallToAction';
 
 // تعريف نوع BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -43,8 +42,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const prevApiKey = useRef("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{username: string; role: string; officeId: string} | null>(null);
+
 
   // لكل مرحلة: نص، نتيجة، تحميل، خطأ، إظهار نتيجة
   const [mainText, setMainText] = useState('');
@@ -57,23 +55,7 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     
-    // التحقق من حالة تسجيل الدخول
-    const userData = localStorage.getItem('legal_user');
-    const token = localStorage.getItem('legal_token') || sessionStorage.getItem('legal_token');
-    
-    if (userData && token) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        // مسح البيانات التالفة
-        localStorage.removeItem('legal_user');
-        localStorage.removeItem('legal_token');
-        sessionStorage.removeItem('legal_token');
-      }
-    }
+
 
     // تحميل مفتاح API من قاعدة البيانات عند بدء التشغيل
     loadApiKey().then(val => {
@@ -288,13 +270,8 @@ export default function Home() {
           margin: '0 auto',
           padding: isMobile() ? '1rem 0.5rem' : '2rem 1rem',
         }}>
-          {/* شريط الترحيب للمستخدمين المسجلين */}
-          {isAuthenticated && user && (
-            <WelcomeHeader user={user} onLogout={handleLogout} />
-          )}
-
           {/* تنبيه إعداد المفتاح عند الحاجة */}
-          {!apiKey && isAuthenticated && (
+          {!apiKey && (
             <div style={{
               background: '#fffbe6',
               color: '#b7791f',
@@ -310,8 +287,8 @@ export default function Home() {
             </div>
           )}
 
-          {/* شريط إجراءات الصفحة - للمستخدمين المسجلين فقط */}
-          {isAuthenticated ? (
+          {/* شريط إجراءات الصفحة */}
+          <div style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', marginBottom:16}}>
             <div style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', marginBottom:16}}>
               <button
                 onClick={handleNewCase}
