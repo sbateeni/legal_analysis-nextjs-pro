@@ -1,6 +1,15 @@
 #!/bin/bash
 
-echo "🚀 بدء عملية البناء..."
+echo "🚀 بدء عملية البناء على Vercel..."
+
+# التحقق من وجود npm
+if ! command -v npm &> /dev/null; then
+    echo "❌ npm غير مثبت. يرجى تثبيت Node.js و npm"
+    exit 1
+fi
+
+echo "✅ npm موجود: $(npm --version)"
+echo "✅ Node.js موجود: $(node --version)"
 
 # تنظيف البناء السابق
 echo "🧹 تنظيف البناء السابق..."
@@ -20,6 +29,16 @@ fi
 
 if [ ! -f "pages/_app.tsx" ]; then
     echo "❌ ملف pages/_app.tsx غير موجود"
+    exit 1
+fi
+
+if [ ! -f "next.config.js" ]; then
+    echo "❌ ملف next.config.js غير موجود"
+    exit 1
+fi
+
+if [ ! -f "vercel.json" ]; then
+    echo "❌ ملف vercel.json غير موجود"
     exit 1
 fi
 

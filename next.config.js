@@ -1,61 +1,34 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // إعدادات PWA
-  experimental: {
-    optimizePackageImports: ['idb-keyval'],
-  },
-  
-  // تحسينات الأداء
-  compress: true,
-  poweredByHeader: false,
+  // إعدادات أساسية
+  reactStrictMode: true,
+  swcMinify: true,
   
   // إعدادات الصور
   images: {
+    unoptimized: true,
     domains: [],
     formats: ['image/webp', 'image/avif'],
-    unoptimized: true,
-  },
-  
-  // إعدادات الأمان
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-        ],
-      },
-    ];
-  },
-  
-  // إعدادات التطوير
-  devIndicators: {
-    position: 'bottom-right',
   },
   
   // إعدادات الإنتاج
   output: 'standalone',
   trailingSlash: false,
   
-  // إعدادات إضافية لحل مشكلة 404
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: '/api/:path*',
-      },
-    ];
+  // إعدادات الأمان
+  poweredByHeader: false,
+  
+  // إعدادات إضافية
+  experimental: {
+    optimizePackageImports: ['idb-keyval'],
+  },
+  
+  // إعدادات البناء
+  distDir: '.next',
+  
+  // إعدادات التطوير
+  devIndicators: {
+    position: 'bottom-right',
   },
 };
 

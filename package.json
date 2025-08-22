@@ -15,7 +15,7 @@
     "test:watch": "vitest",
     "clean": "rm -rf .next node_modules",
     "reinstall": "npm run clean && npm install",
-    "vercel-build": "npm run build"
+    "vercel-build": "next build"
   },
   "dependencies": {
     "@fontsource/tajawal": "^5.2.6",

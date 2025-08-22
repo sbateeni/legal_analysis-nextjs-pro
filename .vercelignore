@@ -7,6 +7,7 @@
 # ملفات Git
 .git
 .gitignore
+.gitattributes
 
 # ملفات Node.js
 node_modules
@@ -22,6 +23,7 @@ dist
 # ملفات الاختبار
 coverage
 .nyc_output
+tests
 
 # ملفات IDE
 .vscode
@@ -38,4 +40,20 @@ Thumbs.db
 
 # ملفات مؤقتة
 .tmp
-.temp 
+.temp
+
+# ملفات التوثيق
+*.md
+DEPLOYMENT.md
+QUICK-FIX*.md
+FINAL-SOLUTION.md
+
+# ملفات Vercel القديمة
+vercel-*.json
+vercel-build*.sh
+
+# مجلد frontend (غير مستخدم)
+frontend/
+
+# ملفات GitHub
+.github/ 
