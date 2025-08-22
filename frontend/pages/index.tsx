@@ -4,7 +4,7 @@ import { saveApiKey, loadApiKey, addCase, getAllCases, updateCase, clearAllCases
 import { set as idbSet } from 'idb-keyval';
 import { isMobile } from '../utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
-import WelcomeHeader from '../components/WelcomeHeader';
+
 
 // تعريف نوع BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -113,15 +113,7 @@ export default function Home() {
     }
   };
 
-  // دالة تسجيل الخروج
-  const handleLogout = () => {
-    localStorage.removeItem('legal_user');
-    localStorage.removeItem('legal_token');
-    sessionStorage.removeItem('legal_token');
-    setIsAuthenticated(false);
-    setUser(null);
-    window.location.reload();
-  };
+
 
   // دالة بدء قضية جديدة
   const handleNewCase = () => {
@@ -289,7 +281,6 @@ export default function Home() {
 
           {/* شريط إجراءات الصفحة */}
           <div style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', marginBottom:16}}>
-            <div style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', marginBottom:16}}>
               <button
                 onClick={handleNewCase}
                 style={{
@@ -315,77 +306,71 @@ export default function Home() {
                 </button>
               )}
             </div>
-          ) : (
-            /* دعوة للعمل للمستخدمين غير المسجلين */
-            <AuthCallToAction />
-          )}
 
-          {/* نظام التبويبات - للمستخدمين المسجلين فقط */}
-          {isAuthenticated ? (
+          {/* نظام التبويبات */}
+          <div style={{
+            background: theme.card,
+            borderRadius: 16,
+            boxShadow: `0 4px 20px ${theme.shadow}`,
+            marginBottom: 24,
+            border: `1.5px solid ${theme.border}`,
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              display: 'flex',
+              background: darkMode ? '#2a2d3e' : '#f8fafc',
+              borderBottom: `1px solid ${theme.border}`,
+            }}>
+              {[
+                { id: 'input', label: '📝 إدخال البيانات', icon: '✍️' },
+                { id: 'stages', label: '🔍 مراحل التحليل', icon: '⚖️' },
+                { id: 'results', label: '📊 النتائج', icon: '📈' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as 'input' | 'stages' | 'results')}
+                  style={{
+                    flex: 1,
+                    padding: isMobile() ? '12px 8px' : '16px 12px',
+                    background: activeTab === tab.id ? theme.accent : 'transparent',
+                    color: activeTab === tab.id ? '#fff' : theme.text,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: isMobile() ? 14 : 16,
+                    fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <span>{tab.icon}</span>
+                  <span style={{ display: isMobile() ? 'none' : 'inline' }}>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* محتوى التبويبات */}
+          {activeTab === 'input' && (
             <>
+              {/* مربع نص واحد لتفاصيل القضية */}
               <div style={{
                 background: theme.card,
-                borderRadius: 16,
-                boxShadow: `0 4px 20px ${theme.shadow}`,
+                borderRadius: 14,
+                boxShadow: `0 2px 12px ${theme.shadow}`,
+                padding: isMobile() ? 16 : 24,
                 marginBottom: 24,
                 border: `1.5px solid ${theme.border}`,
-                overflow: 'hidden',
               }}>
-                <div style={{
-                  display: 'flex',
-                  background: darkMode ? '#2a2d3e' : '#f8fafc',
-                  borderBottom: `1px solid ${theme.border}`,
-                }}>
-                  {[
-                    { id: 'input', label: '📝 إدخال البيانات', icon: '✍️' },
-                    { id: 'stages', label: '🔍 مراحل التحليل', icon: '⚖️' },
-                    { id: 'results', label: '📊 النتائج', icon: '📈' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as 'input' | 'stages' | 'results')}
-                      style={{
-                        flex: 1,
-                        padding: isMobile() ? '12px 8px' : '16px 12px',
-                        background: activeTab === tab.id ? theme.accent : 'transparent',
-                        color: activeTab === tab.id ? '#fff' : theme.text,
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: isMobile() ? 14 : 16,
-                        fontWeight: 600,
-                        transition: 'all 0.3s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                      }}
-                    >
-                      <span>{tab.icon}</span>
-                      <span style={{ display: isMobile() ? 'none' : 'inline' }}>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* محتوى التبويبات */}
-              {activeTab === 'input' && (
-                <>
-                  {/* مربع نص واحد لتفاصيل القضية */}
-                  <div style={{
-                    background: theme.card,
-                    borderRadius: 14,
-                    boxShadow: `0 2px 12px ${theme.shadow}`,
-                    padding: isMobile() ? 16 : 24,
-                    marginBottom: 24,
-                    border: `1.5px solid ${theme.border}`,
-                  }}>
-                    {/* مربع إدخال اسم القضية في رأس مربع التفاصيل */}
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:12}}>
-                        <span style={{fontSize:20}}>📛</span>
-                        <label style={{ fontWeight: 700, color: theme.accent2, fontSize: 16 }}>اسم القضية:</label>
-                      </div>
-                      <input
+                {/* مربع إدخال اسم القضية في رأس مربع التفاصيل */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:12}}>
+                    <span style={{fontSize:20}}>📛</span>
+                    <label style={{ fontWeight: 700, color: theme.accent2, fontSize: 16 }}>اسم القضية:</label>
+                  </div>
+                  <input
                         type="text"
                         value={caseNameInput}
                         onChange={e => setCaseNameInput(e.target.value)}
@@ -767,10 +752,6 @@ export default function Home() {
                   )}
                 </div>
               )}
-            </>
-          ) : (
-            null
-          )}
         </main>
         
         {/* Footer محسن */}

@@ -194,38 +194,9 @@ class LoginAttemptTracker {
   }
 }
 
-export const loginTracker = new LoginAttemptTracker();
 
-// دالة إنشاء session آمن
-export function createSecureSession(userData: any): string {
-  const sessionData = {
-    user: userData,
-    created: Date.now(),
-    expiry: Date.now() + SECURITY_CONFIG.SESSION_TIMEOUT,
-    token: generateSecureToken()
-  };
 
-  return encryptData(sessionData);
-}
 
-// دالة التحقق من صحة session
-export function validateSession(sessionToken: string): any {
-  try {
-    const sessionData = decryptData(sessionToken);
-    
-    if (!sessionData || !sessionData.expiry) {
-      return null;
-    }
-
-    if (Date.now() > sessionData.expiry) {
-      return null;
-    }
-
-    return sessionData.user;
-  } catch {
-    return null;
-  }
-}
 
 // دالة تسجيل الأحداث الأمنية
 export function logSecurityEvent(event: string, details: any = {}): void {
