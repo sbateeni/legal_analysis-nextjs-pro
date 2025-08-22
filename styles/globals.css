@@ -1,0 +1,318 @@
+/* ملف الأنماط العامة */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap');
+
+/* إعادة تعيين الأنماط الافتراضية */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Tajawal', Arial, sans-serif;
+  direction: rtl;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+/* تحسينات للأجهزة المحمولة */
+@media (max-width: 768px) {
+  body {
+    -webkit-tap-highlight-color: transparent;
+    font-size: 14px;
+  }
+  
+  html {
+    font-size: 14px;
+  }
+}
+
+/* أنيميشن الدوران */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* أنيميشن الظهور التدريجي */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* أنيميشن التكبير */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* أنيميشن النبض */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* أنيميشن التلاشي */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* أنيميشن الانزلاق */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* أنيميشن الانزلاق من اليسار */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* تطبيق الأنيميشن على العناصر */
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.4s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+/* تحسينات للأزرار */
+button {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* تحسينات للحقول */
+input, textarea {
+  transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* تحسينات للروابط */
+a {
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  transform: translateY(-1px);
+}
+
+/* تحسينات للبطاقات */
+.card {
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* تحسينات للتبويبات */
+.tab {
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  background-color: rgba(79, 70, 229, 0.1);
+}
+
+.tab.active {
+  background-color: #4f46e5;
+  color: white;
+}
+
+/* تحسينات للقوائم */
+.list-item {
+  transition: all 0.3s ease;
+}
+
+.list-item:hover {
+  background-color: rgba(79, 70, 229, 0.05);
+  transform: translateX(-4px);
+}
+
+/* تحسينات للتنبيهات */
+.alert {
+  animation: slideInRight 0.5s ease-out;
+}
+
+/* تحسينات للتحميل */
+.loading {
+  animation: pulse 1.5s infinite;
+}
+
+/* تحسينات للنتائج */
+.result {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* تحسينات للشريط الجانبي */
+.sidebar {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+/* تحسينات للشريط العلوي */
+.header {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* تحسينات للشريط السفلي */
+.footer {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* تحسينات للأجهزة المحمولة */
+@media (max-width: 768px) {
+  .mobile-optimized {
+    font-size: 14px;
+    padding: 12px;
+  }
+  
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .mobile-full {
+    width: 100%;
+    margin: 0;
+  }
+}
+
+/* تحسينات للطباعة */
+@media print {
+  .no-print {
+    display: none;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+}
+
+/* تحسينات للوضع الليلي */
+.dark-mode {
+  color-scheme: dark;
+}
+
+/* تحسينات للوصول */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* تحسينات للأداء */
+.optimized {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* تحسينات للشبكة البطيئة */
+.slow-network {
+  animation-duration: 0.3s;
+  transition-duration: 0.3s;
+} 
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  right: 10px;
+  background: #111827;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  z-index: 10000;
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: 10px;
+}
+
+/* High-contrast focus ring */
+:focus-visible {
+  outline: 3px solid #6366f1;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid #6366f1;
+  outline-offset: 2px;
+} 
