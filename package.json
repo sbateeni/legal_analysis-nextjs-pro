@@ -1,14 +1,21 @@
 {
-  "name": "frontend",
+  "name": "legal-analysis-platform",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run --reporter=verbose",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "clean": "rm -rf .next node_modules",
+    "reinstall": "npm run clean && npm install",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@fontsource/tajawal": "^5.2.6",
