@@ -2,30 +2,29 @@
 const nextConfig = {
   // إعدادات أساسية
   reactStrictMode: true,
-  swcMinify: true,
-  
+
   // إعدادات الصور
   images: {
     unoptimized: true,
     domains: [],
     formats: ['image/webp', 'image/avif'],
   },
-  
+
   // إعدادات الإنتاج
   output: 'standalone',
   trailingSlash: false,
-  
+
   // إعدادات الأمان
   poweredByHeader: false,
-  
+
   // إعدادات إضافية
   experimental: {
     optimizePackageImports: ['idb-keyval'],
   },
-  
+
   // إعدادات البناء
   distDir: '.next',
-  
+
   // إعدادات التطوير
   devIndicators: {
     position: 'bottom-right',
