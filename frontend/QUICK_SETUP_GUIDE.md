@@ -7,7 +7,7 @@
 
 ### 1. **اذهب إلى Supabase Dashboard:**
 - [https://supabase.com/dashboard](https://supabase.com/dashboard)
-- اختر مشروعك: `supabase-teal-garden`
+- اختر مشروعك: `https://edwzbiaqarojxtdzraxz.supabase.co`
 
 ### 2. **افتح SQL Editor:**
 - اضغط على **SQL Editor** في القائمة اليسرى
@@ -15,7 +15,8 @@
 
 ### 3. **انسخ والصق الكود التالي:**
 ```sql
--- إعداد سريع لقاعدة البيانات
+-- إعداد سريع لقاعدة البيانات للمشروع الجديد
+-- Project: https://edwzbiaqarojxtdzraxz.supabase.co
 -- انسخ هذا الملف والصقه في Supabase SQL Editor
 
 -- إنشاء جدول المكاتب
