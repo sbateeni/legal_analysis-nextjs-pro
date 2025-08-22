@@ -1,21 +1,10 @@
 {
   "version": 2,
-  "framework": "nextjs",
   "functions": {
     "pages/api/**/*.ts": {
       "runtime": "nodejs22.x"
     }
   },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
