@@ -10,7 +10,8 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
 
-  // إعدادات الإنتاج - مهم: لا نحدد output لـ Vercel
+  // إعدادات الإنتاج - مهم: standalone لـ Vercel
+  output: 'standalone',
   trailingSlash: false,
 
   // إعدادات الأمان
@@ -20,9 +21,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['idb-keyval'],
   },
-
-  // إعدادات البناء
-  distDir: '.next',
 
   // إعدادات التطوير
   devIndicators: {
