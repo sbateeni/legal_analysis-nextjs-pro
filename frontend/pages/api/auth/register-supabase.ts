@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../../utils/supabase';
 import bcrypt from 'bcryptjs';
-import { RegisterRequest, AuthResponse, User, Office } from '../../../types/auth';
+import { RegisterRequest, AuthResponse } from '../../../types/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

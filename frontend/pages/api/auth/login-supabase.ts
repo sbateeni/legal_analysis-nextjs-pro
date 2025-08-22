@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../../utils/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { AuthRequest, AuthResponse, User } from '../../../types/auth';
+import { AuthRequest, AuthResponse } from '../../../types/auth';
 
 // مفتاح JWT (في الإنتاج يجب أن يكون متغير بيئي)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
