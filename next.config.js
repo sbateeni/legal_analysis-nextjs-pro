@@ -10,8 +10,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
 
-  // إعدادات الإنتاج
-  output: 'standalone',
+  // إعدادات الإنتاج - مهم: لا نحدد output لـ Vercel
   trailingSlash: false,
 
   // إعدادات الأمان
