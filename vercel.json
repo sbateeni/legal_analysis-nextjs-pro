@@ -1,15 +1,11 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend/pages && npm install && npm run build",
-  "outputDirectory": "frontend/pages/.next",
-  "installCommand": "cd frontend/pages && npm install",
-  "devCommand": "cd frontend/pages && npm run dev",
-  "framework": "nextjs",
-  "functions": {
-    "frontend/pages/pages/api/**/*.ts": {
-      "runtime": "nodejs22.x"
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
     }
-  },
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -20,6 +16,7 @@
       "destination": "/$1"
     }
   ],
+
   "headers": [
     {
       "source": "/(.*)",
