@@ -175,6 +175,49 @@ export default function AnalyticsPage() {
   const [error, setError] = useState('');
   const [selectedCase, setSelectedCase] = useState<string>('all'); // 'all' أو ID القضية
   const [cases, setCases] = useState<LegalCase[]>([]);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // معالجة تثبيت التطبيق كتطبيق أيقونة
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // التحقق من وجود التطبيق مثبت
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowInstallButton(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    // عرض نافذة التثبيت
+    deferredPrompt.prompt();
+
+    // انتظار اختيار المستخدم
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === 'accepted') {
+      console.log('تم قبول تثبيت التطبيق');
+      setShowInstallButton(false);
+    } else {
+      console.log('تم رفض تثبيت التطبيق');
+    }
+
+    setDeferredPrompt(null);
+  };
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -223,6 +266,40 @@ export default function AnalyticsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: theme.background, color: theme.text, fontFamily: 'Tajawal, Arial, sans-serif' }}>
+      {/* زر تحميل التطبيق - فقط على الهاتف */}
+      {mounted && isMobile() && showInstallButton && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          left: 20,
+          zIndex: 1000,
+          background: theme.accent,
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '25px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          cursor: 'pointer',
+          fontWeight: 700,
+          fontSize: 14,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          transition: 'all 0.3s ease',
+          border: 'none',
+          outline: 'none'
+        }}
+        onClick={handleInstallClick}
+        onTouchStart={(e) => {
+          e.currentTarget.style.transform = 'scale(0.95)';
+        }}
+        onTouchEnd={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+        >
+          📱 تثبيت التطبيق
+        </div>
+      )}
+
       {/* Header */}
       <header style={{ background: theme.accent2, color: 'white', padding: isMobile() ? '1rem' : '1.5rem', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: 1200, margin: '0 auto' }}>

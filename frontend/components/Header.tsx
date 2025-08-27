@@ -6,6 +6,7 @@ import { isMobile } from '../utils/crypto';
 export default function Header() {
   const { darkMode, setDarkMode, theme, mounted } = useTheme();
   const router = useRouter();
+
   if (!mounted) return null;
 
   const isActive = (path: string) => router.pathname === path;
@@ -51,6 +52,7 @@ export default function Header() {
           >
             {darkMode ? '🌙' : '☀️'}
           </button>
+
           <Link href="/" style={{
             color: '#fff', background: isActive('/') ? '#22c55e' : '#22c55ecc', borderRadius: 8, padding: isMobile() ? '8px 16px' : '4px 14px', fontWeight: 700, fontSize: isMobile() ? 14 : 16, textDecoration: 'none', boxShadow: '0 1px 4px #0002', letterSpacing: 1, transition: 'background 0.2s',
             width: isMobile() ? '100%' : 'auto',
