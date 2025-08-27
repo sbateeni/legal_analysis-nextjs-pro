@@ -98,10 +98,10 @@ export default function About() {
         </div>
         <ol className="font-body" style={{ fontSize: isMobile() ? 15 : 17, marginBottom: isMobile() ? 14 : 18, lineHeight: 1.8, paddingRight: isMobile() ? 16 : 24, background: darkMode ? '#181a2a' : '#f5f7ff', borderRadius: isMobile() ? 10 : 12, padding: isMobile() ? '14px 14px 14px 6px' : '18px 18px 18px 8px', borderColor: theme.border, borderStyle: 'solid', borderWidth: 1 }}>
           <li>احصل على مفتاح Gemini API الخاص بك من <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{color:theme.accent, textDecoration:'underline'}}>Google AI Studio</a>.</li>
-          <li>أدخل المفتاح في خانة "مفتاح Gemini API" في الصفحة الرئيسية.</li>
+          <li>أدخل المفتاح في خانة &quot;مفتاح Gemini API&quot; في الصفحة الرئيسية.</li>
           <li>أدخل النص القانوني الذي ترغب في تحليله واسم القضية (اختياري).</li>
           <li>اختر المرحلة التحليلية المناسبة أو اتبع التسلسل التراكمي.</li>
-          <li>اضغط على "ابدأ التحليل" وستظهر لك النتيجة خلال ثوانٍ.</li>
+          <li>اضغط على &quot;ابدأ التحليل&quot; وستظهر لك النتيجة خلال ثوانٍ.</li>
           <li>يمكنك حفظ القضية، تصديرها أو استيرادها لاحقًا.</li>
           <li>استخدم المساعد القانوني الفلسطيني لأسئلة قانونية محددة.</li>
           <li>راجع التحليلات والإحصائيات من صفحة التحليلات.</li>
