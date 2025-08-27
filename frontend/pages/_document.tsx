@@ -12,7 +12,7 @@ class MyDocument extends Document {
         <Head>
           <meta name="theme-color" content="#6366f1" />
           <link rel="manifest" href="/manifest.json" />
-          <link rel="icon" href="/favicon.ico" />
+          {/* <link rel="icon" href="/favicon.ico" /> */}
           
           {/* Preconnect للخطوط */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />

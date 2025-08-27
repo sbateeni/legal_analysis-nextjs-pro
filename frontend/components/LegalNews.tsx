@@ -40,7 +40,7 @@ export default function LegalNews({ apiKey, model = 'gemini-1.5-flash' }: Props)
     if (!apiKey) return;
     // عند التحميل: نحاول فقط قراءة الكاش بدون توليد
     fetchNews(false);
-  }, [fetchNews]);
+  }, [fetchNews, apiKey]);
 
   if (!apiKey) return null;
 
