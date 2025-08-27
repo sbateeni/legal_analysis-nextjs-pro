@@ -93,6 +93,13 @@ export default function Header() {
             maxWidth: isMobile() ? '200px' : 'none',
             textAlign: 'center'
           }}>؟ تعليمات</Link>
+          <Link href="/exports" style={{
+            color: '#fff', background: isActive('/exports') ? '#dc2626' : '#dc2626cc', borderRadius: 8, padding: isMobile() ? '8px 16px' : '4px 14px', fontWeight: 700, fontSize: isMobile() ? 14 : 16, textDecoration: 'none', boxShadow: '0 1px 4px #0002', letterSpacing: 1, transition: 'background 0.2s',
+            width: isMobile() ? '100%' : 'auto',
+            minWidth: isMobile() ? '140px' : 'auto',
+            maxWidth: isMobile() ? '200px' : 'none',
+            textAlign: 'center'
+          }}>⬇️ الصادرات</Link>
         </div>
       </nav>
     </header>

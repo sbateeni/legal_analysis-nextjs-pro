@@ -45,6 +45,10 @@ export default function MobileNav() {
         <div>❓</div>
         <div style={{fontSize:10, marginTop:2}}>عن</div>
       </Link>
+      <Link href="/exports" style={{color:'#fff', textAlign:'center', fontSize:20, flex:1, textDecoration:'none'}}>
+        <div>⬇️</div>
+        <div style={{fontSize:10, marginTop:2}}>الصادرات</div>
+      </Link>
       <button onClick={() => setDarkMode(!darkMode)} style={{background:'none', border:'none', color:'#fff', fontSize:20, flex:1, textAlign:'center', cursor:'pointer', outline:'none'}}>
         <div>{darkMode ? '🌙' : '☀️'}</div>
         <div style={{fontSize:10, marginTop:2}}>الوضع</div>
