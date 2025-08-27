@@ -6,6 +6,12 @@ import { loadAppSettings } from '../utils/appSettings';
 import { Button } from '../components/UI';
 import { extractApiError, mapApiErrorToMessage } from '../utils/errors';
 
+// تعريف نوع BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -32,7 +38,7 @@ export default function ChatPage() {
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const CHAT_STORAGE_KEY_PREFIX = 'legal_chat_';
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -52,7 +58,7 @@ export default function ChatPage() {
     // معالجة تثبيت التطبيق كتطبيق أيقونة
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowInstallButton(true);
     };
 

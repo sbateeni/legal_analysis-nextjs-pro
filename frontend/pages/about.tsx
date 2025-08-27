@@ -3,6 +3,12 @@ import Link from 'next/link';
 import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '../utils/crypto';
 
+// تعريف نوع BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 const stages = [
   'تحديد المشكلة القانونية',
   'جمع المعلومات والوثائق',
@@ -21,18 +27,21 @@ const stages = [
 
 export default function About() {
   const { theme, darkMode } = useTheme();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!mounted) return;
 
     // استماع لحدث beforeinstallprompt
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowInstallButton(true);
     };
 

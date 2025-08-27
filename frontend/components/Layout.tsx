@@ -5,10 +5,16 @@ import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '../utils/crypto';
 import Image from 'next/image';
 
+// تعريف نوع BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const showHeader = !isMobile();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -22,7 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     // استماع لحدث beforeinstallprompt
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowInstallButton(true);
     };
 

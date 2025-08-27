@@ -3,9 +3,15 @@ import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '../utils/crypto';
 import { useState, useEffect } from 'react';
 
+// تعريف نوع BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export default function MobileNav() {
   const { darkMode, setDarkMode, mounted } = useTheme();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [clientMounted, setClientMounted] = useState(false);
 
@@ -19,7 +25,7 @@ export default function MobileNav() {
     // استماع لحدث beforeinstallprompt
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowInstallButton(true);
     };
 

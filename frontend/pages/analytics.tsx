@@ -4,6 +4,12 @@ import { useTheme } from '../contexts/ThemeContext';
 import { getAllCases } from '../utils/db';
 import Link from 'next/link';
 
+// تعريف نوع BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 interface AnalysisStage {
   id: string;
   stageIndex: number;
@@ -175,7 +181,7 @@ export default function AnalyticsPage() {
   const [error, setError] = useState('');
   const [selectedCase, setSelectedCase] = useState<string>('all'); // 'all' أو ID القضية
   const [cases, setCases] = useState<LegalCase[]>([]);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -184,7 +190,7 @@ export default function AnalyticsPage() {
     // معالجة تثبيت التطبيق كتطبيق أيقونة
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowInstallButton(true);
     };
 
