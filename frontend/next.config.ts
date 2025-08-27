@@ -29,11 +29,11 @@ const nextConfig: NextConfig = {
               ? "script-src 'self'"
               : (process.env.NODE_ENV === 'production' ? "script-src 'self'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'"),
             process.env.STRICT_CSP === '1'
-              ? "style-src 'self'"
-              : "style-src 'self' 'unsafe-inline'",
+              ? "style-src 'self' https://fonts.googleapis.com"
+              : "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: blob: https:",
-            "font-src 'self' data:",
-            "connect-src 'self' https://generativelanguage.googleapis.com",
+            "font-src 'self' data: https://fonts.gstatic.com",
+            "connect-src 'self' https://generativelanguage.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com",
             "frame-ancestors 'none'",
           ].join('; '),
         },
@@ -65,8 +65,6 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
-  
-
   
   // إعدادات التطوير
   devIndicators: {
