@@ -252,6 +252,47 @@ npm run start
 # ثم فتح http://localhost:3000/web-vitals
 ```
 
+## 🛠️ إصلاح المشاكل الشائعة
+
+### 1. مشاكل Content Security Policy (CSP)
+**المشكلة**: رفض تحميل الخطوط من Google Fonts
+**الحل**: تحديث `next.config.ts` لإضافة:
+```typescript
+"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+"font-src 'self' data: https://fonts.gstatic.com",
+"connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"
+```
+
+### 2. مشاكل الخطوط
+**المشكلة**: عدم تحميل الخطوط العربية والإنجليزية
+**الحل**: إضافة في `_document.tsx`:
+```typescript
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+```
+
+### 3. مشاكل PWA Manifest
+**المشكلة**: أيقونات غير صالحة في manifest.json
+**الحل**: استبدال الأيقونات المشفرة بـ SVG:
+```json
+{
+  "src": "/icon-192x192.svg",
+  "type": "image/svg+xml"
+}
+```
+
+### 4. مشاكل API
+**المشكلة**: أخطاء 500 في API الأخبار القانونية
+**الحل**: 
+- إضافة معالجة أخطاء أفضل
+- إضافة User-Agent headers
+- معالجة فشل الاتصال بالمصدر
+
+### 5. مشاكل Favicon
+**المشكلة**: خطأ 404 في favicon.ico
+**الحل**: إنشاء ملف favicon.ico صالح في مجلد public
+
 ## 📈 التطوير المستقبلي
 
 ### الميزات المخطط لها

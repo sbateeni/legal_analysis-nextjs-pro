@@ -1,8 +1,19 @@
 User-agent: *
 Allow: /
 
-# Disallow API routes from indexing
+# منع الوصول لصفحات API
 Disallow: /api/
 
-Sitemap: /sitemap.xml
+# منع الوصول لصفحات الإدارة
+Disallow: /admin/
+Disallow: /_next/
+
+# السماح بالوصول للصفحات العامة
+Allow: /
+Allow: /about
+Allow: /privacy
+Allow: /kb
+
+# خريطة الموقع
+Sitemap: https://legal-analysis-nextjs-pro.vercel.app/sitemap.xml
 

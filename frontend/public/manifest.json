@@ -12,15 +12,15 @@
   "dir": "rtl",
   "icons": [
     {
-      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABl+JbSAAAAAElFTkSuQmCC",
+      "src": "/icon-192x192.svg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAQAAAB5GJcZAAAAAElFTkSuQmCC",
+      "src": "/icon-512x512.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
@@ -47,7 +47,7 @@
       "url": "/?action=new-case",
       "icons": [
         {
-          "src": "/icon-192x192.png",
+          "src": "/icon-192x192.svg",
           "sizes": "192x192"
         }
       ]
@@ -59,7 +59,7 @@
       "url": "/history",
       "icons": [
         {
-          "src": "/icon-192x192.png",
+          "src": "/icon-192x192.svg",
           "sizes": "192x192"
         }
       ]

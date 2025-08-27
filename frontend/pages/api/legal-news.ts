@@ -22,11 +22,16 @@ function shouldUseCache(model: string): boolean {
 }
 
 async function callGemini(prompt: string, apiKey: string, modelName: string): Promise<string> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: modelName });
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: modelName });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error) {
+    console.error('Error calling Gemini:', error);
+    throw new Error('فشل في الاتصال بـ Gemini API');
+  }
 }
 
 function buildPrompt(sourceText: string): string {
@@ -44,20 +49,38 @@ function buildPrompt(sourceText: string): string {
 }
 
 async function fetchSourceText(): Promise<string> {
-  // جلب الصفحة الرئيسية للمصدر
-  const url = 'http://www.qanon.ps/index.php';
-  const res = await fetch(url, { method: 'GET' });
-  const html = await res.text();
-  // استخراج نصوص الروابط والعناوين بشكل بسيط
-  const matches = Array.from(html.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi))
-    .map(m => m[1]
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&[^;]+;/g, ' ')
-      .trim())
-    .filter(Boolean)
-    .slice(0, 200);
-  // ضم أول 200 عنصر لتقليل الحجم
-  return matches.join('\n').slice(0, 8000);
+  try {
+    // جلب الصفحة الرئيسية للمصدر
+    const url = 'http://www.qanon.ps/index.php';
+    const res = await fetch(url, { 
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
+    const html = await res.text();
+    
+    // استخراج نصوص الروابط والعناوين بشكل بسيط
+    const matches = Array.from(html.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi))
+      .map(m => m[1]
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&[^;]+;/g, ' ')
+        .trim())
+      .filter(Boolean)
+      .slice(0, 200);
+    
+    // ضم أول 200 عنصر لتقليل الحجم
+    return matches.join('\n').slice(0, 8000);
+  } catch (error) {
+    console.error('Error fetching source text:', error);
+    // إرجاع نص افتراضي في حالة الفشل
+    return 'لا يمكن الوصول للمصدر حالياً. يرجى المحاولة لاحقاً.';
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -87,6 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(200).json(response);
       return;
     }
+    
     // إذا لم يكن هناك كاش ولا يوجد طلب إجباري للتحديث، لا نقوم بالتوليد
     if (!force && !shouldUseCache(modelName)) {
       res.status(204).end();
@@ -98,22 +122,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const prompt = buildPrompt(sourceText);
     const content = await callGemini(prompt, apiKey, modelName);
 
-    // Cache for 24 hours
+    // Cache the result
+    const now = Date.now();
     newsCacheByModel.set(modelName, {
       content,
-      updatedAt: Date.now(),
-      expiresAt: Date.now() + ONE_DAY_MS,
+      updatedAt: now,
+      expiresAt: now + ONE_DAY_MS,
     });
 
     const response: NewsResponse = {
-      updatedAt: Date.now(),
+      updatedAt: now,
       model: modelName,
       content,
     };
+
     res.status(200).json(response);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unexpected error';
-    res.status(500).json({ error: message });
+  } catch (error) {
+    console.error('Error in legal-news API:', error);
+    
+    // إرجاع رسالة خطأ مناسبة
+    const errorMessage = error instanceof Error ? error.message : 'حدث خطأ غير متوقع';
+    res.status(500).json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    });
   }
 }
 
