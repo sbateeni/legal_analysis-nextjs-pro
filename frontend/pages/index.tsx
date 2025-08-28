@@ -5,7 +5,6 @@ import { saveApiKey, loadApiKey, addCase, getAllCases, updateCase, LegalCase } f
 import { isMobile } from '../utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
 // تمت إزالة بطاقات المقالات
-import LegalNews from '../components/LegalNews';
 import { exportResultsToPDF, exportResultsToDocx } from '../utils/export';
 import { loadExportPreferences } from '../utils/exportSettings';
 import { Button } from '../components/UI';
@@ -274,8 +273,7 @@ export default function Home() {
           margin: '0 auto',
           padding: isMobile() ? '1rem 0.5rem' : '2rem 1rem',
         }}>
-          {/* أخبار قانونية فلسطينية */}
-          <LegalNews apiKey={apiKey} model={preferredModel} />
+          {/* تم حذف قسم الأخبار القانونية الفلسطينية */}
 
           {/* قسم المقالات التعريفية محذوف بناءً على طلب المستخدم */}
           {/* تنبيه إعداد المفتاح عند الحاجة */}
