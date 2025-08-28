@@ -1,6 +1,6 @@
 import type { AppProps } from "next/app";
 import Head from 'next/head';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import '../styles/globals.css';
 import '../styles/responsive.css';
 import { ThemeProvider } from '../contexts/ThemeContext';
@@ -13,33 +13,34 @@ export function reportWebVitals(metric: NextWebVitalsMetric) {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
+  const [updateReady, setUpdateReady] = useState(false);
+  const waitingSWRef = useRef<ServiceWorker | null>(null);
+  const unregisterVisibilityHandlerRef = useRef<() => void>();
+
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const swUrl = '/sw.js';
       navigator.serviceWorker.register(swUrl).then(async (registration) => {
-        // الاستماع للتحديثات
+        // رصد وجود نسخة جاهزة (waiting)
         if (registration.waiting) {
-          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          waitingSWRef.current = registration.waiting;
+          setUpdateReady(true);
         }
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (!newWorker) return;
           newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed') {
-              if (navigator.serviceWorker.controller) {
-                // يوجد نسخة جديدة، استبدل وتحديث الصفحة
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
-              }
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // نسخة جديدة أصبحت جاهزة وتنتظر التفعيل
+              waitingSWRef.current = registration.waiting || newWorker as unknown as ServiceWorker;
+              setUpdateReady(true);
             }
           });
         });
 
-        // عندما تصبح النسخة الجديدة مفعّلة، أعد تحميل الصفحة مرة واحدة
-        let refreshed = false;
+        // لا نقوم بإعادة التحميل تلقائياً
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (refreshed) return;
-          refreshed = true;
-          window.location.reload();
+          // تحكم SW تغير؛ نترك الصفحة كما هي ما لم يختَر المستخدم التحديث الآن
         });
 
         // فحص دوري لوجود تحديثات كل 30 دقيقة
@@ -52,6 +53,44 @@ export default function App({ Component, pageProps }: AppProps) {
     }
   }, []);
 
+  // تطبيق التحديث الآن: تفعيل SW الجديد ثم إعادة التحميل فوراً
+  const applyUpdateNow = () => {
+    const sw = waitingSWRef.current;
+    if (!sw) return;
+    sw.postMessage({ type: 'SKIP_WAITING' });
+    // عند انتقال التحكم إلى SW الجديد، أعد التحميل
+    const onControllerChange = () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+    setUpdateReady(false);
+  };
+
+  // تطبيق التحديث عند الخمول/الخلفية: انتظر حتى تصبح الصفحة مخفية
+  const applyUpdateOnIdle = () => {
+    const handler = () => {
+      if (document.visibilityState === 'hidden') {
+        const sw = waitingSWRef.current;
+        if (sw) {
+          sw.postMessage({ type: 'SKIP_WAITING' });
+        }
+        if (unregisterVisibilityHandlerRef.current) unregisterVisibilityHandlerRef.current();
+      }
+    };
+    document.addEventListener('visibilitychange', handler);
+    unregisterVisibilityHandlerRef.current = () => {
+      document.removeEventListener('visibilitychange', handler);
+      unregisterVisibilityHandlerRef.current = undefined;
+    };
+    setUpdateReady(false);
+  };
+
+  // تطبيق النسخة الجديدة عند الفتح القادم: لا نفعل شيئاً الآن، فقط نخفي التنبيه
+  const applyNextOpen = () => {
+    setUpdateReady(false);
+  };
+
   return (
     <>
       <Head>
@@ -63,6 +102,32 @@ export default function App({ Component, pageProps }: AppProps) {
           <main id="main-content">
             <Component {...pageProps} />
           </main>
+          {updateReady && (
+            <div style={{
+              position: 'fixed',
+              bottom: 16,
+              right: 16,
+              zIndex: 10000,
+              background: '#111827',
+              color: 'white',
+              padding: '12px 16px',
+              borderRadius: 12,
+              boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              maxWidth: 320,
+              fontFamily: 'Tajawal, Arial, sans-serif'
+            }}>
+              <div style={{ fontWeight: 800 }}>تحديث متاح</div>
+              <div style={{ fontSize: 13, opacity: 0.9 }}>هناك نسخة جديدة من التطبيق. اختر طريقة التحديث:</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={applyUpdateNow} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>تحديث الآن</button>
+                <button onClick={applyUpdateOnIdle} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>عند الخمول</button>
+                <button onClick={applyNextOpen} style={{ background: '#374151', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>عند الفتح القادم</button>
+              </div>
+            </div>
+          )}
         </Layout>
       </ThemeProvider>
     </>
