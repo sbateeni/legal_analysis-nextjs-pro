@@ -1,10 +1,10 @@
 // Simple Service Worker with basic caching strategies
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.0.1';
 const PRECACHE = `precache-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
+// لا تقم بتخزين الصفحة الرئيسية حتى لا نثبّت نسخة قديمة من الـ HTML
 const PRECACHE_URLS = [
-  '/',
   '/manifest.json',
   '/favicon.ico',
 ];
@@ -23,6 +23,14 @@ self.addEventListener('activate', (event) => {
       }
     }))).then(() => self.clients.claim())
   );
+});
+
+// دعم الرسائل (مثلاً skipWaiting يدوي)
+self.addEventListener('message', (event) => {
+  if (!event.data) return;
+  if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 function fromNetwork(request, timeoutMs = 4000) {
