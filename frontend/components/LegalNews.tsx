@@ -42,6 +42,17 @@ export default function LegalNews({ apiKey, model = 'gemini-1.5-flash' }: Props)
     fetchNews(true);
   }, [fetchNews, apiKey]);
 
+  // إعادة محاولة تلقائية سريعة إذا لم يصل محتوى بعد المحاولة الأولى
+  useEffect(() => {
+    if (!apiKey) return;
+    if (loading) return;
+    if (content) return;
+    const t = setTimeout(() => {
+      fetchNews(true);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [apiKey, loading, content, fetchNews]);
+
   if (!apiKey) return null;
 
   return (
