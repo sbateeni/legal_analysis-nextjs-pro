@@ -38,8 +38,8 @@ export default function LegalNews({ apiKey, model = 'gemini-1.5-flash' }: Props)
 
   useEffect(() => {
     if (!apiKey) return;
-    // عند التحميل: نحاول فقط قراءة الكاش بدون توليد
-    fetchNews(false);
+    // عند التحميل: حاول التوليد مباشرة إذا لم يوجد كاش
+    fetchNews(true);
   }, [fetchNews, apiKey]);
 
   if (!apiKey) return null;

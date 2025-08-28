@@ -37,50 +37,138 @@ async function callGemini(prompt: string, apiKey: string, modelName: string): Pr
 function buildPrompt(sourceText: string): string {
   return [
     'أنت مساعد مختص يرصد الأخبار القانونية الفلسطينية فقط خلال آخر 24 ساعة من النص التالي.',
-    'المصدر التالي مأخوذ من موقع رسمي فلسطيني. استخرج فقط: قرارات بقانون، قوانين جديدة، تعديلات على قوانين، نشرات في الجريدة الرسمية، تعليمات أو بلاغات تنظيمية.',
+    'المصادر التالية مأخوذة من مواقع فلسطينية رسمية. استخرج فقط: قرارات بقانون، قوانين جديدة، تعديلات على قوانين، نشرات في الجريدة الرسمية، تعليمات أو بلاغات تنظيمية.',
     'التزم بما يلي:',
     '- لا تذكر الأخبار السياسية/الأمنية أو المقالات العامة.',
     '- إن لم تتوفر أي تحديثات قانونية خلال آخر 24 ساعة، أجب: لا توجد تحديثات قانونية خلال 24 ساعة الماضية.',
     '- قدّم الناتج في نقاط موجزة: العنوان | الجهة المُصدِرة | التاريخ | لمحة سريعة.',
+    '- ركّز أولاً على العناصر التي يظهر فيها تاريخ حديث خلال آخر 48 ساعة إن وُجد.',
     '',
-    'نص المصدر (مختصر):',
+    'نص المصادر (مختصر):',
     sourceText,
   ].join('\n');
 }
 
+// مصادر فلسطينية رسمية يُحتمل أن تنشر تحديثات قانونية
+const OFFICIAL_SOURCES: Array<{ label: string; url: string }> = [
+  { label: 'بوابة قانون (التشريعات الفلسطينية)', url: 'http://www.qanon.ps/index.php' },
+  { label: 'مجلس الوزراء الفلسطيني', url: 'https://www.palestinecabinet.gov.ps' },
+  { label: 'وزارة العدل الفلسطينية', url: 'https://www.moj.pna.ps' },
+  { label: 'الوقائع الفلسطينية (الجريدة الرسمية) - إن وُجدت روابط', url: 'https://info.wafa.ps' }
+];
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error('انتهت مهلة الاتصال بالمصدر')), ms);
+    promise
+      .then((value) => { clearTimeout(id); resolve(value); })
+      .catch((err) => { clearTimeout(id); reject(err); });
+  });
+}
+
+function extractReadableText(html: string): string {
+  // سحب نصوص أساسية بسيطة من الروابط والعناوين
+  const anchors = Array.from(html.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi))
+    .map(m => m[1]
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&[^;]+;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim())
+    .filter(Boolean)
+    .slice(0, 120);
+  const headings = Array.from(html.matchAll(/<(h1|h2|h3)[^>]*>([\s\S]*?)<\/\1>/gi))
+    .map(m => m[2]
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&[^;]+;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim())
+    .filter(Boolean)
+    .slice(0, 40);
+  const combined = [...headings, ...anchors].join('\n');
+  return combined.slice(0, 8000);
+}
+
+async function fetchOneSource(url: string): Promise<string> {
+  const res = await withTimeout(fetch(url, {
+    method: 'GET',
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+  }), 7000);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const html = await res.text();
+  return extractReadableText(html);
+}
+
 async function fetchSourceText(): Promise<string> {
-  try {
-    // جلب الصفحة الرئيسية للمصدر
-    const url = 'http://www.qanon.ps/index.php';
-    const res = await fetch(url, { 
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+  const results = await Promise.allSettled(
+    OFFICIAL_SOURCES.map(async (src) => {
+      try {
+        const text = await fetchOneSource(src.url);
+        if (!text) return '';
+        return `المصدر: ${src.label} (${src.url})\n${text}`;
+      } catch (err) {
+        console.warn('Source failed:', src.url, err);
+        return '';
       }
-    });
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+    })
+  );
+  const texts = results
+    .map(r => r.status === 'fulfilled' ? r.value : '')
+    .filter(Boolean);
+  const joined = texts.join('\n\n').trim();
+  return joined || 'لا يمكن الوصول للمصادر حالياً. يرجى المحاولة لاحقاً.';
+}
+
+// ————————————————————————————————
+// ترجيح العناصر ذات التواريخ الحديثة
+// ————————————————————————————————
+const AR_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+function isRecentDateToken(token: string, now: Date, maxDays: number): boolean {
+  // أنماط شائعة: 2025-08-28 | 28-08-2025 | 28/08/2025 | 28/8/2025
+  const ymd = token.match(/(20\d{2})[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])/);
+  const dmy = token.match(/(0?[1-9]|[12]\d|3[01])[-/](0?[1-9]|1[0-2])[-/](20\d{2})/);
+  let d: Date | null = null;
+  if (ymd) {
+    const y = Number(ymd[1]);
+    const m = Number(ymd[2]) - 1;
+    const da = Number(ymd[3]);
+    d = new Date(y, m, da);
+  } else if (dmy) {
+    const da = Number(dmy[1]);
+    const m = Number(dmy[2]) - 1;
+    const y = Number(dmy[3]);
+    d = new Date(y, m, da);
+  } else {
+    // صيغة عربية تقريبية: 28 أغسطس 2025
+    const ar = token.match(/(0?[1-9]|[12]\d|3[01])\s+([\u0621-\u064A]+)\s+(20\d{2})/);
+    if (ar) {
+      const da = Number(ar[1]);
+      const monthName = ar[2];
+      const y = Number(ar[3]);
+      const mi = AR_MONTHS.indexOf(monthName);
+      if (mi >= 0) d = new Date(y, mi, da);
     }
-    
-    const html = await res.text();
-    
-    // استخراج نصوص الروابط والعناوين بشكل بسيط
-    const matches = Array.from(html.matchAll(/<a[^>]*>([\s\S]*?)<\/a>/gi))
-      .map(m => m[1]
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&[^;]+;/g, ' ')
-        .trim())
-      .filter(Boolean)
-      .slice(0, 200);
-    
-    // ضم أول 200 عنصر لتقليل الحجم
-    return matches.join('\n').slice(0, 8000);
-  } catch (error) {
-    console.error('Error fetching source text:', error);
-    // إرجاع نص افتراضي في حالة الفشل
-    return 'لا يمكن الوصول للمصدر حالياً. يرجى المحاولة لاحقاً.';
   }
+  if (!d || isNaN(d.getTime())) return false;
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  return diffDays >= 0 && diffDays <= maxDays;
+}
+
+function prioritizeRecent(text: string, maxDays: number): string {
+  const now = new Date();
+  const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  if (lines.length === 0) return text;
+  const recent: string[] = [];
+  const rest: string[] = [];
+  for (const line of lines) {
+    const hasRecent = line.split(/\s+/).some(tok => isRecentDateToken(tok, now, maxDays));
+    if (hasRecent) recent.push(line);
+    else rest.push(line);
+  }
+  if (recent.length === 0) return text; // لا يوجد ما يُرجّح
+  const merged = [...recent, '', ...rest].join('\n');
+  return merged.slice(0, 12000);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -110,15 +198,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(200).json(response);
       return;
     }
-    
-    // إذا لم يكن هناك كاش ولا يوجد طلب إجباري للتحديث، لا نقوم بالتوليد
-    if (!force && !shouldUseCache(modelName)) {
-      res.status(204).end();
-      return;
-    }
+    // إذا لم يكن هناك كاش أو تم إجبار التحديث، قم بالتوليد الآن
 
     // Fetch source and generate new content
-    const sourceText = await fetchSourceText();
+    const sourceRaw = await fetchSourceText();
+    const daysParam = Number((req.query.days as string) || '2');
+    const maxDays = Number.isFinite(daysParam) && daysParam > 0 && daysParam <= 7 ? Math.floor(daysParam) : 2;
+    const sourceText = prioritizeRecent(sourceRaw, maxDays);
     const prompt = buildPrompt(sourceText);
     const content = await callGemini(prompt, apiKey, modelName);
 
