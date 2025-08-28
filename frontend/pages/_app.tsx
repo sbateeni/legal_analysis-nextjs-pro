@@ -15,16 +15,36 @@ export function reportWebVitals(metric: NextWebVitalsMetric) {
 export default function App({ Component, pageProps }: AppProps) {
   const [updateReady, setUpdateReady] = useState(false);
   const waitingSWRef = useRef<ServiceWorker | null>(null);
-  const unregisterVisibilityHandlerRef = useRef<() => void>();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // تتبّع وجود تفاعل لتحديد ما إذا كان هذا تشغيلًا جديدًا أم أثناء العمل
+      const markInteracted = () => {
+        try { sessionStorage.setItem('hasInteracted', '1'); } catch {}
+        window.removeEventListener('pointerdown', markInteracted);
+        window.removeEventListener('keydown', markInteracted);
+      };
+      window.addEventListener('pointerdown', markInteracted, { once: true });
+      window.addEventListener('keydown', markInteracted, { once: true });
+
       const swUrl = '/sw.js';
       navigator.serviceWorker.register(swUrl).then(async (registration) => {
         // رصد وجود نسخة جاهزة (waiting)
+        const hasInteracted = (() => { try { return sessionStorage.getItem('hasInteracted') === '1'; } catch { return false; } })();
+        const isFreshLoad = !hasInteracted && performance.now() < 5000;
         if (registration.waiting) {
           waitingSWRef.current = registration.waiting;
-          setUpdateReady(true);
+          if (isFreshLoad) {
+            // تحديث تلقائي عند التشغيل فقط
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            const onControllerChange = () => {
+              navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+              window.location.reload();
+            };
+            navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+          } else {
+            setUpdateReady(true);
+          }
         }
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
@@ -33,7 +53,18 @@ export default function App({ Component, pageProps }: AppProps) {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // نسخة جديدة أصبحت جاهزة وتنتظر التفعيل
               waitingSWRef.current = registration.waiting || newWorker as unknown as ServiceWorker;
-              setUpdateReady(true);
+              const fresh = !hasInteracted && performance.now() < 5000;
+              if (fresh) {
+                // تحديث تلقائي عند التشغيل فقط
+                (waitingSWRef.current || newWorker as unknown as ServiceWorker).postMessage({ type: 'SKIP_WAITING' });
+                const onControllerChange = () => {
+                  navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+                  window.location.reload();
+                };
+                navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+              } else {
+                setUpdateReady(true);
+              }
             }
           });
         });
@@ -68,24 +99,6 @@ export default function App({ Component, pageProps }: AppProps) {
   };
 
   // تطبيق التحديث عند الخمول/الخلفية: انتظر حتى تصبح الصفحة مخفية
-  const applyUpdateOnIdle = () => {
-    const handler = () => {
-      if (document.visibilityState === 'hidden') {
-        const sw = waitingSWRef.current;
-        if (sw) {
-          sw.postMessage({ type: 'SKIP_WAITING' });
-        }
-        if (unregisterVisibilityHandlerRef.current) unregisterVisibilityHandlerRef.current();
-      }
-    };
-    document.addEventListener('visibilitychange', handler);
-    unregisterVisibilityHandlerRef.current = () => {
-      document.removeEventListener('visibilitychange', handler);
-      unregisterVisibilityHandlerRef.current = undefined;
-    };
-    setUpdateReady(false);
-  };
-
   // تطبيق النسخة الجديدة عند الفتح القادم: لا نفعل شيئاً الآن، فقط نخفي التنبيه
   const applyNextOpen = () => {
     setUpdateReady(false);
@@ -120,10 +133,9 @@ export default function App({ Component, pageProps }: AppProps) {
               fontFamily: 'Tajawal, Arial, sans-serif'
             }}>
               <div style={{ fontWeight: 800 }}>تحديث متاح</div>
-              <div style={{ fontSize: 13, opacity: 0.9 }}>هناك نسخة جديدة من التطبيق. اختر طريقة التحديث:</div>
+              <div style={{ fontSize: 13, opacity: 0.9 }}>هناك نسخة جديدة من التطبيق. يمكنك التحديث الآن أو سيُطبّق عند تشغيل التطبيق لاحقاً.</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button onClick={applyUpdateNow} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>تحديث الآن</button>
-                <button onClick={applyUpdateOnIdle} style={{ background: '#059669', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>عند الخمول</button>
                 <button onClick={applyNextOpen} style={{ background: '#374151', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>عند الفتح القادم</button>
               </div>
             </div>
