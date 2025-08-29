@@ -9,6 +9,11 @@ export interface StageDetails {
   examples?: string[];
   legalReferences?: string[];
   complexity?: 'basic' | 'intermediate' | 'advanced';
+  applicableTo?: string[]; // أنواع القضايا التي تنطبق عليها المرحلة (إن وجدت)
+  order?: number; // ترتيب المرحلة ضمن مسار النوع
+  optional?: boolean; // هل المرحلة اختيارية
+  prerequisites?: string[]; // مراحل يجب إكمالها مسبقاً
+  deadlines?: string[]; // مواعيد قانونية/سقوط مهمة
 }
 
 export interface StageDetailsMap {
@@ -36,7 +41,7 @@ export interface AnalysisResponse {
 export interface AnalysisError {
   code: 'INVALID_API_KEY' | 'TEXT_TOO_LONG' | 'STAGE_NOT_FOUND' | 'API_ERROR' | 'VALIDATION_ERROR';
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export interface AnalysisContext {

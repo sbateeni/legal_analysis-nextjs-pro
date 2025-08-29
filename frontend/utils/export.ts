@@ -5,6 +5,7 @@ import type { ExportPreferences } from './exportSettings';
 export interface ExportStageItem {
   title: string;
   content: string;
+  deadlines?: string[];
 }
 
 export interface ExportOptions {
@@ -54,6 +55,10 @@ export function exportResultsToPDF(stages: ExportStageItem[], options: ExportOpt
     const bodyParts: string[] = [];
     if (prefs?.includeInputs) bodyParts.push(`النص: ${s.content}`);
     if (prefs?.includeOutputs !== false) bodyParts.push(`النتيجة: ${s.content}`);
+    if (s.deadlines && s.deadlines.length) {
+      bodyParts.push(`مواعيد قانونية:
+${s.deadlines.map((d, i) => `- ${d}`).join('\n')}`);
+    }
     const lines = doc.splitTextToSize((bodyParts.join('\n\n') || '-') as string, maxWidth);
     lines.forEach((line: string) => {
       if (y > doc.internal.pageSize.getHeight() - margin) {
@@ -114,6 +119,9 @@ export async function exportResultsToDocx(stages: ExportStageItem[], options: Ex
     const parts: string[] = [];
     if (prefs?.includeInputs) parts.push(`النص: ${s.content}`);
     if (prefs?.includeOutputs !== false) parts.push(`النتيجة: ${s.content}`);
+    if (s.deadlines && s.deadlines.length) {
+      parts.push(`مواعيد قانونية:\n${s.deadlines.map((d, i) => `- ${d}`).join('\n')}`);
+    }
     const contentLines = (parts.join('\n\n') || '-').split('\n');
     contentLines.forEach((line) => {
       children.push(new Paragraph({ text: line }));

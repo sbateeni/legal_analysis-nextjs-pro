@@ -135,7 +135,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const petitionPrompt = buildFinalPetitionPrompt(request.text, trimmedSummaries, context);
 
       try {
-        const analysis = await callGeminiAPI(petitionPrompt, request.apiKey, preferredModel);
+        // استخدم نموذج أقوى للعريضة النهائية
+        const analysis = await callGeminiAPI(petitionPrompt, request.apiKey, 'gemini-1.5-pro');
         return res.status(200).json({ 
           stage: 'العريضة النهائية', 
           analysis,
@@ -195,10 +196,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const prompt = buildEnhancedPrompt(stageDetails, request.text, trimmedSummaries, context);
 
     try {
-      const analysis = await callGeminiAPI(prompt, request.apiKey, preferredModel);
+      // اختيار النموذج تلقائياً حسب مستوى التعقيد
+      const stageComplexity = stageDetails.complexity || determineComplexity(request.text);
+      const modelForStage = stageComplexity === 'advanced' ? 'gemini-1.5-pro' : preferredModel || 'gemini-1.5-flash';
+      const analysis = await callGeminiAPI(prompt, request.apiKey, modelForStage);
       
       // حفظ في Cache
-      cacheAnalysis(request.text, request.stageIndex, analysis, preferredModel);
+      cacheAnalysis(request.text, request.stageIndex, analysis, modelForStage);
 
       const response: AnalysisResponse = {
         stage: stageName,

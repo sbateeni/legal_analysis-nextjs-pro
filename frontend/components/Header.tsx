@@ -102,6 +102,13 @@ export default function Header() {
             maxWidth: isMobile() ? '200px' : 'none',
             textAlign: 'center'
           }}>⬇️ الصادرات</Link>
+          <Link href="/reference-checker" style={{
+            color: '#fff', background: isActive('/reference-checker') ? '#8b5cf6' : '#8b5cf6cc', borderRadius: 8, padding: isMobile() ? '8px 16px' : '4px 14px', fontWeight: 700, fontSize: isMobile() ? 14 : 16, textDecoration: 'none', boxShadow: '0 1px 4px #0002', letterSpacing: 1, transition: 'background 0.2s',
+            width: isMobile() ? '100%' : 'auto',
+            minWidth: isMobile() ? '140px' : 'auto',
+            maxWidth: isMobile() ? '200px' : 'none',
+            textAlign: 'center'
+          }}>🔍 المدقق المرجعي</Link>
         </div>
       </nav>
     </header>

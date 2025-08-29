@@ -8,6 +8,11 @@ import { useTheme } from '../contexts/ThemeContext';
 import { exportResultsToPDF, exportResultsToDocx } from '../utils/export';
 import { loadExportPreferences } from '../utils/exportSettings';
 import { Button } from '../components/UI';
+import ReferenceCheckerWidget from '../components/ReferenceCheckerWidget';
+import ReferenceNotification from '../components/ReferenceNotification';
+import { type LegalReference } from '../utils/referenceChecker';
+import stagesDef from '../stages';
+import type { StageDetails } from '../types/analysis';
 
 
 // تعريف نوع BeforeInstallPromptEvent
@@ -16,20 +21,12 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const STAGES = [
-  'المرحلة الأولى: تحديد المشكلة القانونية',
-  'المرحلة الثانية: جمع المعلومات والوثائق',
-  'المرحلة الثالثة: تحليل النصوص القانونية',
-  'المرحلة الرابعة: تحديد القواعد القانونية المنطبقة',
-  'المرحلة الخامسة: تحليل السوابق القضائية',
-  'المرحلة السادسة: تحليل الفقه القانوني',
-  'المرحلة السابعة: تحليل الظروف الواقعية',
-  'المرحلة الثامنة: تحديد الحلول القانونية الممكنة',
-  'المرحلة التاسعة: تقييم الحلول القانونية',
-  'المرحلة العاشرة: اختيار الحل الأمثل',
-  'المرحلة الحادية عشرة: صياغة الحل القانوني',
-  'المرحلة الثانية عشرة: تقديم التوصيات',
-];
+// تحميل المراحل ديناميكياً من تعريف `stages` مع ترتيب ثابت حسب order
+const STAGES = Object.keys(stagesDef).sort((a, b) => {
+  const da = (stagesDef as Record<string, StageDetails>)[a]?.order ?? 9999;
+  const db = (stagesDef as Record<string, StageDetails>)[b]?.order ?? 9999;
+  return da - db;
+});
 
 const FINAL_STAGE = 'المرحلة الثالثة عشرة: العريضة القانونية النهائية';
 const ALL_STAGES = [...STAGES, FINAL_STAGE];
@@ -56,10 +53,18 @@ export default function Home() {
   const [stageShowResult, setStageShowResult] = useState<boolean[]>(() => Array(ALL_STAGES.length).fill(false));
   const [partyRole, setPartyRole] = useState<PartyRole | ''>('');
   const [preferredModel, setPreferredModel] = useState<string>('gemini-1.5-flash');
+  const [caseType, setCaseType] = useState<string>('عام');
+  const [showReferenceNotification, setShowReferenceNotification] = useState(false);
+  const [discoveredReference, setDiscoveredReference] = useState<LegalReference | null>(null);
 
   useEffect(() => {
     setMounted(true);
     
+    // استرجاع نوع القضية من التخزين المحلي
+    try {
+      const savedCaseType = localStorage.getItem('selected_case_type');
+      if (savedCaseType) setCaseType(savedCaseType);
+    } catch {}
 
 
     // تحميل مفتاح API من قاعدة البيانات عند بدء التشغيل
@@ -97,6 +102,11 @@ export default function Home() {
       window.removeEventListener('resize', checkScreenSize);
     };
   }, []);
+
+  // حفظ نوع القضية محلياً
+  useEffect(() => {
+    try { localStorage.setItem('selected_case_type', caseType); } catch {}
+  }, [caseType]);
 
   useEffect(() => {
     // حفظ مفتاح API في قاعدة البيانات عند تغييره
@@ -157,9 +167,10 @@ export default function Home() {
         return;
       }
       try {
+        const modelToUse = /pro|1\.5-pro|2\.0|ultra/i.test(preferredModel) ? 'gemini-1.5-flash' : preferredModel;
         const res = await fetch('/api/analyze', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-model': preferredModel },
+          headers: { 'Content-Type': 'application/json', 'x-model': modelToUse },
           body: JSON.stringify({ text: mainText, stageIndex: -1, apiKey, previousSummaries: summaries, finalPetition: true, partyRole: partyRole || undefined }),
         });
         const data = await res.json();
@@ -204,9 +215,10 @@ export default function Home() {
       totalLength = previousSummaries.reduce((acc, cur) => acc + (cur?.length || 0), 0);
     }
     try {
+      const modelToUse = /pro|1\.5-pro|2\.0|ultra/i.test(preferredModel) ? 'gemini-1.5-flash' : preferredModel;
       const res = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-model': preferredModel },
+        headers: { 'Content-Type': 'application/json', 'x-model': modelToUse },
         body: JSON.stringify({ text, stageIndex: idx, apiKey, previousSummaries, partyRole: partyRole || undefined }),
       });
       const data = await res.json();
@@ -320,6 +332,34 @@ export default function Home() {
                 </button>
               )}
             </div>
+
+          {/* اختيار نوع القضية لتفعيل التفرع */}
+          <div style={{
+            background: theme.card,
+            borderRadius: 12,
+            boxShadow: `0 2px 10px ${theme.shadow}`,
+            padding: 12,
+            marginBottom: 16,
+            border: `1px solid ${theme.border}`
+          }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+              <span style={{fontWeight:700, color: theme.accent2}}>نوع القضية:</span>
+              {['عام','ميراث','أحوال شخصية','تجاري','جنائي','عمل','عقاري','إداري','إيجارات'].map(t => (
+                <button key={t}
+                  onClick={() => setCaseType(t)}
+                  style={{
+                    background: caseType === t ? theme.accent : 'transparent',
+                    color: caseType === t ? '#fff' : theme.text,
+                    border: `1.5px solid ${theme.input}`,
+                    borderRadius: 10,
+                    padding: '6px 10px',
+                    cursor: 'pointer',
+                    fontWeight: 700
+                  }}
+                >{t}</button>
+              ))}
+            </div>
+          </div>
 
           {/* نظام التبويبات */}
           <div style={{
@@ -517,7 +557,23 @@ export default function Home() {
               {activeTab === 'stages' && (
                 <>
                   {/* عرض جميع المراحل */}
-                  {ALL_STAGES.map((stage, idx) => (
+                  {ALL_STAGES
+                    .filter((stageName) => {
+                      const details = (stagesDef as Record<string, StageDetails>)[stageName];
+                      const applicable: string[] | undefined = details?.applicableTo;
+                      if (!applicable || applicable.includes('عام')) return true;
+                      return applicable.includes(caseType);
+                    })
+                    .map((stage) => {
+                      const absoluteIdx = ALL_STAGES.indexOf(stage);
+                      const details = (stagesDef as Record<string, StageDetails>)[stage];
+                      const prereqNames = (details?.prerequisites as string[]) || [];
+                      const unmetPrereqs = prereqNames.filter((name) => {
+                        const idx = ALL_STAGES.indexOf(name);
+                        return idx >= 0 ? !stageResults[idx] : false;
+                      });
+                      const prerequisitesMet = unmetPrereqs.length === 0;
+                      return (
                     <div key={stage} style={{
                       background: theme.card,
                       borderRadius: 16,
@@ -538,10 +594,55 @@ export default function Home() {
                       }}>
                         <span style={{fontSize: isMobile() ? 20 : 24}}>⚖️</span>
                         {stage}
+                        {((stagesDef as Record<string, StageDetails>)[stage]?.optional) && (
+                          <span style={{
+                            marginInlineStart: 8,
+                            background: '#f59e0b',
+                            color: '#fff',
+                            borderRadius: 8,
+                            padding: '2px 8px',
+                            fontSize: 12
+                          }}>اختيارية</span>
+                        )}
                       </div>
+                      {((stagesDef as Record<string, StageDetails>)[stage]?.deadlines?.length) ? (
+                        <div style={{
+                          background: '#fff7ed',
+                          border: '1px solid #fdba74',
+                          color: '#9a3412',
+                          borderRadius: 8,
+                          padding: 10,
+                          marginBottom: 12,
+                          fontSize: 13
+                        }}>
+                          <div style={{ fontWeight: 700, marginBottom: 6 }}>⏰ مواعيد قانونية:</div>
+                          <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                            {((stagesDef as Record<string, StageDetails>)[stage].deadlines as string[]).map((d, i) => (
+                              <li key={i}>{d}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+
+                      {!prerequisitesMet && unmetPrereqs.length > 0 && (
+                        <div style={{
+                          background: '#fef2f2',
+                          border: '1px solid #fecaca',
+                          color: '#991b1b',
+                          borderRadius: 8,
+                          padding: 10,
+                          marginBottom: 12,
+                          fontSize: 13
+                        }}>
+                          <div style={{ fontWeight: 700, marginBottom: 6 }}>🔒 هذه المرحلة مقفلة لوجود اعتماديات غير مكتملة:</div>
+                          <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                            {unmetPrereqs.map((p, i) => (<li key={i}>{p}</li>))}
+                          </ul>
+                        </div>
+                      )}
                       
                       {/* ملخص التحليل السابق */}
-                      {idx > 0 && stageResults[idx-1] && (
+                      {absoluteIdx > 0 && stageResults[absoluteIdx-1] && (
                         <div style={{
                           background: theme.resultBg,
                           borderRadius: 12,
@@ -554,15 +655,15 @@ export default function Home() {
                           opacity: 0.95,
                         }}>
                           <div style={{fontWeight: 700, color: theme.accent2, marginBottom: 8}}>📋 ملخص المرحلة السابقة:</div>
-                          <div style={{ whiteSpace: 'pre-line', marginTop: 4, lineHeight: 1.6 }}>{stageResults[idx-1]}</div>
+                          <div style={{ whiteSpace: 'pre-line', marginTop: 4, lineHeight: 1.6 }}>{stageResults[absoluteIdx-1]}</div>
                         </div>
                       )}
                       
                       {/* إذا كانت المرحلة الأخيرة، غير نص الزر */}
                       <button
                         type="button"
-                        disabled={stageLoading[idx]}
-                        onClick={() => handleAnalyzeStage(idx)}
+                        disabled={stageLoading[absoluteIdx] || !prerequisitesMet}
+                        onClick={() => prerequisitesMet && handleAnalyzeStage(absoluteIdx)}
                         style={{ 
                           width: '100%', 
                           background: `linear-gradient(135deg, ${theme.accent2} 0%, ${theme.accent} 100%)`, 
@@ -572,26 +673,27 @@ export default function Home() {
                           padding: isMobile() ? '14px 0' : '18px 0', 
                           fontSize: isMobile() ? 16 : 18, 
                           fontWeight: 800, 
-                          cursor: stageLoading[idx] ? 'not-allowed' : 'pointer', 
+                          cursor: (stageLoading[absoluteIdx] || !prerequisitesMet) ? 'not-allowed' : 'pointer', 
                           marginTop: 8, 
                           boxShadow: `0 4px 16px ${theme.accent}33`, 
                           letterSpacing: 1, 
                           transition: 'all 0.3s ease', 
                           position:'relative',
-                          transform: stageLoading[idx] ? 'scale(0.98)' : 'scale(1)',
+                          transform: (stageLoading[absoluteIdx] || !prerequisitesMet) ? 'scale(0.98)' : 'scale(1)',
                         }}
+                        title={!prerequisitesMet && unmetPrereqs.length > 0 ? `مطلوب إكمال: ${unmetPrereqs.join('، ')}` : undefined}
                       >
-                        {stageLoading[idx] ? (
+                        {stageLoading[absoluteIdx] ? (
                           <span style={{display:'inline-flex', alignItems:'center', gap:8}}>
                             <span className="spinner" style={{display:'inline-block', width:20, height:20, border:'3px solid #fff', borderTop:`3px solid ${theme.accent2}`, borderRadius:'50%', animation:'spin 1s linear infinite', verticalAlign:'middle'}}></span>
-                            {idx === ALL_STAGES.length - 1 ? '⏳ جاري توليد العريضة النهائية...' : '⏳ جاري التحليل...'}
+                            {absoluteIdx === ALL_STAGES.length - 1 ? '⏳ جاري توليد العريضة النهائية...' : '⏳ جاري التحليل...'}
                           </span>
                         ) : (
-                          idx === ALL_STAGES.length - 1 ? '📜 توليد العريضة القانونية النهائية' : `📜 تحليل ${stage}`
+                          absoluteIdx === ALL_STAGES.length - 1 ? '📜 توليد العريضة القانونية النهائية' : `📜 تحليل ${stage}`
                         )}
                       </button>
                       
-                      {stageErrors[idx] && (
+                      {stageErrors[absoluteIdx] && (
                         <div style={{ 
                           color: theme.errorText, 
                           background: theme.errorBg, 
@@ -604,11 +706,11 @@ export default function Home() {
                           boxShadow: `0 2px 8px ${theme.errorText}22`,
                           border: `1px solid ${theme.errorText}33`
                         }}>
-                          ❌ {stageErrors[idx]}
+                          ❌ {stageErrors[absoluteIdx]}
                         </div>
                       )}
                       
-                      {stageResults[idx] && (
+                      {stageResults[absoluteIdx] && (
                         <div style={{
                           background: theme.resultBg,
                           borderRadius: 16,
@@ -617,19 +719,20 @@ export default function Home() {
                           marginTop: 20,
                           border: `1.5px solid ${theme.input}`,
                           color: theme.text,
-                          opacity: stageShowResult[idx] ? 1 : 0,
-                          transform: stageShowResult[idx] ? 'translateY(0)' : 'translateY(30px)',
+                          opacity: stageShowResult[absoluteIdx] ? 1 : 0,
+                          transform: stageShowResult[absoluteIdx] ? 'translateY(0)' : 'translateY(30px)',
                           transition: 'all 0.7s ease',
                         }}>
                           <h3 style={{ color: theme.accent, marginBottom: 12, fontSize: 18, fontWeight: 800, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span>🔍</span>
                             نتيجة التحليل
                           </h3>
-                          <div style={{ whiteSpace: 'pre-line', fontSize: 16, lineHeight: 1.8 }}>{stageResults[idx]}</div>
+                          <div style={{ whiteSpace: 'pre-line', fontSize: 16, lineHeight: 1.8 }}>{stageResults[absoluteIdx]}</div>
                         </div>
                       )}
                     </div>
-                  ))}
+                  );
+                  })}
                 </>
               )}
 
@@ -644,7 +747,12 @@ export default function Home() {
                       onClick={async () => {
                         const prefs = await loadExportPreferences();
                         const stages = stageResults
-                          .map((content, idx) => content ? ({ title: ALL_STAGES[idx], content }) : null)
+                          .map((content, idx) => {
+                            if (!content) return null;
+                            const sName = ALL_STAGES[idx];
+                            const deadlines = (stagesDef as Record<string, StageDetails>)[sName]?.deadlines;
+                            return { title: sName, content, deadlines };
+                          })
                           .filter(Boolean) as { title: string; content: string }[];
                         if (stages.length === 0) return;
                         exportResultsToPDF(stages, { caseName: caseNameInput || 'قضية', partyRole: partyRole || undefined }, prefs);
@@ -657,7 +765,12 @@ export default function Home() {
                       onClick={async () => {
                         const prefs = await loadExportPreferences();
                         const stages = stageResults
-                          .map((content, idx) => content ? ({ title: ALL_STAGES[idx], content }) : null)
+                          .map((content, idx) => {
+                            if (!content) return null;
+                            const sName = ALL_STAGES[idx];
+                            const deadlines = (stagesDef as Record<string, StageDetails>)[sName]?.deadlines;
+                            return { title: sName, content, deadlines };
+                          })
                           .filter(Boolean) as { title: string; content: string }[];
                         if (stages.length === 0) return;
                         exportResultsToDocx(stages, { caseName: caseNameInput || 'قضية', partyRole: partyRole || undefined }, prefs);
@@ -786,10 +899,33 @@ export default function Home() {
                   )}
                 </div>
               )}
+
+              {/* المدقق المرجعي المدمج */}
+              <div style={{ marginTop: 32 }}>
+                <ReferenceCheckerWidget 
+                  compact={true}
+                  onReferenceFound={(reference) => {
+                    setDiscoveredReference(reference);
+                    setShowReferenceNotification(true);
+                  }}
+                />
+              </div>
         </main>
         
         {/* تمت إزالة الفوتر التحذيري من الصفحة الرئيسية بناءً على طلب المستخدم */}
       </div>
+
+      {/* إشعارات المراجع */}
+      {showReferenceNotification && discoveredReference && (
+        <ReferenceNotification
+          reference={discoveredReference}
+          onClose={() => setShowReferenceNotification(false)}
+          onViewDetails={() => {
+            setShowReferenceNotification(false);
+            window.location.href = '/reference-checker';
+          }}
+        />
+      )}
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
       `}</style>
