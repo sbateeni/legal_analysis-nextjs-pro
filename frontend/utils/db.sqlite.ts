@@ -123,12 +123,28 @@ class SQLiteDatabase {
     }
     
     try {
-      // Load sql.js dynamically only in browser
-      const sqlWasm = await import('sql.js');
-      return sqlWasm.default;
+      // Load sql.js init function dynamically only in browser
+      const { default: initSqlJs } = await import('sql.js');
+      
+      // Initialize sql.js and return the SQL object
+      const SQL = await initSqlJs({
+        // Let sql.js find the wasm file automatically
+        locateFile: (file: string) => `/_next/static/chunks/${file}`
+      });
+      
+      return SQL;
     } catch (error) {
       console.error('Failed to load SQL.js:', error);
-      throw new Error('SQL.js failed to load in browser context');
+      
+      // Fallback: try without locateFile
+      try {
+        const { default: initSqlJs } = await import('sql.js');
+        const SQL = await initSqlJs();
+        return SQL;
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        throw new Error('SQL.js failed to load in browser context');
+      }
     }
   }
 
