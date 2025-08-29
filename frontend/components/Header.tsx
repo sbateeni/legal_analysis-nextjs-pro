@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '../utils/crypto';
-import { useEffect, useState } from 'react';
+// تم حذف useEffect و useState لعدم الحاجة إليهما
 // تم حذف نظام المصادقة لجعل الموقع عاماً
 
 export default function Header() {
