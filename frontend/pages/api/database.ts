@@ -187,7 +187,8 @@ async function handleGetUserByEmail(data: unknown, res: NextApiResponse) {
     }
 
     // إزالة كلمة المرور من النتيجة
-    const { password_hash: _, ...safeUser } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash, ...safeUser } = user;
     return res.json({ success: true, user: safeUser });
   } catch (error) {
     console.error('Get user by email error:', error);
@@ -213,7 +214,8 @@ async function handleGetUserById(data: unknown, res: NextApiResponse) {
     }
 
     // إزالة كلمة المرور من النتيجة
-    const { password_hash: _, ...safeUser } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash, ...safeUser } = user;
     return res.json({ success: true, user: safeUser });
   } catch (error) {
     console.error('Get user by ID error:', error);
@@ -267,7 +269,8 @@ async function handleValidateUserPassword(data: unknown, res: NextApiResponse) {
     await centralDB.updateUserLastLogin(user.id);
 
     // إزالة كلمة المرور من النتيجة
-    const { password_hash: _, ...safeUser } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash, ...safeUser } = user;
     return res.json({ success: true, user: safeUser });
   } catch (error) {
     console.error('Validate password error:', error);
