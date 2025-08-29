@@ -93,7 +93,12 @@ export default function UserProfile() {
       await embeddedAuth.upgradeSubscription(user.id, planType);
       
       // إعادة تحميل البيانات
-      await loadUserData();
+      const updatedUser = await embeddedAuth.getCurrentUser();
+      if (updatedUser) {
+        setUser(updatedUser);
+        const userSubscription = await embeddedAuth.checkSubscriptionStatus(updatedUser.id);
+        setSubscription(userSubscription);
+      }
     } catch (error) {
       console.error('Failed to upgrade subscription:', error);
     }
