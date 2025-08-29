@@ -131,8 +131,8 @@ export default function Settings() {
     try {
       const b = await getBridge();
       if (!b) return;
-      const data: Uint8Array = await b.exportDatabase();
-      const blob = new Blob([data.buffer], { type: 'application/octet-stream' });
+      const data = await b.exportDatabase();
+      const blob = new Blob([data], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
