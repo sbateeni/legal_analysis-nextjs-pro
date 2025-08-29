@@ -7,12 +7,19 @@ import { saveApiKey, loadApiKey, getAllCases, saveAllCases, clearAllCases } from
 import { loadExportPreferences, saveExportPreferences, type ExportPreferences } from '../utils/exportSettings';
 import { loadAppSettings, saveAppSettings, type AppSettings } from '../utils/appSettings';
 // جسر قاعدة البيانات (يُحمّل ديناميكياً وقت الحاجة)
-let bridge: any = null;
-async function getBridge() {
+type BridgeAPI = {
+  init: () => Promise<void>;
+  getPreference: (key: string) => Promise<string | null>;
+  setPreference: (key: string, value: string) => Promise<void>;
+  exportDatabase: () => Promise<Uint8Array>;
+  importDatabase: (data: Uint8Array) => Promise<void>;
+};
+let bridge: BridgeAPI | null = null;
+async function getBridge(): Promise<BridgeAPI | null> {
   if (typeof window === 'undefined') return null;
   if (!bridge) {
     const mod = await import('../utils/db.bridge');
-    bridge = mod.dbBridge;
+    bridge = mod.dbBridge as unknown as BridgeAPI;
     await bridge.init();
   }
   return bridge;

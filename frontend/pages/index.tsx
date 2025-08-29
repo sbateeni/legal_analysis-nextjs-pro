@@ -91,7 +91,7 @@ export default function Home() {
           dbBridge.getPreference('show_deadlines_enabled'),
         ]);
         if (p1) setCaseType(p1);
-        if (p2) setPartyRole((p2 as any) || '');
+        if (p2) setPartyRole((p2 as PartyRole) || '');
         if (p3) setStageGating(p3 === '1');
         if (p4) setShowDeadlines(p4 === '1');
       } catch {}

@@ -1,11 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 // جلب التحليلات من الجسر (SQLite)
-let bridge: any = null;
+interface BridgeAPI {
+  init: () => Promise<void>;
+  listAnalytics: (
+    caseId: string,
+    limit: number
+  ) => Promise<Array<{ id: string; action: string; timestamp: string; metadata?: string; duration?: number }>>;
+}
+let bridge: BridgeAPI | null = null;
 async function loadBridge() {
   if (typeof window === 'undefined') return null;
   if (!bridge) {
     const mod = await import('../utils/db.bridge');
-    bridge = mod.dbBridge;
+    bridge = mod.dbBridge as unknown as BridgeAPI;
     await bridge.init();
   }
   return bridge;
@@ -119,7 +126,7 @@ export default function History() {
   const exportActivityCSV = () => {
     const rows = [
       ['id', 'caseId', 'action', 'timestamp', 'duration', 'metadata'] as const,
-      ...filteredActivity.map((a: any) => [
+      ...filteredActivity.map((a) => [
         a.id,
         selectedCaseId || '',
         a.action,

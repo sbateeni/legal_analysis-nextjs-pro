@@ -145,7 +145,7 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
           <span>🤝</span>
           لوحة التعاون (تعليقات ومهام)
         </div>
-        <button onClick={() => caseId && loadData(caseId)} style={{
+        <button onClick={() => { if (caseId) { loadData(caseId); } }} style={{
           background: 'transparent', color: theme.text, border: `1.5px solid ${theme.input}`, borderRadius: 10,
           padding: '6px 10px', cursor: 'pointer', fontWeight: 700
         }}>تحديث</button>
@@ -186,13 +186,13 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
         <div style={{ fontWeight: 700, color: theme.accent2, marginBottom: 8 }}>✅ المهام</div>
         {/* فلاتر متقدمة */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:8, marginBottom:10 }}>
-          <select value={filters.status || 'all'} onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as any }))} style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }}>
+          <select value={filters.status || 'all'} onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as TaskRecord['status'] | 'all' }))} style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }}>
             <option value="all">كل الحالات</option>
             <option value="open">مفتوحة</option>
             <option value="in_progress">قيد التنفيذ</option>
             <option value="done">مكتملة</option>
           </select>
-          <select value={filters.priority || 'all'} onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value as any }))} style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }}>
+          <select value={filters.priority || 'all'} onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value as TaskRecord['priority'] | 'all' }))} style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }}>
             <option value="all">كل الأولويات</option>
             <option value="low">منخفضة</option>
             <option value="medium">متوسطة</option>
@@ -205,8 +205,8 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
         <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:8, marginBottom:10 }}>
           <input type="text" value={filters.q || ''} onChange={(e) => setFilters(prev => ({ ...prev, q: e.target.value }))} placeholder="🔍 بحث في العنوان" style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }} />
           <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
-            <button onClick={() => caseId && loadData(caseId)} style={{ background:'transparent', border:`1.5px solid ${theme.input}`, color: theme.text, borderRadius:10, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>تطبيق الفلاتر</button>
-            <button onClick={() => { setFilters({ status:'all', priority:'all' }); caseId && loadData(caseId); }} style={{ background:'transparent', border:`1.5px solid ${theme.input}`, color: theme.text, borderRadius:10, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>إعادة تعيين</button>
+            <button onClick={() => { if (caseId) { loadData(caseId); } }} style={{ background:'transparent', border:`1.5px solid ${theme.input}`, color: theme.text, borderRadius:10, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>تطبيق الفلاتر</button>
+            <button onClick={() => { setFilters({ status:'all', priority:'all' }); if (caseId) { loadData(caseId); } }} style={{ background:'transparent', border:`1.5px solid ${theme.input}`, color: theme.text, borderRadius:10, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>إعادة تعيين</button>
           </div>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto', gap:8, alignItems:'center', marginBottom: 10 }}>
