@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useTheme } from '../contexts/ThemeContext';
 import { embeddedAuth, User } from '../utils/auth.embedded';
-import { isMobile } from '../utils/crypto';
 import AuthGuard from '../components/AuthGuard';
 
 export default function ProfilePage() {
@@ -18,7 +16,7 @@ function ProfilePageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { theme } = useTheme();
+
 
   useEffect(() => {
     const fetchUser = async () => {

@@ -3,7 +3,13 @@ import Head from 'next/head';
 import { testPrivacySystem, cleanupTestData } from '../utils/test-privacy';
 
 export default function TestPrivacyPage() {
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+    user1Cases?: number;
+    user2Cases?: number;
+    privacyVerified?: boolean;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
 
@@ -15,9 +21,10 @@ export default function TestPrivacyPage() {
       const result = await testPrivacySystem();
       setTestResult(result);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ غير معروف';
       setTestResult({
         success: false,
-        message: error.message,
+        message: errorMessage,
         privacyVerified: false
       });
     } finally {
@@ -33,7 +40,8 @@ export default function TestPrivacyPage() {
       setTestResult(null);
       alert('تم تنظيف البيانات التجريبية بنجاح');
     } catch (error) {
-      alert('فشل في تنظيف البيانات التجريبية: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ غير معروف';
+      alert('فشل في تنظيف البيانات التجريبية: ' + errorMessage);
     } finally {
       setIsCleaning(false);
     }
@@ -148,7 +156,7 @@ export default function TestPrivacyPage() {
                 <h3 className="text-xl font-bold text-white mb-4">⚠️ ملاحظات مهمة:</h3>
                 <ul className="text-gray-300 space-y-2 text-right">
                   <li>• هذا الاختبار ينشئ بيانات تجريبية مؤقتة</li>
-                  <li>• استخدم زر "تنظيف البيانات التجريبية" لحذف البيانات التجريبية</li>
+                  <li>• استخدم زر &quot;تنظيف البيانات التجريبية&quot; لحذف البيانات التجريبية</li>
                   <li>• لا تقم بتشغيل هذا الاختبار في بيئة الإنتاج</li>
                   <li>• الاختبار يتحقق من جميع جوانب الخصوصية والأمان</li>
                 </ul>

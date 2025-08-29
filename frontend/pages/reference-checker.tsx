@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { referenceChecker, type LegalReference } from '../utils/referenceChecker';
-import { useTheme } from '../contexts/ThemeContext';
-import { isMobile } from '../utils/crypto';
 import AuthGuard from '../components/AuthGuard';
 
 export default function ReferenceCheckerPage() {

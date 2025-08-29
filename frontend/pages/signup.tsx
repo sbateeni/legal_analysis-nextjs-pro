@@ -105,16 +105,18 @@ export default function SignupPage() {
         router.push('/login?message=تم إنشاء الحساب بنجاح، يمكنك الآن تسجيل الدخول');
       }, 2000);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       // رسائل خطأ مفصلة
-      if (error.message.includes('المستخدم موجود بالفعل')) {
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ في إنشاء الحساب';
+      
+      if (errorMessage.includes('المستخدم موجود بالفعل')) {
         setError('هذا البريد الإلكتروني مسجل مسبقاً. يرجى تسجيل الدخول أو استخدام بريد إلكتروني آخر');
-      } else if (error.message.includes('email')) {
+      } else if (errorMessage.includes('email')) {
         setError('البريد الإلكتروني غير صحيح');
-      } else if (error.message.includes('password')) {
+      } else if (errorMessage.includes('password')) {
         setError('كلمة المرور غير صحيحة');
       } else {
-        setError(error.message || 'حدث خطأ في إنشاء الحساب، يرجى المحاولة مرة أخرى');
+        setError(errorMessage || 'حدث خطأ في إنشاء الحساب، يرجى المحاولة مرة أخرى');
       }
     } finally {
       setIsLoading(false);
