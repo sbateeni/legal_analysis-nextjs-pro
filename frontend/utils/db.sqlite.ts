@@ -121,7 +121,9 @@ class SQLiteDatabase {
     if (typeof window === 'undefined') {
       throw new Error('SQLite is only available in the browser context');
     }
-    const sqlWasm = await import('sql.js');
+    // Use runtime-only dynamic import to avoid bundler static resolution of 'sql.js'
+    const dynamicImport = new Function('s', 'return import(s)');
+    const sqlWasm = await (dynamicImport as (s: string) => Promise<any>)('sql.js');
     return sqlWasm.default;
   }
 
