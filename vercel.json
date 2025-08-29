@@ -1,5 +1,12 @@
 {
-  "rewrites": [
-    { "source": "/((?!api).*)", "destination": "/" }
+  "version": 2,
+  "builds": [
+    { "src": "frontend/package.json", "use": "@vercel/next" }
+  ],
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "/$1" }
   ]
-} 
+}
