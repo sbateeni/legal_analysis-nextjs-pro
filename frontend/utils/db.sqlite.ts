@@ -128,18 +128,24 @@ class SQLiteDatabase {
       
       // Initialize sql.js and return the SQL object
       const SQL = await initSqlJs({
-        // Let sql.js find the wasm file automatically
-        locateFile: (file: string) => `/_next/static/chunks/${file}`
+        // Explicitly set the path to the wasm file
+        locateFile: (file: string) => {
+          console.log('Attempting to load WASM file:', file);
+          // Try multiple possible locations for the wasm file
+          return `/sql-wasm.wasm`;
+        }
       });
       
       return SQL;
     } catch (error) {
       console.error('Failed to load SQL.js:', error);
       
-      // Fallback: try without locateFile
+      // Fallback: try with node_modules path
       try {
         const { default: initSqlJs } = await import('sql.js');
-        const SQL = await initSqlJs();
+        const SQL = await initSqlJs({
+          locateFile: (file: string) => `/node_modules/sql.js/dist/${file}`
+        });
         return SQL;
       } catch (fallbackError) {
         console.error('Fallback also failed:', fallbackError);
