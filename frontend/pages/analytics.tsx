@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { isMobile } from '../utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases, LegalCase } from '../utils/db';
+import { getAllCases } from '../utils/db';
 import Link from 'next/link';
 import AuthGuard from '../components/AuthGuard';
 
