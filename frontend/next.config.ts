@@ -54,9 +54,6 @@ const nextConfig: NextConfig = {
 
   // Output configuration for better deployment
   output: 'standalone',
-  
-  // Disable telemetry
-  telemetry: false,
 }
 
 export default nextConfig
