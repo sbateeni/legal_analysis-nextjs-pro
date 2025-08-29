@@ -8,10 +8,9 @@ import { useTheme } from '../contexts/ThemeContext';
 import { exportResultsToPDF, exportResultsToDocx } from '../utils/export';
 import { loadExportPreferences } from '../utils/exportSettings';
 import { Button } from '../components/UI';
-import ReferenceCheckerWidget from '../components/ReferenceCheckerWidget';
-import ReferenceNotification from '../components/ReferenceNotification';
+// تمت إزالة الودجت المدمج للمدقق المرجعي من الواجهة الرئيسية بناءً على طلب المستخدم
 import CollabPanel from '../components/CollabPanel';
-import { type LegalReference } from '../utils/referenceChecker';
+// تم حذف استيراد أنواع المدقق المرجعي لعدم الحاجة هنا
 import stagesDef from '../stages';
 import type { StageDetails } from '../types/analysis';
 
@@ -55,8 +54,7 @@ export default function Home() {
   const [partyRole, setPartyRole] = useState<PartyRole | ''>('');
   const [preferredModel, setPreferredModel] = useState<string>('gemini-1.5-flash');
   const [caseType, setCaseType] = useState<string>('عام');
-  const [showReferenceNotification, setShowReferenceNotification] = useState(false);
-  const [discoveredReference, setDiscoveredReference] = useState<LegalReference | null>(null);
+  // تمت إزالة إشعارات المراجع المكتشفة من الصفحة الرئيسية
   const [selectedStageForCollab, setSelectedStageForCollab] = useState<string | null>(null);
   const collabRef = useRef<HTMLDivElement | null>(null);
 
@@ -914,32 +912,13 @@ export default function Home() {
                 </div>
               )}
 
-              {/* المدقق المرجعي المدمج */}
-              <div style={{ marginTop: 32 }}>
-                <ReferenceCheckerWidget 
-                  compact={true}
-                  onReferenceFound={(reference) => {
-                    setDiscoveredReference(reference);
-                    setShowReferenceNotification(true);
-                  }}
-                />
-              </div>
+              {/* تمت إزالة المدقق المرجعي المدمج من الصفحة الرئيسية */}
         </main>
         
         {/* تمت إزالة الفوتر التحذيري من الصفحة الرئيسية بناءً على طلب المستخدم */}
       </div>
 
-      {/* إشعارات المراجع */}
-      {showReferenceNotification && discoveredReference && (
-        <ReferenceNotification
-          reference={discoveredReference}
-          onClose={() => setShowReferenceNotification(false)}
-          onViewDetails={() => {
-            setShowReferenceNotification(false);
-            window.location.href = '/reference-checker';
-          }}
-        />
-      )}
+      {/* تمت إزالة إشعارات المراجع من الصفحة الرئيسية */}
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
       `}</style>
