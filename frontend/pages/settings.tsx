@@ -132,7 +132,7 @@ export default function Settings() {
       const b = await getBridge();
       if (!b) return;
       const data = await b.exportDatabase();
-      const blob = new Blob([data], { type: 'application/octet-stream' });
+      const blob = new Blob([new Uint8Array(data)], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -438,4 +438,4 @@ export default function Settings() {
       </main>
     </div>
   );
-} 
+}
