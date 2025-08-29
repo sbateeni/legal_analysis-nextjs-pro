@@ -72,7 +72,7 @@ export default function LoginPage() {
       
       // الانتقال للصفحة الرئيسية بعد ثانية
       setTimeout(() => {
-        router.push('/');
+      router.push('/');
       }, 1000);
       
     } catch (error: unknown) {
@@ -185,152 +185,152 @@ export default function LoginPage() {
           {/* القسم الأيمن - نموذج تسجيل الدخول */}
           <div className="flex items-center justify-center">
             <div className="w-full max-w-md bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl p-8 border border-gray-700">
-              {/* شعار المنصة */}
+          {/* شعار المنصة */}
               <div className="text-center mb-8">
                 <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
                   <span className="text-2xl">⚖️</span>
-                </div>
+            </div>
                 <h2 className="text-2xl font-bold text-white mb-2">مرحباً بك مجدداً</h2>
                 <p className="text-gray-300">سجل دخولك للوصول إلى منصة التحليل القانوني</p>
-              </div>
+          </div>
 
-              {/* نموذج تسجيل الدخول */}
+          {/* نموذج تسجيل الدخول */}
               <form onSubmit={handleLogin} className="space-y-6">
-                {/* البريد الإلكتروني */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                    البريد الإلكتروني
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              {/* البريد الإلكتروني */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                  البريد الإلكتروني
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <span className="text-gray-400 text-sm">✉️</span>
-                    </div>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       className="w-full pl-10 pr-4 py-3 text-sm bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="أدخل بريدك الإلكتروني"
-                      dir="ltr"
+                    placeholder="أدخل بريدك الإلكتروني"
+                    dir="ltr"
                       required
-                    />
-                  </div>
+                  />
                 </div>
+              </div>
 
-                {/* كلمة المرور */}
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                    كلمة المرور
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              {/* كلمة المرور */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                  كلمة المرور
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                       <span className="text-gray-400 text-sm">🔒</span>
-                    </div>
-                    <input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
+                  </div>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       className="w-full pr-10 pl-4 py-3 text-sm bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="أدخل كلمة المرور"
-                      dir="ltr"
+                    placeholder="أدخل كلمة المرور"
+                    dir="ltr"
                       required
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 left-0 pl-3 flex items-center"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 left-0 pl-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
                       <span className="text-gray-400 text-sm">
                         {showPassword ? '👁️' : '👁️‍🗨️'}
                       </span>
-                    </button>
-                  </div>
+                  </button>
                 </div>
+              </div>
 
                 {/* رسالة النجاح */}
                 {success && (
                   <div className="bg-green-900/50 border border-green-500 text-green-200 px-4 py-3 rounded-lg text-sm flex items-center">
                     <span className="mr-2">✅</span>
                     {success}
-                  </div>
+            </div>
                 )}
 
-                {/* رسالة الخطأ */}
-                {error && (
+            {/* رسالة الخطأ */}
+            {error && (
                   <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-sm flex items-center">
                     <span className="mr-2">❌</span>
-                    {error}
-                  </div>
-                )}
+                {error}
+              </div>
+            )}
 
-                {/* زر تسجيل الدخول */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
+            {/* زر تسجيل الدخول */}
+              <button
+                type="submit"
+                disabled={isLoading}
                   className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg shadow-lg hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    <>
+              >
+                {isLoading ? (
+                  <>
                       <span className="inline-block animate-spin mr-2 text-sm">⏳</span>
-                      جاري تسجيل الدخول...
-                    </>
-                  ) : (
-                    <>
+                    جاري تسجيل الدخول...
+                  </>
+                ) : (
+                  <>
                       <span className="mr-2">→</span>
-                      تسجيل الدخول
-                    </>
-                  )}
-                </button>
+                    تسجيل الدخول
+                  </>
+                )}
+              </button>
               </form>
 
-              {/* روابط إضافية */}
+            {/* روابط إضافية */}
               <div className="mt-6 text-center space-y-3">
-                <div className="text-sm text-gray-400">
-                  ليس لديك حساب؟{' '}
-                  <button
-                    type="button"
-                    onClick={handleGoToSignup}
+              <div className="text-sm text-gray-400">
+                ليس لديك حساب؟{' '}
+                <button
+                  type="button"
+                  onClick={handleGoToSignup}
                     className="text-blue-400 hover:text-blue-300 font-medium border-b border-blue-400 hover:border-blue-300 pb-0.5 transition-colors"
-                  >
-                    إنشاء حساب جديد
-                  </button>
-                </div>
-                
-                <div className="text-sm text-gray-400">
-                  <button
-                    type="button"
-                    onClick={() => router.push('/')}
-                    className="text-gray-300 hover:text-white border-b border-gray-600 hover:border-gray-300 pb-0.5 transition-colors"
-                  >
-                    العودة للصفحة الرئيسية
-                  </button>
-                </div>
+                >
+                  إنشاء حساب جديد
+                </button>
               </div>
+              
+              <div className="text-sm text-gray-400">
+                <button
+                  type="button"
+                  onClick={() => router.push('/')}
+                    className="text-gray-300 hover:text-white border-b border-gray-600 hover:border-gray-300 pb-0.5 transition-colors"
+                >
+                  العودة للصفحة الرئيسية
+                </button>
+              </div>
+            </div>
 
-              {/* معلومات إضافية */}
+          {/* معلومات إضافية */}
               <div className="mt-8 pt-6 border-t border-gray-700">
                 <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-lg p-4">
                   <h3 className="text-sm font-medium text-white mb-3 text-center">مزايا التسجيل</h3>
                   <ul className="text-xs text-gray-300 space-y-1">
                     <li className="flex items-center">
                       <span className="text-blue-400 mr-1.5">✓</span>
-                      حفظ القضايا والمراحل
-                    </li>
+                  حفظ القضايا والمراحل
+                </li>
                     <li className="flex items-center">
                       <span className="text-blue-400 mr-1.5">✓</span>
-                      مزامنة البيانات بين الأجهزة
-                    </li>
+                  مزامنة البيانات بين الأجهزة
+                </li>
                     <li className="flex items-center">
                       <span className="text-blue-400 mr-1.5">✓</span>
-                      تحليل قانوني متقدم
-                    </li>
+                  تحليل قانوني متقدم
+                </li>
                     <li className="flex items-center">
                       <span className="text-blue-400 mr-1.5">✓</span>
-                      دعم كامل للغة العربية
-                    </li>
-                  </ul>
+                  دعم كامل للغة العربية
+                </li>
+              </ul>
                 </div>
               </div>
             </div>
