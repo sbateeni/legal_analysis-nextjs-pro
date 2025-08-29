@@ -632,7 +632,13 @@ class SQLiteDatabase {
 
   async exportDatabase(): Promise<Uint8Array> {
     if (!this.db) throw new Error('Database not initialized');
-    return this.db.export();
+    const result = this.db.export();
+    // Ensure we return a proper Uint8Array
+    if (result instanceof Uint8Array) {
+      return result;
+    }
+    // If it's not a Uint8Array, convert it
+    return new Uint8Array(result);
   }
 
   async importDatabase(data: Uint8Array): Promise<void> {
@@ -644,7 +650,9 @@ class SQLiteDatabase {
     }
 
     // Create new database from imported data
-    this.db = new this.sqlite.Database(data);
+    // Ensure data is properly typed for sql.js
+    const dataArray = data instanceof Uint8Array ? data : new Uint8Array(data);
+    this.db = new this.sqlite.Database(dataArray);
     
     // Persist to OPFS
     await this.persistToOPFS();
