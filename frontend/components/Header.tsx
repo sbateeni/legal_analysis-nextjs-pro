@@ -6,8 +6,7 @@ import { isMobile } from '../utils/crypto';
 export default function Header() {
   const { darkMode, setDarkMode, theme, mounted } = useTheme();
   const router = useRouter();
-
-  if (!mounted) return null;
+  const mobile = mounted ? isMobile() : false;
 
   const isActive = (path: string) => router.pathname === path;
 
@@ -16,7 +15,7 @@ export default function Header() {
       width: '100%',
       background: `linear-gradient(135deg, ${theme.accent2} 0%, ${theme.accent} 100%)`,
       color: '#fff',
-      padding: isMobile() ? '10px 0 8px 0' : '18px 0 12px 0',
+      padding: mobile ? '10px 0 8px 0' : '18px 0 12px 0',
       marginBottom: 0,
       boxShadow: '0 4px 20px rgba(79, 70, 229, 0.3)',
       position: 'sticky',
@@ -25,26 +24,26 @@ export default function Header() {
       textAlign: 'center',
       letterSpacing: 1,
       fontWeight: 800,
-      fontSize: isMobile() ? 20 : 26,
+      fontSize: mobile ? 20 : 26,
     }}>
-      <nav style={{display:'flex', flexDirection:'column', alignItems:'center', gap: isMobile() ? 8 : 14}}>
+      <nav style={{display:'flex', flexDirection:'column', alignItems:'center', gap: mobile ? 8 : 14}}>
         <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:12}}>
-          <span style={{fontSize: isMobile() ? 22 : 30}}>⚖️</span>
+          <span style={{fontSize: mobile ? 22 : 30}}>⚖️</span>
           <Link href="/" style={{color:'#fff', textDecoration:'none'}}>
             <span>منصة التحليل القانوني الذكي</span>
           </Link>
         </div>
         <div className="header-nav" style={{
           display: 'flex',
-          flexDirection: isMobile() ? 'row' : 'row',
+          flexDirection: mobile ? 'row' : 'row',
           alignItems: 'center',
           justifyContent: 'flex-start',
-          gap: isMobile() ? 8 : 18,
-          marginTop: isMobile() ? 6 : 6,
-          flexWrap: isMobile() ? 'nowrap' : 'wrap',
+          gap: mobile ? 8 : 18,
+          marginTop: mobile ? 6 : 6,
+          flexWrap: mobile ? 'nowrap' : 'wrap',
           maxWidth: '100%',
-          overflowX: isMobile() ? 'auto' : 'visible',
-          padding: isMobile() ? '0 10px' : 0,
+          overflowX: mobile ? 'auto' : 'visible',
+          padding: mobile ? '0 10px' : 0,
           WebkitOverflowScrolling: 'touch'
         }}>
           <button
