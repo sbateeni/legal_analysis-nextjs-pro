@@ -126,6 +126,7 @@ class SQLiteDatabase {
   }
 
   private async initializeDatabase(): Promise<void> {
+    if (typeof window === 'undefined') throw new Error('SQLite import only allowed in browser');
     if (!this.sqlite) throw new Error('SQLite not loaded');
 
     // Create database in memory first, then persist to OPFS
@@ -139,6 +140,7 @@ class SQLiteDatabase {
   }
 
   private async createTables(): Promise<void> {
+    if (typeof window === 'undefined') throw new Error('Not available in SSR');
     if (!this.db) throw new Error('Database not initialized');
 
     const schema = `
