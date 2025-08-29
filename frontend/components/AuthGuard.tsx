@@ -4,10 +4,9 @@ import { embeddedAuth, User } from '../utils/auth.embedded';
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  fallback?: React.ReactNode;
 }
 
-export default function AuthGuard({ children, fallback }: AuthGuardProps) {
+export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -17,7 +16,7 @@ export default function AuthGuard({ children, fallback }: AuthGuardProps) {
       try {
         const user = await embeddedAuth.getCurrentUser();
         setCurrentUser(user);
-      } catch (error) {
+      } catch {
         console.log('No current user');
         setCurrentUser(null);
       } finally {
