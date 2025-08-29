@@ -1,16 +1,6 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // إعادة توجيه الصفحة الرئيسية إلى صفحة تسجيل الدخول
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/login',
-        permanent: true,
-      },
-    ];
-  },
   // Webpack configuration for proper sql.js handling
   webpack: (config, { isServer, dev }) => {
     // Prevent bundling Node built-ins on client
