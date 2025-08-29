@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { getAllCases, LegalCase } from '../utils/db';
+import { isMobile } from '../utils/crypto';
+import AuthGuard from '../components/AuthGuard';
 
 interface ExportLogItem {
   type: 'pdf' | 'docx';
@@ -10,6 +13,14 @@ interface ExportLogItem {
 }
 
 export default function ExportsPage() {
+  return (
+    <AuthGuard>
+      <ExportsPageContent />
+    </AuthGuard>
+  );
+}
+
+function ExportsPageContent() {
   const { theme } = useTheme();
   const [logs, setLogs] = useState<ExportLogItem[]>([]);
 

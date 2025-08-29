@@ -7,6 +7,7 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import Layout from '../components/Layout';
 import type { NextWebVitalsMetric } from 'next/app';
 import { recordWebVital } from '../utils/metrics';
+import { embeddedAuth } from '../utils/auth.embedded';
 
 export function reportWebVitals(metric: NextWebVitalsMetric) {
   recordWebVital(metric);
@@ -17,6 +18,18 @@ export default function App({ Component, pageProps }: AppProps) {
   const waitingSWRef = useRef<ServiceWorker | null>(null);
 
   useEffect(() => {
+    // تهيئة نظام المصادقة المدمج
+    const initAuth = async () => {
+      try {
+        await embeddedAuth.init();
+        console.log('Embedded authentication system initialized');
+      } catch (error) {
+        console.error('Failed to initialize auth system:', error);
+      }
+    };
+
+    initAuth();
+
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       // تتبّع وجود تفاعل لتحديد ما إذا كان هذا تشغيلًا جديدًا أم أثناء العمل
       const markInteracted = () => {

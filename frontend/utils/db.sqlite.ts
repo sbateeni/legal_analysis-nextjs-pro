@@ -98,6 +98,54 @@ class SQLiteDatabase {
   private sqlite: any = null;
   private isInitialized = false;
 
+  // إضافة دالة exec للتنفيذ المباشر للاستعلامات SQL
+  async exec(sql: string, params?: any[]): Promise<any> {
+    if (!this.db) throw new Error('Database not initialized');
+    
+    try {
+      if (params && params.length > 0) {
+        const stmt = this.db.prepare(sql);
+        stmt.bind(params);
+        const result = stmt.run();
+        stmt.free();
+        return result;
+      } else {
+        return this.db.exec(sql);
+      }
+    } catch (error) {
+      console.error('SQL execution error:', error);
+      throw error;
+    }
+  }
+
+  // إضافة دالة query للاستعلامات التي تعيد نتائج
+  async query(sql: string, params?: any[]): Promise<any[]> {
+    if (!this.db) throw new Error('Database not initialized');
+    
+    try {
+      const stmt = this.db.prepare(sql);
+      
+      // ربط المعاملات إذا كانت موجودة
+      if (params && params.length > 0) {
+        stmt.bind(params);
+      }
+      
+      const results: any[] = [];
+      
+      // استخدام step() للحصول على النتائج
+      while (stmt.step()) {
+        const row = stmt.getAsObject();
+        results.push(row);
+      }
+      
+      stmt.free();
+      return results;
+    } catch (error) {
+      console.error('SQL query error:', error);
+      throw error;
+    }
+  }
+
   async init(): Promise<void> {
     if (this.isInitialized) return;
 
@@ -176,6 +224,7 @@ class SQLiteDatabase {
       -- Cases table
       CREATE TABLE IF NOT EXISTS cases (
         id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
         name TEXT NOT NULL,
         caseType TEXT NOT NULL,
         partyRole TEXT,
@@ -190,6 +239,7 @@ class SQLiteDatabase {
       -- Stages table
       CREATE TABLE IF NOT EXISTS stages (
         id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
         caseId TEXT NOT NULL,
         stageName TEXT NOT NULL,
         stageIndex INTEGER NOT NULL,
@@ -205,6 +255,7 @@ class SQLiteDatabase {
       -- Exports table
       CREATE TABLE IF NOT EXISTS exports (
         id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
         caseId TEXT NOT NULL,
         type TEXT NOT NULL,
         filename TEXT NOT NULL,
@@ -217,6 +268,7 @@ class SQLiteDatabase {
       -- Search index table
       CREATE TABLE IF NOT EXISTS search_index (
         id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
         caseId TEXT NOT NULL,
         stageId TEXT,
         content TEXT NOT NULL,
@@ -230,6 +282,7 @@ class SQLiteDatabase {
       -- Analytics table
       CREATE TABLE IF NOT EXISTS analytics (
         id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
         caseId TEXT NOT NULL,
         action TEXT NOT NULL,
         timestamp TEXT NOT NULL,
@@ -241,14 +294,17 @@ class SQLiteDatabase {
       -- User preferences table
       CREATE TABLE IF NOT EXISTS user_preferences (
         id TEXT PRIMARY KEY,
-        key TEXT UNIQUE NOT NULL,
+        userId TEXT NOT NULL,
+        key TEXT NOT NULL,
         value TEXT NOT NULL,
-        updatedAt TEXT NOT NULL
+        updatedAt TEXT NOT NULL,
+        UNIQUE(userId, key)
       );
 
       -- Comments table
       CREATE TABLE IF NOT EXISTS comments (
         id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
         caseId TEXT NOT NULL,
         stageId TEXT,
         author TEXT NOT NULL,
@@ -264,6 +320,7 @@ class SQLiteDatabase {
       -- Tasks table
       CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
         caseId TEXT NOT NULL,
         stageId TEXT,
         title TEXT NOT NULL,
@@ -279,18 +336,26 @@ class SQLiteDatabase {
       );
 
       -- Create indexes for better performance
+      CREATE INDEX IF NOT EXISTS idx_cases_user ON cases(userId);
       CREATE INDEX IF NOT EXISTS idx_cases_type ON cases(caseType);
       CREATE INDEX IF NOT EXISTS idx_cases_status ON cases(status);
       CREATE INDEX IF NOT EXISTS idx_cases_created ON cases(createdAt);
+      CREATE INDEX IF NOT EXISTS idx_stages_user ON stages(userId);
       CREATE INDEX IF NOT EXISTS idx_stages_case ON stages(caseId);
       CREATE INDEX IF NOT EXISTS idx_stages_status ON stages(status);
+      CREATE INDEX IF NOT EXISTS idx_exports_user ON exports(userId);
+      CREATE INDEX IF NOT EXISTS idx_search_user ON search_index(userId);
       CREATE INDEX IF NOT EXISTS idx_search_content ON search_index(content);
       CREATE INDEX IF NOT EXISTS idx_search_type ON search_index(type);
+      CREATE INDEX IF NOT EXISTS idx_analytics_user ON analytics(userId);
       CREATE INDEX IF NOT EXISTS idx_analytics_action ON analytics(action);
       CREATE INDEX IF NOT EXISTS idx_analytics_timestamp ON analytics(timestamp);
+      CREATE INDEX IF NOT EXISTS idx_preferences_user ON user_preferences(userId);
+      CREATE INDEX IF NOT EXISTS idx_comments_user ON comments(userId);
       CREATE INDEX IF NOT EXISTS idx_comments_case ON comments(caseId);
       CREATE INDEX IF NOT EXISTS idx_comments_stage ON comments(stageId);
       CREATE INDEX IF NOT EXISTS idx_comments_parent ON comments(parentId);
+      CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(userId);
       CREATE INDEX IF NOT EXISTS idx_tasks_case ON tasks(caseId);
       CREATE INDEX IF NOT EXISTS idx_tasks_stage ON tasks(stageId);
       CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
@@ -321,58 +386,62 @@ class SQLiteDatabase {
   }
 
   // Case operations
-  async createCase(caseData: Omit<CaseRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  async createCase(caseData: Omit<CaseRecord, 'id' | 'createdAt' | 'updatedAt'> & { userId: string }): Promise<string> {
     if (!this.db) throw new Error('Database not initialized');
 
     const id = `case_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const now = new Date().toISOString();
 
     const stmt = this.db.prepare(`
-      INSERT INTO cases (id, name, caseType, partyRole, complexity, createdAt, updatedAt, status, tags, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO cases (id, userId, name, caseType, partyRole, complexity, createdAt, updatedAt, status, tags, description)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run([
-      id, caseData.name, caseData.caseType, caseData.partyRole, 
+    stmt.bind([
+      id, caseData.userId, caseData.name, caseData.caseType, caseData.partyRole, 
       caseData.complexity, now, now, caseData.status || 'active',
       caseData.tags, caseData.description
     ]);
+    stmt.run();
 
     stmt.free();
     return id;
   }
 
-  async getCase(id: string): Promise<CaseRecord | null> {
+  async getCase(id: string, userId: string): Promise<CaseRecord | null> {
     if (!this.db) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare('SELECT * FROM cases WHERE id = ?');
-    const result = stmt.get([id]);
+    const stmt = this.db.prepare('SELECT * FROM cases WHERE id = ? AND userId = ?');
+    stmt.bind([id, userId]);
+    const result = stmt.get();
     stmt.free();
 
     return result ? result as CaseRecord : null;
   }
 
-  async updateCase(id: string, updates: Partial<CaseRecord>): Promise<void> {
+  async updateCase(id: string, userId: string, updates: Partial<CaseRecord>): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
 
     const fields = Object.keys(updates).filter(key => key !== 'id');
     const setClause = fields.map(field => `${field} = ?`).join(', ');
-    const values = [...fields.map(field => updates[field as keyof CaseRecord]), new Date().toISOString(), id];
+    const values = [...fields.map(field => updates[field as keyof CaseRecord]), new Date().toISOString(), id, userId];
 
-    const stmt = this.db.prepare(`UPDATE cases SET ${setClause}, updatedAt = ? WHERE id = ?`);
-    stmt.run(values);
+    const stmt = this.db.prepare(`UPDATE cases SET ${setClause}, updatedAt = ? WHERE id = ? AND userId = ?`);
+    stmt.bind(values);
+    stmt.run();
     stmt.free();
   }
 
-  async deleteCase(id: string): Promise<void> {
+  async deleteCase(id: string, userId: string): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare('DELETE FROM cases WHERE id = ?');
-    stmt.run([id]);
+    const stmt = this.db.prepare('DELETE FROM cases WHERE id = ? AND userId = ?');
+    stmt.bind([id, userId]);
+    stmt.run();
     stmt.free();
   }
 
-  async listCases(filters?: {
+  async listCases(userId: string, filters?: {
     caseType?: string;
     status?: string;
     limit?: number;
@@ -380,9 +449,9 @@ class SQLiteDatabase {
   }): Promise<CaseRecord[]> {
     if (!this.db) throw new Error('Database not initialized');
 
-    let query = 'SELECT * FROM cases';
+    let query = 'SELECT * FROM cases WHERE userId = ?';
     const conditions: string[] = [];
-    const values: any[] = [];
+    const values: any[] = [userId];
 
     if (filters?.caseType) {
       conditions.push('caseType = ?');
@@ -395,7 +464,7 @@ class SQLiteDatabase {
     }
 
     if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
+      query += ' AND ' + conditions.join(' AND ');
     }
 
     query += ' ORDER BY updatedAt DESC';
@@ -411,46 +480,59 @@ class SQLiteDatabase {
     }
 
     const stmt = this.db.prepare(query);
-    const results = stmt.all(values);
+    stmt.bind(values);
+    const results: any[] = [];
+    
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      results.push(row);
+    }
     stmt.free();
 
     return results as CaseRecord[];
   }
 
   // Stage operations
-  async createStage(stageData: Omit<StageRecord, 'id' | 'createdAt'>): Promise<string> {
+  async createStage(stageData: Omit<StageRecord, 'id' | 'createdAt'> & { userId: string }): Promise<string> {
     if (!this.db) throw new Error('Database not initialized');
 
     const id = `stage_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const now = new Date().toISOString();
 
     const stmt = this.db.prepare(`
-      INSERT INTO stages (id, caseId, stageName, stageIndex, input, output, createdAt, completedAt, status, metadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO stages (id, userId, caseId, stageName, stageIndex, input, output, createdAt, completedAt, status, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run([
-      id, stageData.caseId, stageData.stageName, stageData.stageIndex,
+    stmt.bind([
+      id, stageData.userId, stageData.caseId, stageData.stageName, stageData.stageIndex,
       stageData.input, stageData.output, now, stageData.completedAt,
       stageData.status || 'pending', stageData.metadata
     ]);
+    stmt.run();
 
     stmt.free();
     return id;
   }
 
-  async getStagesForCase(caseId: string): Promise<StageRecord[]> {
+  async getStagesForCase(caseId: string, userId: string): Promise<StageRecord[]> {
     if (!this.db) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare('SELECT * FROM stages WHERE caseId = ? ORDER BY stageIndex');
-    const results = stmt.all([caseId]);
+    const stmt = this.db.prepare('SELECT * FROM stages WHERE caseId = ? AND userId = ? ORDER BY stageIndex');
+    stmt.bind([caseId, userId]);
+    const results: any[] = [];
+    
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      results.push(row);
+    }
     stmt.free();
 
     return results as StageRecord[];
   }
 
   // Search functionality
-  async searchCases(query: string, filters?: {
+  async searchCases(query: string, userId: string, filters?: {
     caseType?: string;
     status?: string;
     limit?: number;
@@ -460,10 +542,10 @@ class SQLiteDatabase {
     let sql = `
       SELECT DISTINCT c.* FROM cases c
       JOIN search_index si ON c.id = si.caseId
-      WHERE si.content LIKE ?
+      WHERE si.content LIKE ? AND c.userId = ?
     `;
 
-    const values: any[] = [`%${query}%`];
+    const values: any[] = [`%${query}%`, userId];
 
     if (filters?.caseType) {
       sql += ' AND c.caseType = ?';
@@ -483,33 +565,40 @@ class SQLiteDatabase {
     }
 
     const stmt = this.db.prepare(sql);
-    const results = stmt.all(values);
+    stmt.bind(values);
+    const results: any[] = [];
+    
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      results.push(row);
+    }
     stmt.free();
 
     return results as CaseRecord[];
   }
 
   // Analytics
-  async trackAction(caseId: string, action: string, metadata?: any, duration?: number): Promise<void> {
+  async trackAction(caseId: string, userId: string, action: string, metadata?: any, duration?: number): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
 
     const id = `analytics_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const timestamp = new Date().toISOString();
 
     const stmt = this.db.prepare(`
-      INSERT INTO analytics (id, caseId, action, timestamp, metadata, duration)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO analytics (id, userId, caseId, action, timestamp, metadata, duration)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run([
-      id, caseId, action, timestamp,
+    stmt.bind([
+      id, userId, caseId, action, timestamp,
       metadata ? JSON.stringify(metadata) : null, duration
     ]);
+    stmt.run();
 
     stmt.free();
   }
 
-  async getAnalytics(timeRange?: { start: string; end: string }): Promise<{
+  async getAnalytics(userId: string, timeRange?: { start: string; end: string }): Promise<{
     totalCases: number;
     casesByType: Record<string, number>;
     casesByStatus: Record<string, number>;
@@ -519,27 +608,27 @@ class SQLiteDatabase {
     if (!this.db) throw new Error('Database not initialized');
 
     // Get basic stats
-    const totalCases = this.db.exec('SELECT COUNT(*) as count FROM cases')[0]?.[0] || 0;
+    const totalCases = this.db.exec(`SELECT COUNT(*) as count FROM cases WHERE userId = '${userId}'`)[0]?.[0] || 0;
     
     // Cases by type
-    const casesByType = this.db.exec('SELECT caseType, COUNT(*) as count FROM cases GROUP BY caseType');
+    const casesByType = this.db.exec(`SELECT caseType, COUNT(*) as count FROM cases WHERE userId = '${userId}' GROUP BY caseType`);
     const typeStats: Record<string, number> = {};
     casesByType[0]?.forEach((row: any) => {
       typeStats[row[0]] = row[1];
     });
 
     // Cases by status
-    const casesByStatus = this.db.exec('SELECT status, COUNT(*) as count FROM cases GROUP BY status');
+    const casesByStatus = this.db.exec(`SELECT status, COUNT(*) as count FROM cases WHERE userId = '${userId}' GROUP BY status`);
     const statusStats: Record<string, number> = {};
     casesByStatus[0]?.forEach((row: any) => {
       statusStats[row[0]] = row[1];
     });
 
     // Average stages per case
-    const avgStages = this.db.exec('SELECT AVG(stage_count) as avg FROM (SELECT caseId, COUNT(*) as stage_count FROM stages GROUP BY caseId)')[0]?.[0] || 0;
+    const avgStages = this.db.exec(`SELECT AVG(stage_count) as avg FROM (SELECT caseId, COUNT(*) as stage_count FROM stages WHERE userId = '${userId}' GROUP BY caseId)`)[0]?.[0] || 0;
 
     // Most common actions
-    const actions = this.db.exec('SELECT action, COUNT(*) as count FROM analytics GROUP BY action ORDER BY count DESC LIMIT 10');
+    const actions = this.db.exec(`SELECT action, COUNT(*) as count FROM analytics WHERE userId = '${userId}' GROUP BY action ORDER BY count DESC LIMIT 10`);
     const actionStats: Array<{ action: string; count: number }> = [];
     actions[0]?.forEach((row: any) => {
       actionStats.push({ action: row[0], count: row[1] });
@@ -554,13 +643,13 @@ class SQLiteDatabase {
     };
   }
 
-  async listAnalytics(caseId?: string, limit: number = 200): Promise<AnalyticsRecord[]> {
+  async listAnalytics(userId: string, caseId?: string, limit: number = 200): Promise<AnalyticsRecord[]> {
     if (!this.db) throw new Error('Database not initialized');
 
-    let sql = 'SELECT id, caseId, action, timestamp, metadata, duration FROM analytics';
-    const params: any[] = [];
+    let sql = 'SELECT id, caseId, action, timestamp, metadata, duration FROM analytics WHERE userId = ?';
+    const params: any[] = [userId];
     if (caseId) {
-      sql += ' WHERE caseId = ?';
+      sql += ' AND caseId = ?';
       params.push(caseId);
     }
     sql += ' ORDER BY timestamp DESC';
@@ -569,7 +658,13 @@ class SQLiteDatabase {
       params.push(limit);
     }
     const stmt = this.db.prepare(sql);
-    const results = stmt.all(params);
+    stmt.bind(params);
+    const results: any[] = [];
+    
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      results.push(row);
+    }
     stmt.free();
     return (results || []).map((row: any) => ({
       id: row.id,
@@ -582,47 +677,50 @@ class SQLiteDatabase {
   }
 
   // Export operations
-  async createExport(exportData: Omit<ExportRecord, 'id' | 'createdAt'>): Promise<string> {
+  async createExport(exportData: Omit<ExportRecord, 'id' | 'createdAt'> & { userId: string }): Promise<string> {
     if (!this.db) throw new Error('Database not initialized');
 
     const id = `export_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const createdAt = new Date().toISOString();
 
     const stmt = this.db.prepare(`
-      INSERT INTO exports (id, caseId, type, filename, createdAt, fileSize, preferences)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO exports (id, userId, caseId, type, filename, createdAt, fileSize, preferences)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run([
-      id, exportData.caseId, exportData.type, exportData.filename,
+    stmt.bind([
+      id, exportData.userId, exportData.caseId, exportData.type, exportData.filename,
       createdAt, exportData.fileSize, exportData.preferences
     ]);
+    stmt.run();
 
     stmt.free();
     return id;
   }
 
   // User preferences
-  async setPreference(key: string, value: string): Promise<void> {
+  async setPreference(userId: string, key: string, value: string): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
 
     const now = new Date().toISOString();
     
     const stmt = this.db.prepare(`
-      INSERT OR REPLACE INTO user_preferences (id, key, value, updatedAt)
-      VALUES (?, ?, ?, ?)
+      INSERT OR REPLACE INTO user_preferences (id, userId, key, value, updatedAt)
+      VALUES (?, ?, ?, ?, ?)
     `);
 
-    const id = `pref_${key}`;
-    stmt.run([id, key, value, now]);
+    const id = `pref_${userId}_${key}`;
+    stmt.bind([id, userId, key, value, now]);
+    stmt.run();
     stmt.free();
   }
 
-  async getPreference(key: string): Promise<string | null> {
+  async getPreference(userId: string, key: string): Promise<string | null> {
     if (!this.db) throw new Error('Database not initialized');
 
-    const stmt = this.db.prepare('SELECT value FROM user_preferences WHERE key = ?');
-    const result = stmt.get([key]);
+    const stmt = this.db.prepare('SELECT value FROM user_preferences WHERE userId = ? AND key = ?');
+    stmt.bind([userId, key]);
+    const result = stmt.get();
     stmt.free();
 
     return result ? result.value : null;
@@ -665,32 +763,39 @@ class SQLiteDatabase {
   }
 
   // Comments CRUD
-  async createComment(comment: Omit<CommentRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  async createComment(comment: Omit<CommentRecord, 'id' | 'createdAt' | 'updatedAt'> & { userId: string }): Promise<string> {
     if (!this.db) throw new Error('Database not initialized');
     const id = `comment_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const now = new Date().toISOString();
     const stmt = this.db.prepare(`
-      INSERT INTO comments (id, caseId, stageId, author, content, createdAt, updatedAt, parentId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO comments (id, userId, caseId, stageId, author, content, createdAt, updatedAt, parentId)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run([id, comment.caseId, comment.stageId || null, comment.author, comment.content, now, now, comment.parentId || null]);
+    stmt.bind([id, comment.userId, comment.caseId, comment.stageId || null, comment.author, comment.content, now, now, comment.parentId || null]);
+    stmt.run();
     stmt.free();
     return id;
   }
 
-  async listComments(caseId: string, stageId?: string): Promise<CommentRecord[]> {
+  async listComments(caseId: string, userId: string, stageId?: string): Promise<CommentRecord[]> {
     if (!this.db) throw new Error('Database not initialized');
-    let sql = 'SELECT * FROM comments WHERE caseId = ?';
-    const params: any[] = [caseId];
+    let sql = 'SELECT * FROM comments WHERE caseId = ? AND userId = ?';
+    const params: any[] = [caseId, userId];
     if (stageId) { sql += ' AND stageId = ?'; params.push(stageId); }
     sql += ' ORDER BY createdAt ASC';
     const stmt = this.db.prepare(sql);
-    const results = stmt.all(params);
+    stmt.bind(params);
+    const results: any[] = [];
+    
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      results.push(row);
+    }
     stmt.free();
     return results as CommentRecord[];
   }
 
-  async updateComment(id: string, updates: Partial<CommentRecord>): Promise<void> {
+  async updateComment(id: string, userId: string, updates: Partial<CommentRecord>): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
     const fields = Object.keys(updates).filter(k => !['id','createdAt'].includes(k));
     if (fields.length === 0) return;
@@ -698,50 +803,60 @@ class SQLiteDatabase {
     const values = fields.map(f => (updates as any)[f]);
     values.push(new Date().toISOString());
     values.push(id);
-    const stmt = this.db.prepare(`UPDATE comments SET ${setClause}, updatedAt = ? WHERE id = ?`);
-    stmt.run(values);
+    values.push(userId);
+    const stmt = this.db.prepare(`UPDATE comments SET ${setClause}, updatedAt = ? WHERE id = ? AND userId = ?`);
+    stmt.bind(values);
+    stmt.run();
     stmt.free();
   }
 
-  async deleteComment(id: string): Promise<void> {
+  async deleteComment(id: string, userId: string): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
-    const stmt = this.db.prepare('DELETE FROM comments WHERE id = ?');
-    stmt.run([id]);
+    const stmt = this.db.prepare('DELETE FROM comments WHERE id = ? AND userId = ?');
+    stmt.bind([id, userId]);
+    stmt.run();
     stmt.free();
   }
 
   // Tasks CRUD
-  async createTask(task: Omit<TaskRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  async createTask(task: Omit<TaskRecord, 'id' | 'createdAt' | 'updatedAt'> & { userId: string }): Promise<string> {
     if (!this.db) throw new Error('Database not initialized');
     const id = `task_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const now = new Date().toISOString();
     const stmt = this.db.prepare(`
-      INSERT INTO tasks (id, caseId, stageId, title, description, assignee, dueDate, status, priority, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tasks (id, userId, caseId, stageId, title, description, assignee, dueDate, status, priority, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run([
-      id, task.caseId, task.stageId || null, task.title, task.description || null,
+    stmt.bind([
+      id, task.userId, task.caseId, task.stageId || null, task.title, task.description || null,
       task.assignee || null, task.dueDate || null, task.status || 'open', task.priority || 'medium', now, now
     ]);
+    stmt.run();
     stmt.free();
     return id;
   }
 
-  async listTasks(caseId: string, filters?: { stageId?: string; status?: TaskRecord['status']; assignee?: string }): Promise<TaskRecord[]> {
+  async listTasks(caseId: string, userId: string, filters?: { stageId?: string; status?: TaskRecord['status']; assignee?: string }): Promise<TaskRecord[]> {
     if (!this.db) throw new Error('Database not initialized');
-    let sql = 'SELECT * FROM tasks WHERE caseId = ?';
-    const params: any[] = [caseId];
+    let sql = 'SELECT * FROM tasks WHERE caseId = ? AND userId = ?';
+    const params: any[] = [caseId, userId];
     if (filters?.stageId) { sql += ' AND stageId = ?'; params.push(filters.stageId); }
     if (filters?.status) { sql += ' AND status = ?'; params.push(filters.status); }
     if (filters?.assignee) { sql += ' AND assignee = ?'; params.push(filters.assignee); }
     sql += ' ORDER BY COALESCE(dueDate, createdAt) ASC';
     const stmt = this.db.prepare(sql);
-    const results = stmt.all(params);
+    stmt.bind(params);
+    const results: any[] = [];
+    
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      results.push(row);
+    }
     stmt.free();
     return results as TaskRecord[];
   }
 
-  async updateTask(id: string, updates: Partial<TaskRecord>): Promise<void> {
+  async updateTask(id: string, userId: string, updates: Partial<TaskRecord>): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
     const fields = Object.keys(updates).filter(k => !['id','createdAt'].includes(k));
     if (fields.length === 0) return;
@@ -749,15 +864,18 @@ class SQLiteDatabase {
     const values = fields.map(f => (updates as any)[f]);
     values.push(new Date().toISOString());
     values.push(id);
-    const stmt = this.db.prepare(`UPDATE tasks SET ${setClause}, updatedAt = ? WHERE id = ?`);
-    stmt.run(values);
+    values.push(userId);
+    const stmt = this.db.prepare(`UPDATE tasks SET ${setClause}, updatedAt = ? WHERE id = ? AND userId = ?`);
+    stmt.bind(values);
+    stmt.run();
     stmt.free();
   }
 
-  async deleteTask(id: string): Promise<void> {
+  async deleteTask(id: string, userId: string): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
-    const stmt = this.db.prepare('DELETE FROM tasks WHERE id = ?');
-    stmt.run([id]);
+    const stmt = this.db.prepare('DELETE FROM tasks WHERE id = ? AND userId = ?');
+    stmt.bind([id, userId]);
+    stmt.run();
     stmt.free();
   }
 

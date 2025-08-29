@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Notifications, type Notice } from '../components/Notifications';
 import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '../utils/crypto';
@@ -6,6 +6,7 @@ import { set as idbSet } from 'idb-keyval';
 import { saveApiKey, loadApiKey, getAllCases, saveAllCases, clearAllCases } from '../utils/db';
 import { loadExportPreferences, saveExportPreferences, type ExportPreferences } from '../utils/exportSettings';
 import { loadAppSettings, saveAppSettings, type AppSettings } from '../utils/appSettings';
+import AuthGuard from '../components/AuthGuard';
 // جسر قاعدة البيانات (يُحمّل ديناميكياً وقت الحاجة)
 type BridgeAPI = {
   init: () => Promise<void>;
@@ -25,7 +26,15 @@ async function getBridge(): Promise<BridgeAPI | null> {
   return bridge;
 }
 
-export default function Settings() {
+export default function SettingsPage() {
+  return (
+    <AuthGuard>
+      <SettingsPageContent />
+    </AuthGuard>
+  );
+}
+
+function SettingsPageContent() {
   const { theme, darkMode, setDarkMode } = useTheme();
   const [apiKey, setApiKey] = useState('');
   const [saving, setSaving] = useState(false);

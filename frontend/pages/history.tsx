@@ -23,6 +23,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { exportResultsToPDF, exportResultsToDocx } from '../utils/export';
+import AuthGuard from '../components/AuthGuard';
 
 const STAGES = [
   'المرحلة الأولى: تحديد المشكلة القانونية',
@@ -90,6 +91,14 @@ interface ChatMessage {
 
 
 export default function History() {
+  return (
+    <AuthGuard>
+      <HistoryPageContent />
+    </AuthGuard>
+  );
+}
+
+function HistoryPageContent() {
   const { theme, darkMode } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [cases, setCases] = useState<Case[]>([]);

@@ -5,6 +5,7 @@ import { getAllCases, LegalCase, loadApiKey } from '../utils/db';
 import { loadAppSettings } from '../utils/appSettings';
 import { Button } from '../components/UI';
 import { extractApiError, mapApiErrorToMessage } from '../utils/errors';
+import AuthGuard from '../components/AuthGuard';
 
 // تعريف نوع BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -22,6 +23,14 @@ interface ChatMessage {
 }
 
 export default function ChatPage() {
+  return (
+    <AuthGuard>
+      <ChatPageContent />
+    </AuthGuard>
+  );
+}
+
+function ChatPageContent() {
   const { theme } = useTheme();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { isMobile } from '../utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases } from '../utils/db';
+import { getAllCases, LegalCase } from '../utils/db';
 import Link from 'next/link';
+import AuthGuard from '../components/AuthGuard';
 
 // تعريف نوع BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -175,6 +176,14 @@ function analyzeCases(cases: LegalCase[], isSingleCase: boolean = false): Analyt
 }
 
 export default function AnalyticsPage() {
+  return (
+    <AuthGuard>
+      <AnalyticsPageContent />
+    </AuthGuard>
+  );
+}
+
+function AnalyticsPageContent() {
   const { theme } = useTheme();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);

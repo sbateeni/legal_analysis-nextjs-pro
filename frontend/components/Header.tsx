@@ -2,13 +2,32 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '../utils/crypto';
+import { useEffect, useState } from 'react';
+import { embeddedAuth, User } from '../utils/auth.embedded';
 
 export default function Header() {
   const { darkMode, setDarkMode, theme, mounted } = useTheme();
   const router = useRouter();
   const mobile = mounted ? isMobile() : false;
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const isActive = (path: string) => router.pathname === path;
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const user = await embeddedAuth.getCurrentUser();
+        setCurrentUser(user);
+      } catch (error) {
+        console.log('No current user');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkUser();
+  }, []);
 
   return (
     <header style={{
@@ -90,6 +109,14 @@ export default function Header() {
             color: '#fff', background: isActive('/reference-checker') ? '#8b5cf6' : '#8b5cf6cc', borderRadius: 10, padding: isMobile() ? '8px 12px' : '6px 14px', fontWeight: 700, fontSize: isMobile() ? 13 : 16, textDecoration: 'none', boxShadow: '0 1px 4px #0002', letterSpacing: 1, transition: 'background 0.2s',
             whiteSpace: 'nowrap'
           }}>🔍 المدقق المرجعي</Link>
+
+          {/* رابط الملف الشخصي للمستخدم المسجل */}
+          {!isLoading && currentUser && (
+            <Link href="/profile" style={{
+              color: '#fff', background: isActive('/profile') ? '#ec4899' : '#ec4899cc', borderRadius: 10, padding: isMobile() ? '8px 12px' : '6px 14px', fontWeight: 700, fontSize: isMobile() ? 13 : 16, textDecoration: 'none', boxShadow: '0 1px 4px #0002', letterSpacing: 1, transition: 'background 0.2s',
+              whiteSpace: 'nowrap'
+            }}>👤 {currentUser.fullName.split(' ')[0]}</Link>
+          )}
         </div>
       </nav>
     </header>

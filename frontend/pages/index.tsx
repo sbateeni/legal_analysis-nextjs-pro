@@ -13,6 +13,8 @@ import CollabPanel from '../components/CollabPanel';
 // تم حذف استيراد أنواع المدقق المرجعي لعدم الحاجة هنا
 import stagesDef from '../stages';
 import type { StageDetails } from '../types/analysis';
+import { embeddedAuth, User } from '../utils/auth.embedded';
+import AuthGuard from '../components/AuthGuard';
 
 
 // تعريف نوع BeforeInstallPromptEvent
@@ -34,6 +36,14 @@ const ALL_STAGES = [...STAGES, FINAL_STAGE];
 type PartyRole = 'المشتكي' | 'المشتكى عليه' | 'المدعي' | 'المدعى عليه';
 
 export default function Home() {
+  return (
+    <AuthGuard>
+      <HomeContent />
+    </AuthGuard>
+  );
+}
+
+function HomeContent() {
   const { theme, darkMode } = useTheme();
   const [apiKey, setApiKey] = useState('');
   const [caseNameInput, setCaseNameInput] = useState('');
@@ -59,6 +69,7 @@ export default function Home() {
   // تمت إزالة إشعارات المراجع المكتشفة من الصفحة الرئيسية
   const [selectedStageForCollab, setSelectedStageForCollab] = useState<string | null>(null);
   const collabRef = useRef<HTMLDivElement | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -112,6 +123,18 @@ export default function Home() {
     }
 
     // مراقبة حجم الشاشة
+
+    // تحميل بيانات المستخدم
+    const loadUserData = async () => {
+      try {
+        const user = await embeddedAuth.getCurrentUser();
+        setCurrentUser(user);
+      } catch (error) {
+        console.log('No current user');
+      }
+    };
+
+    loadUserData();
     const checkScreenSize = () => {
       setIsSmallScreen(window.innerWidth <= 768);
     };
@@ -323,6 +346,78 @@ export default function Home() {
               textAlign: 'center'
             }}>
               لم يتم إعداد مفتاح Gemini API بعد. انتقل إلى <Link href="/settings" style={{color: theme.accent, textDecoration:'underline'}}>الإعدادات</Link> لإعداده.
+            </div>
+          )}
+
+          {/* رسالة ترحيب للمستخدمين */}
+          {currentUser && (
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: '#fff',
+              border: '1px solid #667eea',
+              borderRadius: 12,
+              padding: '16px 20px',
+              marginBottom: 16,
+              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+              fontWeight: 600,
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '18px', marginBottom: '8px'}}>
+                🎉 مرحباً بك {currentUser.fullName}!
+              </div>
+              <div style={{fontSize: '14px', opacity: 0.9}}>
+                {currentUser.subscriptionType === 'free' ? 
+                  'أنت تستخدم الحساب المجاني. يمكنك إنشاء 3 قضايا.' :
+                  `أنت تستخدم الخطة ${currentUser.subscriptionType === 'monthly' ? 'الشهرية' : 'السنوية'}. يمكنك إنشاء قضايا غير محدودة.`
+                }
+              </div>
+            </div>
+          )}
+
+          {/* رسالة للزوار */}
+          {!currentUser && (
+            <div style={{
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: '#fff',
+              border: '1px solid #f093fb',
+              borderRadius: 12,
+              padding: '16px 20px',
+              marginBottom: 16,
+              boxShadow: '0 4px 15px rgba(240, 147, 251, 0.3)',
+              fontWeight: 600,
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '18px', marginBottom: '8px'}}>
+                🚀 انضم إلى منصة التحليل القانوني!
+              </div>
+              <div style={{fontSize: '14px', opacity: 0.9, marginBottom: '12px'}}>
+                احصل على حساب مجاني مع 3 قضايا، أو ارفع إلى خطة مدفوعة لقضايا غير محدودة
+              </div>
+              <div style={{display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap'}}>
+                <Link href="/signup" style={{
+                  background: '#10b981',
+                  color: '#fff',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  fontSize: '14px'
+                }}>
+                  إنشاء حساب مجاني
+                </Link>
+                <Link href="/login" style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  border: '1px solid rgba(255,255,255,0.3)'
+                }}>
+                  تسجيل الدخول
+                </Link>
+              </div>
             </div>
           )}
 
