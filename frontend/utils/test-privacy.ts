@@ -109,7 +109,7 @@ export async function testPrivacySystem() {
     console.error('❌ فشل اختبار الخصوصية:', error);
     return {
       success: false,
-      message: error.message,
+      message: error instanceof Error ? error.message : 'حدث خطأ غير معروف',
       privacyVerified: false
     };
   }
