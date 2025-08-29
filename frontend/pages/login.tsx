@@ -75,18 +75,20 @@ export default function LoginPage() {
         router.push('/');
       }, 1000);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       // رسائل خطأ مفصلة
-      if (error.message.includes('بيانات الدخول غير صحيحة')) {
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ في تسجيل الدخول';
+      
+      if (errorMessage.includes('بيانات الدخول غير صحيحة')) {
         setError('البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى التحقق من البيانات والمحاولة مرة أخرى');
-      } else if (error.message.includes('المستخدم غير موجود')) {
+      } else if (errorMessage.includes('المستخدم غير موجود')) {
         setError('هذا الحساب غير مسجل. يرجى إنشاء حساب جديد أو التحقق من البريد الإلكتروني');
-      } else if (error.message.includes('كلمة المرور')) {
+      } else if (errorMessage.includes('كلمة المرور')) {
         setError('كلمة المرور غير صحيحة');
-      } else if (error.message.includes('البريد الإلكتروني')) {
+      } else if (errorMessage.includes('البريد الإلكتروني')) {
         setError('البريد الإلكتروني غير صحيح');
       } else {
-        setError(error.message || 'حدث خطأ في تسجيل الدخول، يرجى المحاولة مرة أخرى');
+        setError(errorMessage || 'حدث خطأ في تسجيل الدخول، يرجى المحاولة مرة أخرى');
       }
     } finally {
       setIsLoading(false);

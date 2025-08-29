@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases, LegalCase } from '../utils/db';
-import { isMobile } from '../utils/crypto';
 import AuthGuard from '../components/AuthGuard';
 
 interface ExportLogItem {

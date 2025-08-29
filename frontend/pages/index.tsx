@@ -129,7 +129,7 @@ function HomeContent() {
       try {
         const user = await embeddedAuth.getCurrentUser();
         setCurrentUser(user);
-      } catch (error) {
+      } catch {
         console.log('No current user');
       }
     };
