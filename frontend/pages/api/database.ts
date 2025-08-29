@@ -187,9 +187,11 @@ async function handleGetUserByEmail(data: unknown, res: NextApiResponse) {
     }
 
     // إزالة كلمة المرور من النتيجة
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password_hash, ...safeUser } = user;
-    return res.json({ success: true, user: safeUser });
+    if (user && typeof user === 'object' && 'password_hash' in user) {
+      const { password_hash, ...safeUser } = user as { password_hash: string; [key: string]: unknown };
+      return res.json({ success: true, user: safeUser });
+    }
+    return res.json({ success: true, user });
   } catch (error) {
     console.error('Get user by email error:', error);
     return res.status(500).json({ error: 'Failed to get user' });
@@ -214,9 +216,11 @@ async function handleGetUserById(data: unknown, res: NextApiResponse) {
     }
 
     // إزالة كلمة المرور من النتيجة
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password_hash, ...safeUser } = user;
-    return res.json({ success: true, user: safeUser });
+    if (user && typeof user === 'object' && 'password_hash' in user) {
+      const { password_hash, ...safeUser } = user as { password_hash: string; [key: string]: unknown };
+      return res.json({ success: true, user: safeUser });
+    }
+    return res.json({ success: true, user });
   } catch (error) {
     console.error('Get user by ID error:', error);
     return res.status(500).json({ error: 'Failed to get user' });
@@ -260,18 +264,26 @@ async function handleValidateUserPassword(data: unknown, res: NextApiResponse) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) {
+    if (user && typeof user === 'object' && 'password_hash' in user) {
+      const isValidPassword = await bcrypt.compare(password, (user as { password_hash: string }).password_hash);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+    } else {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // تحديث آخر تسجيل دخول
-    await centralDB.updateUserLastLogin(user.id);
+    if (user && typeof user === 'object' && 'id' in user) {
+      await centralDB.updateUserLastLogin((user as { id: string }).id);
+    }
 
     // إزالة كلمة المرور من النتيجة
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password_hash, ...safeUser } = user;
-    return res.json({ success: true, user: safeUser });
+    if (user && typeof user === 'object' && 'password_hash' in user) {
+      const { password_hash, ...safeUser } = user as { password_hash: string; [key: string]: unknown };
+      return res.json({ success: true, user: safeUser });
+    }
+    return res.json({ success: true, user });
   } catch (error) {
     console.error('Validate password error:', error);
     return res.status(500).json({ error: 'Failed to validate password' });

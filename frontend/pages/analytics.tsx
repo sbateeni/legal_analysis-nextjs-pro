@@ -3,7 +3,7 @@ import { isMobile } from '../utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
 import { getAllCases } from '../utils/db';
 import Link from 'next/link';
-import AuthGuard from '../components/AuthGuard';
+// تم حذف AuthGuard لجعل الموقع عاماً
 
 // تعريف نوع BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -176,11 +176,7 @@ function analyzeCases(cases: LegalCase[], isSingleCase: boolean = false): Analyt
 }
 
 export default function AnalyticsPage() {
-  return (
-    <AuthGuard>
-      <AnalyticsPageContent />
-    </AuthGuard>
-  );
+  return <AnalyticsPageContent />;
 }
 
 function AnalyticsPageContent() {

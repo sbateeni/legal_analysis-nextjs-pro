@@ -6,7 +6,7 @@ import { set as idbSet } from 'idb-keyval';
 import { saveApiKey, loadApiKey, getAllCases, saveAllCases, clearAllCases } from '../utils/db';
 import { loadExportPreferences, saveExportPreferences, type ExportPreferences } from '../utils/exportSettings';
 import { loadAppSettings, saveAppSettings, type AppSettings } from '../utils/appSettings';
-import AuthGuard from '../components/AuthGuard';
+// تم حذف AuthGuard لجعل الموقع عاماً
 // جسر قاعدة البيانات (يُحمّل ديناميكياً وقت الحاجة)
 type BridgeAPI = {
   init: () => Promise<void>;
@@ -27,11 +27,7 @@ async function getBridge(): Promise<BridgeAPI | null> {
 }
 
 export default function SettingsPage() {
-  return (
-    <AuthGuard>
-      <SettingsPageContent />
-    </AuthGuard>
-  );
+  return <SettingsPageContent />;
 }
 
 function SettingsPageContent() {

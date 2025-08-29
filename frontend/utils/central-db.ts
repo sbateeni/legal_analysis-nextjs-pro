@@ -341,8 +341,8 @@ export const centralDB = {
   init: async () => {
     console.log('🚀 قاعدة البيانات المركزية تعمل في المتصفح');
   },
-  createUser: async () => {
-    console.log('✅ تم إنشاء المستخدم');
+  createUser: async (userData: any) => {
+    console.log('✅ تم إنشاء المستخدم:', userData);
   },
   getUserByEmail: async (email: string) => {
     console.log('✅ تم جلب المستخدم:', email);

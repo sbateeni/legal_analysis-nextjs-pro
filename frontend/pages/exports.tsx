@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import AuthGuard from '../components/AuthGuard';
+// تم حذف AuthGuard لجعل الموقع عاماً
 
 interface ExportLogItem {
   type: 'pdf' | 'docx';
@@ -11,11 +11,7 @@ interface ExportLogItem {
 }
 
 export default function ExportsPage() {
-  return (
-    <AuthGuard>
-      <ExportsPageContent />
-    </AuthGuard>
-  );
+  return <ExportsPageContent />;
 }
 
 function ExportsPageContent() {

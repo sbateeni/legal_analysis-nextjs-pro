@@ -23,7 +23,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { exportResultsToPDF, exportResultsToDocx } from '../utils/export';
-import AuthGuard from '../components/AuthGuard';
+// تم حذف AuthGuard لجعل الموقع عاماً
 
 const STAGES = [
   'المرحلة الأولى: تحديد المشكلة القانونية',
@@ -91,11 +91,7 @@ interface ChatMessage {
 
 
 export default function History() {
-  return (
-    <AuthGuard>
-      <HistoryPageContent />
-    </AuthGuard>
-  );
+  return <HistoryPageContent />;
 }
 
 function HistoryPageContent() {
