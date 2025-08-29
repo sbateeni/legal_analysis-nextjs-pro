@@ -71,6 +71,16 @@ const nextConfig: NextConfig = {
     position: 'bottom-right',
   },
   // Avoid custom aliasing; we guard sql.js usage at runtime in the browser only
+  webpack: (config, { isServer }) => {
+    // Prevent bundling Node built-ins on client; silence sql.js optional deps
+    config.resolve = config.resolve || {} as any;
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      fs: false,
+      path: false,
+    } as any;
+    return config;
+  },
 };
 
 export default nextConfig;

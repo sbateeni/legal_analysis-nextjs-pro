@@ -392,6 +392,12 @@ class DatabaseBridge {
     };
   }
 
+  async listAnalytics(caseId?: string, limit: number = 200) {
+    await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
+    return await sqliteDB.listAnalytics(caseId, limit);
+  }
+
   private async getMigrationActions(): Promise<Array<{ timestamp: string }>> {
     // This would need to be implemented in the SQLite database
     // For now, return empty array

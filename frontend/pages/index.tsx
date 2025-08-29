@@ -54,6 +54,8 @@ export default function Home() {
   const [partyRole, setPartyRole] = useState<PartyRole | ''>('');
   const [preferredModel, setPreferredModel] = useState<string>('gemini-1.5-flash');
   const [caseType, setCaseType] = useState<string>('عام');
+  const [stageGating, setStageGating] = useState<boolean>(true);
+  const [showDeadlines, setShowDeadlines] = useState<boolean>(true);
   // تمت إزالة إشعارات المراجع المكتشفة من الصفحة الرئيسية
   const [selectedStageForCollab, setSelectedStageForCollab] = useState<string | null>(null);
   const collabRef = useRef<HTMLDivElement | null>(null);
@@ -72,10 +74,28 @@ export default function Home() {
     loadApiKey().then(val => {
       if (val) setApiKey(val);
     });
-    // تحميل نموذج مفضّل من الإعدادات
-    import('../utils/appSettings').then(({ loadAppSettings }) => {
-      loadAppSettings().then(s => setPreferredModel(s.preferredModel || 'gemini-1.5-flash'));
-    });
+    // تحميل نموذج مفضّل + تفضيلات لوحة التحكم من SQLite
+    (async () => {
+      const [{ loadAppSettings }, { dbBridge }] = await Promise.all([
+        import('../utils/appSettings'),
+        import('../utils/db.bridge')
+      ]);
+      const s = await loadAppSettings();
+      setPreferredModel(s.preferredModel || 'gemini-1.5-flash');
+      try {
+        await dbBridge.init();
+        const [p1,p2,p3,p4] = await Promise.all([
+          dbBridge.getPreference('default_case_type'),
+          dbBridge.getPreference('default_party_role'),
+          dbBridge.getPreference('stage_gating_enabled'),
+          dbBridge.getPreference('show_deadlines_enabled'),
+        ]);
+        if (p1) setCaseType(p1);
+        if (p2) setPartyRole((p2 as any) || '');
+        if (p3) setStageGating(p3 === '1');
+        if (p4) setShowDeadlines(p4 === '1');
+      } catch {}
+    })();
 
     // معالجة تثبيت التطبيق كتطبيق أيقونة
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -613,7 +633,7 @@ export default function Home() {
                           }}>اختيارية</span>
                         )}
                       </div>
-                      {((stagesDef as Record<string, StageDetails>)[stage]?.deadlines?.length) ? (
+                      {showDeadlines && ((stagesDef as Record<string, StageDetails>)[stage]?.deadlines?.length) ? (
                         <div style={{
                           background: '#fff7ed',
                           border: '1px solid #fdba74',
@@ -632,7 +652,7 @@ export default function Home() {
                         </div>
                       ) : null}
 
-                      {!prerequisitesMet && unmetPrereqs.length > 0 && (
+                      {stageGating && !prerequisitesMet && unmetPrereqs.length > 0 && (
                         <div style={{
                           background: '#fef2f2',
                           border: '1px solid #fecaca',
@@ -670,8 +690,8 @@ export default function Home() {
                       {/* إذا كانت المرحلة الأخيرة، غير نص الزر */}
                       <button
                         type="button"
-                        disabled={stageLoading[absoluteIdx] || !prerequisitesMet}
-                        onClick={() => prerequisitesMet && handleAnalyzeStage(absoluteIdx)}
+                        disabled={stageLoading[absoluteIdx] || (stageGating && !prerequisitesMet)}
+                        onClick={() => (!stageGating || prerequisitesMet) && handleAnalyzeStage(absoluteIdx)}
                         style={{ 
                           width: '100%', 
                           background: `linear-gradient(135deg, ${theme.accent2} 0%, ${theme.accent} 100%)`, 
@@ -681,15 +701,15 @@ export default function Home() {
                           padding: isMobile() ? '14px 0' : '18px 0', 
                           fontSize: isMobile() ? 16 : 18, 
                           fontWeight: 800, 
-                          cursor: (stageLoading[absoluteIdx] || !prerequisitesMet) ? 'not-allowed' : 'pointer', 
+                          cursor: (stageLoading[absoluteIdx] || (stageGating && !prerequisitesMet)) ? 'not-allowed' : 'pointer', 
                           marginTop: 8, 
                           boxShadow: `0 4px 16px ${theme.accent}33`, 
                           letterSpacing: 1, 
                           transition: 'all 0.3s ease', 
                           position:'relative',
-                          transform: (stageLoading[absoluteIdx] || !prerequisitesMet) ? 'scale(0.98)' : 'scale(1)',
+                          transform: (stageLoading[absoluteIdx] || (stageGating && !prerequisitesMet)) ? 'scale(0.98)' : 'scale(1)',
                         }}
-                        title={!prerequisitesMet && unmetPrereqs.length > 0 ? `مطلوب إكمال: ${unmetPrereqs.join('، ')}` : undefined}
+                        title={stageGating && !prerequisitesMet && unmetPrereqs.length > 0 ? `مطلوب إكمال: ${unmetPrereqs.join('، ')}` : undefined}
                       >
                         {stageLoading[absoluteIdx] ? (
                           <span style={{display:'inline-flex', alignItems:'center', gap:8}}>

@@ -1,4 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+// جلب التحليلات من الجسر (SQLite)
+let bridge: any = null;
+async function loadBridge() {
+  if (typeof window === 'undefined') return null;
+  if (!bridge) {
+    const mod = await import('../utils/db.bridge');
+    bridge = mod.dbBridge;
+    await bridge.init();
+  }
+  return bridge;
+}
 import { saveAllCases, getAllCases, loadApiKey } from '../utils/db';
 import { isMobile } from '../utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
@@ -78,6 +89,58 @@ export default function History() {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [editNameId, setEditNameId] = useState<string | null>(null);
   const [editNameValue, setEditNameValue] = useState<string>('');
+  const [activity, setActivity] = useState<Array<{ id:string; action:string; timestamp:string; metadata?: string; duration?: number }>>([]);
+  const [actionFilter, setActionFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [query, setQuery] = useState<string>('');
+  const filteredActivity = useMemo(() => {
+    return activity.filter((a) => {
+      if (actionFilter !== 'all' && a.action !== actionFilter) return false;
+      const ts = new Date(a.timestamp).getTime();
+      if (dateFrom) {
+        const from = new Date(dateFrom).getTime();
+        if (isFinite(from) && ts < from) return false;
+      }
+      if (dateTo) {
+        // include whole day
+        const to = new Date(dateTo).getTime() + 24*60*60*1000 - 1;
+        if (isFinite(to) && ts > to) return false;
+      }
+      if (query.trim()) {
+        const q = query.trim().toLowerCase();
+        const meta = (a.metadata || '').toLowerCase();
+        if (!a.action.toLowerCase().includes(q) && !meta.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [activity, actionFilter, dateFrom, dateTo, query]);
+
+  const exportActivityCSV = () => {
+    const rows = [
+      ['id', 'caseId', 'action', 'timestamp', 'duration', 'metadata'] as const,
+      ...filteredActivity.map((a: any) => [
+        a.id,
+        selectedCaseId || '',
+        a.action,
+        a.timestamp,
+        (a.duration ?? '').toString(),
+        (a.metadata ?? '').replace(/\n/g, ' ').replace(/"/g, '""')
+      ])
+    ];
+    const csv = rows
+      .map(r => r.map(v => `"${(v ?? '').toString().replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `activity_${selectedCaseId || 'case'}_${Date.now()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
   // بحث وفلاتر
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState('');
@@ -98,6 +161,20 @@ export default function History() {
       }
     });
   }, []);
+  // تحميل نشاط القضية عند اختيارها
+  useEffect(() => {
+    if (!selectedCaseId) { setActivity([]); return; }
+    (async () => {
+      try {
+        const b = await loadBridge();
+        if (!b) return;
+        const logs = await b.listAnalytics(selectedCaseId, 200);
+        setActivity(logs || []);
+      } catch {
+        setActivity([]);
+      }
+    })();
+  }, [selectedCaseId]);
 
   useEffect(() => {
     saveAllCases(cases);
@@ -279,6 +356,66 @@ export default function History() {
                   <div style={{display:'flex', alignItems:'center', gap:8, flexWrap:'wrap'}}>
                     <span style={{fontWeight:700, color:theme.accent2}}>وسوم:</span>
                     <TagEditor c={c} setCases={setCases} theme={theme} />
+                  </div>
+                  {/* Activity Timeline */}
+                  <div style={{background: theme.resultBg, border:`1px solid ${theme.border}`, borderRadius: 12, padding: isMobile()? 10 : 16}}>
+                    <div style={{fontWeight:800, color: theme.accent, marginBottom: 8, display:'flex', alignItems:'center', gap:8}}>
+                      <span>🕒</span> سجل النشاط
+                    </div>
+                    {/* فلاتر السجل */}
+                    <div style={{display:'grid', gridTemplateColumns: isMobile()? '1fr' : '1fr 150px 150px 150px 140px', gap: 8, marginBottom: 10, alignItems:'center'}}>
+                      <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="🔍 بحث في الحدث/البيانات"
+                        style={{ borderRadius:8, border:`1px solid ${theme.border}`, padding:'8px 10px', background: darkMode ? '#232946' : '#fff', color: theme.text }}
+                      />
+                      <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} style={{ borderRadius:8, border:`1px solid ${theme.border}`, padding:'8px 10px', background: darkMode ? '#232946' : '#fff', color: theme.text }}>
+                        <option value="all">كل الأحداث</option>
+                        <option value="case_created">case_created</option>
+                        <option value="case_updated">case_updated</option>
+                        <option value="case_deleted">case_deleted</option>
+                        <option value="stage_created">stage_created</option>
+                        <option value="comment_created">comment_created</option>
+                        <option value="comment_deleted">comment_deleted</option>
+                        <option value="task_created">task_created</option>
+                        <option value="task_updated">task_updated</option>
+                        <option value="task_deleted">task_deleted</option>
+                        <option value="migration">migration</option>
+                      </select>
+                      <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ borderRadius:8, border:`1px solid ${theme.border}`, padding:'8px 10px', background: darkMode ? '#232946' : '#fff', color: theme.text }} />
+                      <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ borderRadius:8, border:`1px solid ${theme.border}`, padding:'8px 10px', background: darkMode ? '#232946' : '#fff', color: theme.text }} />
+                      {!isMobile() && (
+                        <button onClick={exportActivityCSV} className="btn btn-info" style={{ background: theme.accent2, color:'#fff', border:'none', borderRadius:8, padding:'8px 10px', fontWeight:700, cursor:'pointer' }}>
+                          ⬇️ تصدير CSV
+                        </button>
+                      )}
+                    </div>
+                    {isMobile() && (
+                      <div style={{display:'flex', justifyContent:'flex-end', marginBottom:8}}>
+                        <button onClick={exportActivityCSV} className="btn btn-info" style={{ background: theme.accent2, color:'#fff', border:'none', borderRadius:8, padding:'8px 10px', fontWeight:700, cursor:'pointer' }}>
+                          ⬇️ تصدير CSV
+                        </button>
+                      </div>
+                    )}
+                    {activity.length === 0 ? (
+                      <div style={{fontSize:13, color:'#888'}}>لا يوجد نشاط مسجل بعد.</div>
+                    ) : (
+                      <div style={{display:'flex', flexDirection:'column', gap:10}}>
+                        {filteredActivity.map((a) => (
+                          <div key={a.id} style={{display:'grid', gridTemplateColumns: isMobile()? '1fr' : '160px 1fr', gap:10, background: darkMode? '#181a2a' : '#fff', border:`1px solid ${theme.border}`, borderRadius: 10, padding: 10}}>
+                            <div style={{color: theme.accent2, fontWeight: 700}}>{new Date(a.timestamp).toLocaleString('ar-EG')}</div>
+                            <div>
+                              <div style={{fontWeight: 700, color: theme.text}}>{a.action}</div>
+                              {a.metadata && (
+                                <div style={{fontSize: 12, color: '#888', marginTop:4, whiteSpace:'pre-wrap'}}>{a.metadata}</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {c.stages.map((stage) => (
                     <div key={stage.id} style={{background:lightTheme.resultBg, borderRadius:12, boxShadow:`0 1px 6px ${theme.shadow}`, border:`1.5px solid ${theme.accent2}`, padding:isMobile()?10:18, position:'relative', marginBottom:8}}>

@@ -28,6 +28,7 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
   const [caseId, setCaseId] = useState<string | null>(null);
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
+  const [filters, setFilters] = useState<{ status?: TaskRecord['status'] | 'all'; assignee?: string; priority?: TaskRecord['priority'] | 'all'; dueFrom?: string; dueTo?: string; q?: string }>({ status: 'all', priority: 'all' });
   const [newComment, setNewComment] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDue, setNewTaskDue] = useState('');
@@ -86,7 +87,7 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
     const stg = stageName || undefined;
     const [cmts, tks] = await Promise.all([
       bridgeRef.current!.listComments(cid, stg),
-      bridgeRef.current!.listTasks(cid, { stageId: stg })
+      bridgeRef.current!.listTasks(cid, { stageId: stg, status: (filters.status && filters.status !== 'all') ? filters.status as TaskRecord['status'] : undefined, assignee: filters.assignee || undefined })
     ]);
     setComments(cmts);
     setTasks(tks);
@@ -183,6 +184,31 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
       {/* المهام */}
       <div>
         <div style={{ fontWeight: 700, color: theme.accent2, marginBottom: 8 }}>✅ المهام</div>
+        {/* فلاتر متقدمة */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:8, marginBottom:10 }}>
+          <select value={filters.status || 'all'} onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as any }))} style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }}>
+            <option value="all">كل الحالات</option>
+            <option value="open">مفتوحة</option>
+            <option value="in_progress">قيد التنفيذ</option>
+            <option value="done">مكتملة</option>
+          </select>
+          <select value={filters.priority || 'all'} onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value as any }))} style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }}>
+            <option value="all">كل الأولويات</option>
+            <option value="low">منخفضة</option>
+            <option value="medium">متوسطة</option>
+            <option value="high">مرتفعة</option>
+          </select>
+          <input type="text" value={filters.assignee || ''} onChange={(e) => setFilters(prev => ({ ...prev, assignee: e.target.value }))} placeholder="المسؤول" style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }} />
+          <input type="date" value={filters.dueFrom || ''} onChange={(e) => setFilters(prev => ({ ...prev, dueFrom: e.target.value }))} style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }} />
+          <input type="date" value={filters.dueTo || ''} onChange={(e) => setFilters(prev => ({ ...prev, dueTo: e.target.value }))} style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }} />
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:8, marginBottom:10 }}>
+          <input type="text" value={filters.q || ''} onChange={(e) => setFilters(prev => ({ ...prev, q: e.target.value }))} placeholder="🔍 بحث في العنوان" style={{ border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 8, background: darkMode ? '#181a2a' : '#fff', color: theme.text }} />
+          <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
+            <button onClick={() => caseId && loadData(caseId)} style={{ background:'transparent', border:`1.5px solid ${theme.input}`, color: theme.text, borderRadius:10, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>تطبيق الفلاتر</button>
+            <button onClick={() => { setFilters({ status:'all', priority:'all' }); caseId && loadData(caseId); }} style={{ background:'transparent', border:`1.5px solid ${theme.input}`, color: theme.text, borderRadius:10, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>إعادة تعيين</button>
+          </div>
+        </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto', gap:8, alignItems:'center', marginBottom: 10 }}>
           <input
             type="text"
@@ -209,11 +235,21 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
             padding: '6px 10px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 700, opacity: (!newTaskTitle.trim() || loading) ? 0.6 : 1
           }}>إضافة</button>
         </div>
-        {tasks.length === 0 ? (
+        {tasks
+          .filter(t => (filters.priority && filters.priority !== 'all') ? t.priority === filters.priority : true)
+          .filter(t => (filters.dueFrom ? (t.dueDate ? new Date(t.dueDate).getTime() >= new Date(filters.dueFrom!).getTime() : false) : true))
+          .filter(t => (filters.dueTo ? (t.dueDate ? new Date(t.dueDate).getTime() <= (new Date(filters.dueTo!).getTime() + 24*60*60*1000 - 1) : false) : true))
+          .filter(t => (filters.q ? t.title.toLowerCase().includes(filters.q.toLowerCase()) : true))
+          .length === 0 ? (
           <div style={{ fontSize: 13, opacity: 0.8, color: theme.text }}>لا توجد مهام بعد.</div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-            {tasks.map((t) => (
+            {tasks
+              .filter(t => (filters.priority && filters.priority !== 'all') ? t.priority === filters.priority : true)
+              .filter(t => (filters.dueFrom ? (t.dueDate ? new Date(t.dueDate).getTime() >= new Date(filters.dueFrom!).getTime() : false) : true))
+              .filter(t => (filters.dueTo ? (t.dueDate ? new Date(t.dueDate).getTime() <= (new Date(filters.dueTo!).getTime() + 24*60*60*1000 - 1) : false) : true))
+              .filter(t => (filters.q ? t.title.toLowerCase().includes(filters.q.toLowerCase()) : true))
+              .map((t) => (
               <div key={t.id} style={{ background: theme.resultBg, border:`1px solid ${theme.border}`, borderRadius: 12, padding: 10, display:'grid', gridTemplateColumns:'1fr auto auto', gap:8, alignItems:'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, color: theme.text }}>{t.title}</div>

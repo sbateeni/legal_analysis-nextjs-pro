@@ -6,6 +6,17 @@ import { set as idbSet } from 'idb-keyval';
 import { saveApiKey, loadApiKey, getAllCases, saveAllCases, clearAllCases } from '../utils/db';
 import { loadExportPreferences, saveExportPreferences, type ExportPreferences } from '../utils/exportSettings';
 import { loadAppSettings, saveAppSettings, type AppSettings } from '../utils/appSettings';
+// جسر قاعدة البيانات (يُحمّل ديناميكياً وقت الحاجة)
+let bridge: any = null;
+async function getBridge() {
+  if (typeof window === 'undefined') return null;
+  if (!bridge) {
+    const mod = await import('../utils/db.bridge');
+    bridge = mod.dbBridge;
+    await bridge.init();
+  }
+  return bridge;
+}
 
 export default function Settings() {
   const { theme, darkMode, setDarkMode } = useTheme();
@@ -15,11 +26,38 @@ export default function Settings() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [exportPrefs, setExportPrefs] = useState<ExportPreferences>({ includeStages: true, includeInputs: false, includeOutputs: true, marginPt: 48 });
   const [appSettings, setAppSettings] = useState<AppSettings>({ preferredModel: 'gemini-1.5-flash', rateLimitPerMin: 10 });
+  // لوحة تحكم عامة (تُخزن في SQLite user_preferences)
+  const [ctrlDefaultCaseType, setCtrlDefaultCaseType] = useState<string>('عام');
+  const [ctrlDefaultPartyRole, setCtrlDefaultPartyRole] = useState<string>('');
+  const [ctrlStageGating, setCtrlStageGating] = useState<boolean>(true);
+  const [ctrlShowDeadlines, setCtrlShowDeadlines] = useState<boolean>(true);
+  const [ctrlLanguage, setCtrlLanguage] = useState<'ar'|'en'>('ar');
+  const [ctrlNotifications, setCtrlNotifications] = useState<boolean>(true);
 
   useEffect(() => {
     loadApiKey().then(val => setApiKey(val || '')); 
     loadExportPreferences().then(setExportPrefs);
     loadAppSettings().then(setAppSettings);
+    // تحميل تفضيلات لوحة التحكم من SQLite
+    (async () => {
+      try {
+        const b = await getBridge(); if (!b) return;
+        const [p1,p2,p3,p4,p5,p6] = await Promise.all([
+          b.getPreference('default_case_type'),
+          b.getPreference('default_party_role'),
+          b.getPreference('stage_gating_enabled'),
+          b.getPreference('show_deadlines_enabled'),
+          b.getPreference('ui_language'),
+          b.getPreference('notifications_enabled'),
+        ]);
+        if (p1) setCtrlDefaultCaseType(p1);
+        if (p2) setCtrlDefaultPartyRole(p2);
+        if (p3) setCtrlStageGating(p3 === '1');
+        if (p4) setCtrlShowDeadlines(p4 === '1');
+        if (p5 === 'ar' || p5 === 'en') setCtrlLanguage(p5);
+        if (p6) setCtrlNotifications(p6 === '1');
+      } catch {/* ignore */}
+    })();
   }, []);
 
   const handleSaveKey = async () => {
@@ -81,6 +119,64 @@ export default function Settings() {
     setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم مسح البيانات وإعادة الضبط.' }]);
   };
 
+  // نسخ احتياطي واستعادة لقاعدة SQLite كاملة
+  const handleBackupDB = async () => {
+    try {
+      const b = await getBridge();
+      if (!b) return;
+      const data: Uint8Array = await b.exportDatabase();
+      const blob = new Blob([data], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `legal_sqlite_backup_${Date.now()}.db`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم إنشاء نسخة احتياطية لقاعدة البيانات.' }]);
+    } catch {
+      setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'error', message: 'فشل النسخ الاحتياطي.' }]);
+    }
+  };
+
+  const handleRestoreDB = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+      try {
+        const arrBuf = ev.target?.result as ArrayBuffer;
+        const u8 = new Uint8Array(arrBuf);
+        const b = await getBridge();
+        if (!b) return;
+        await b.importDatabase(u8);
+        setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم استعادة قاعدة البيانات.' }]);
+      } catch {
+        setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'error', message: 'فشل الاستعادة.' }]);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  // حفظ تفضيلات لوحة التحكم
+  const saveControlPanel = async () => {
+    try {
+      const b = await getBridge(); if (!b) return;
+      await Promise.all([
+        b.setPreference('default_case_type', ctrlDefaultCaseType),
+        b.setPreference('default_party_role', ctrlDefaultPartyRole || ''),
+        b.setPreference('stage_gating_enabled', ctrlStageGating ? '1' : '0'),
+        b.setPreference('show_deadlines_enabled', ctrlShowDeadlines ? '1' : '0'),
+        b.setPreference('ui_language', ctrlLanguage),
+        b.setPreference('notifications_enabled', ctrlNotifications ? '1' : '0'),
+      ]);
+      setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم حفظ تفضيلات لوحة التحكم.' }]);
+    } catch {
+      setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'error', message: 'فشل حفظ التفضيلات.' }]);
+    }
+  };
+
   return (
     <div style={{ fontFamily: 'Tajawal, Arial, sans-serif', direction: 'rtl', minHeight: '100vh', background: theme.background, color: theme.text }}>
       <Notifications notices={notices} setNotices={setNotices} />
@@ -88,6 +184,56 @@ export default function Settings() {
         <div className="font-headline" style={{display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:16}}>
           <span style={{fontSize: isMobile()? 28:32}}>⚙️</span>
           <h1 className="headline-lg" style={{margin:0, color: theme.accent}}>الإعدادات</h1>
+        </div>
+
+        {/* لوحة تحكم المستخدم العامة */}
+        <div className="card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile()? 16:24, marginBottom: 16 }}>
+          <div className="font-headline" style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+            <span style={{fontSize: isMobile()? 22:24}}>🧭</span>
+            <h2 className="headline-sm" style={{margin:0, color: theme.accent2}}>لوحة التحكم</h2>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile()? '1fr' : '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={{display:'block', marginBottom:6, fontWeight:600, color: theme.accent2}}>نوع القضية الافتراضي:</label>
+              <select value={ctrlDefaultCaseType} onChange={e => setCtrlDefaultCaseType(e.target.value)} style={{ width:'100%', border:`1.5px solid ${theme.input}`, borderRadius:10, padding:10 }}>
+                {['عام','ميراث','أحوال شخصية','تجاري','جنائي','عمل','عقاري','إداري','إيجارات'].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{display:'block', marginBottom:6, fontWeight:600, color: theme.accent2}}>الصفة الافتراضية في الدعوى:</label>
+              <select value={ctrlDefaultPartyRole} onChange={e => setCtrlDefaultPartyRole(e.target.value)} style={{ width:'100%', border:`1.5px solid ${theme.input}`, borderRadius:10, padding:10 }}>
+                <option value="">بدون</option>
+                <option value="المشتكي">المشتكي</option>
+                <option value="المشتكى عليه">المشتكى عليه</option>
+                <option value="المدعي">المدعي</option>
+                <option value="المدعى عليه">المدعى عليه</option>
+              </select>
+            </div>
+            <label style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <input type="checkbox" checked={ctrlStageGating} onChange={e => setCtrlStageGating(e.target.checked)} />
+              تفعيل قفل المراحل حتى تحقق الاعتماديات
+            </label>
+            <label style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <input type="checkbox" checked={ctrlShowDeadlines} onChange={e => setCtrlShowDeadlines(e.target.checked)} />
+              عرض المواعيد القانونية ضمن المراحل
+            </label>
+            <div>
+              <label style={{display:'block', marginBottom:6, fontWeight:600, color: theme.accent2}}>اللغة:</label>
+              <select value={ctrlLanguage} onChange={e => setCtrlLanguage(e.target.value as 'ar'|'en')} style={{ width:'100%', border:`1.5px solid ${theme.input}`, borderRadius:10, padding:10 }}>
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <label style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <input type="checkbox" checked={ctrlNotifications} onChange={e => setCtrlNotifications(e.target.checked)} />
+              تفعيل الإشعارات داخل التطبيق
+            </label>
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop: 12 }}>
+            <button onClick={saveControlPanel} className="btn btn-info" style={{ background: theme.accent2 }}>حفظ التفضيلات</button>
+          </div>
         </div>
 
                  {/* بطاقة مفتاح API */}
@@ -153,6 +299,11 @@ export default function Settings() {
                <input type="file" accept="application/json" onChange={handleImport} style={{ display: 'none' }} />
              </label>
              <button onClick={handleClearAll} className="btn btn-danger">🗑️ مسح كل البيانات</button>
+             <button onClick={handleBackupDB} className="btn btn-info" style={{ background: '#0ea5e9' }}>💾 نسخ احتياطي لقاعدة البيانات</button>
+             <label className="btn btn-info" style={{ background: '#06b6d4' }}>
+               ♻️ استعادة قاعدة البيانات
+               <input type="file" accept="application/octet-stream,.db" onChange={handleRestoreDB} style={{ display: 'none' }} />
+             </label>
            </div>
            
            {/* شرح القضايا */}

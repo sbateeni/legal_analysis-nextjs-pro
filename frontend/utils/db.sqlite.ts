@@ -121,9 +121,7 @@ class SQLiteDatabase {
     if (typeof window === 'undefined') {
       throw new Error('SQLite is only available in the browser context');
     }
-    // Use runtime-only dynamic import to avoid bundler static resolution of 'sql.js'
-    const dynamicImport = new Function('s', 'return import(s)');
-    const sqlWasm = await (dynamicImport as (s: string) => Promise<any>)('sql.js');
+    const sqlWasm = await import('sql.js');
     return sqlWasm.default;
   }
 
@@ -525,6 +523,33 @@ class SQLiteDatabase {
       averageStagesPerCase: Math.round(avgStages * 100) / 100,
       mostCommonActions: actionStats
     };
+  }
+
+  async listAnalytics(caseId?: string, limit: number = 200): Promise<AnalyticsRecord[]> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    let sql = 'SELECT id, caseId, action, timestamp, metadata, duration FROM analytics';
+    const params: any[] = [];
+    if (caseId) {
+      sql += ' WHERE caseId = ?';
+      params.push(caseId);
+    }
+    sql += ' ORDER BY timestamp DESC';
+    if (limit) {
+      sql += ' LIMIT ?';
+      params.push(limit);
+    }
+    const stmt = this.db.prepare(sql);
+    const results = stmt.all(params);
+    stmt.free();
+    return (results || []).map((row: any) => ({
+      id: row.id,
+      caseId: row.caseId,
+      action: row.action,
+      timestamp: row.timestamp,
+      metadata: row.metadata,
+      duration: row.duration,
+    })) as AnalyticsRecord[];
   }
 
   // Export operations
