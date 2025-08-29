@@ -1,12 +1,8 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "frontend/package.json", "use": "@vercel/next" }
-  ],
-  "env": {
-    "NEXT_TELEMETRY_DISABLED": "1"
-  },
-  "routes": [
-    { "src": "/(.*)", "dest": "/$1" }
-  ]
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/.next",
+  "framework": "nextjs",
+  "installCommand": "cd frontend && npm install",
+  "devCommand": "cd frontend && npm run dev",
+  "regions": ["fra1"]
 }
