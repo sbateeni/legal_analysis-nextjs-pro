@@ -70,6 +70,17 @@ const nextConfig: NextConfig = {
   devIndicators: {
     position: 'bottom-right',
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Prevent sql.js from attempting to load Node fs in browser bundles
+      config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
+        fs: false,
+        path: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

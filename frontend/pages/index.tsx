@@ -10,6 +10,7 @@ import { loadExportPreferences } from '../utils/exportSettings';
 import { Button } from '../components/UI';
 import ReferenceCheckerWidget from '../components/ReferenceCheckerWidget';
 import ReferenceNotification from '../components/ReferenceNotification';
+import CollabPanel from '../components/CollabPanel';
 import { type LegalReference } from '../utils/referenceChecker';
 import stagesDef from '../stages';
 import type { StageDetails } from '../types/analysis';
@@ -56,6 +57,8 @@ export default function Home() {
   const [caseType, setCaseType] = useState<string>('عام');
   const [showReferenceNotification, setShowReferenceNotification] = useState(false);
   const [discoveredReference, setDiscoveredReference] = useState<LegalReference | null>(null);
+  const [selectedStageForCollab, setSelectedStageForCollab] = useState<string | null>(null);
+  const collabRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -594,6 +597,13 @@ export default function Home() {
                       }}>
                         <span style={{fontSize: isMobile() ? 20 : 24}}>⚖️</span>
                         {stage}
+                        <button
+                          onClick={() => { setSelectedStageForCollab(stage); setTimeout(() => collabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); }}
+                          style={{ marginInlineStart: 'auto', background: 'transparent', color: theme.text, border: `1.5px solid ${theme.input}`, borderRadius: 10, padding: '4px 8px', fontSize: 12, fontWeight: 700, cursor:'pointer' }}
+                          title="فتح لوحة التعاون لهذه المرحلة"
+                        >
+                          🤝 تعاون لهذه المرحلة
+                        </button>
                         {((stagesDef as Record<string, StageDetails>)[stage]?.optional) && (
                           <span style={{
                             marginInlineStart: 8,
@@ -733,6 +743,10 @@ export default function Home() {
                     </div>
                   );
                   })}
+                  {/* لوحة التعاون: تظهر أسفل قائمة المراحل */}
+                  <div ref={collabRef} style={{ marginTop: 24 }}>
+                    <CollabPanel caseName={caseNameInput} caseType={caseType} theme={theme} darkMode={darkMode} stageName={selectedStageForCollab || undefined} />
+                  </div>
                 </>
               )}
 
@@ -844,7 +858,7 @@ export default function Home() {
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
                           }}
-                          onClick={() => setActiveTab('stages')}
+                          onClick={() => { setActiveTab('stages'); setSelectedStageForCollab(ALL_STAGES[idx]); setTimeout(() => collabRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); }}
                           title="انقر للانتقال إلى مراحل التحليل"
                           >
                             <div style={{fontWeight: 700, color: theme.accent2, marginBottom: 8, fontSize: 14}}>

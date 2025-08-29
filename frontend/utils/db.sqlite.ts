@@ -1,8 +1,6 @@
 // SQLite Database Utility using WASM + OPFS
 // Advanced local database for commercial features
 
-import initSqlJs from 'sql.js';
-
 // Types for database schema
 export interface CaseRecord {
   id: string;
@@ -119,7 +117,10 @@ class SQLiteDatabase {
   }
 
   private async loadSQLiteWASM(): Promise<any> {
-    // Dynamic import of sql.js
+    // Dynamic import of sql.js only on client to avoid SSR fs requirement
+    if (typeof window === 'undefined') {
+      throw new Error('SQLite is only available in the browser context');
+    }
     const sqlWasm = await import('sql.js');
     return sqlWasm.default;
   }
