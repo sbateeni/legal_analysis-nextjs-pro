@@ -14,35 +14,37 @@ export default function UserProfile() {
   });
 
   useEffect(() => {
-    loadUserData();
-  }, []);
+    const fetchData = async () => {
+      try {
+        const currentUser = await embeddedAuth.getCurrentUser();
+        if (!currentUser) {
+          router.push('/login');
+          return;
+        }
 
-  const loadUserData = async () => {
-    try {
-      const currentUser = await embeddedAuth.getCurrentUser();
-      if (!currentUser) {
+        setUser(currentUser);
+        
+        // تحميل معلومات الاشتراك
+        const userSubscription = await embeddedAuth.checkSubscriptionStatus(currentUser.id);
+        setSubscription(userSubscription);
+        
+        // تعبئة نموذج التعديل
+        setEditForm({
+          fullName: currentUser.fullName,
+          email: currentUser.email
+        });
+      } catch (error) {
+        console.error('Failed to load user data:', error);
         router.push('/login');
-        return;
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setUser(currentUser);
-      
-      // تحميل معلومات الاشتراك
-      const userSubscription = await embeddedAuth.checkSubscriptionStatus(currentUser.id);
-      setSubscription(userSubscription);
-      
-      // تعبئة نموذج التعديل
-      setEditForm({
-        fullName: currentUser.fullName,
-        email: currentUser.email
-      });
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-      router.push('/login');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    fetchData();
+  }, [router]);
+
+
 
   const handleLogout = async () => {
     try {

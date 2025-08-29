@@ -19,7 +19,7 @@ export default function Header() {
       try {
         const user = await embeddedAuth.getCurrentUser();
         setCurrentUser(user);
-      } catch (error) {
+      } catch {
         console.log('No current user');
       } finally {
         setIsLoading(false);

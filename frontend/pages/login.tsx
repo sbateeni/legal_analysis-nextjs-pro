@@ -19,7 +19,7 @@ export default function LoginPage() {
         if (currentUser) {
           router.push('/');
         }
-      } catch (error) {
+      } catch {
         console.log('No current user');
       }
     };

@@ -24,7 +24,7 @@ export default function SignupPage() {
         if (currentUser) {
           router.push('/');
         }
-      } catch (error) {
+      } catch {
         console.log('No current user');
       }
     };
