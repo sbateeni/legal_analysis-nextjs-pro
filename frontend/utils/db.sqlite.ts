@@ -121,8 +121,15 @@ class SQLiteDatabase {
     if (typeof window === 'undefined') {
       throw new Error('SQLite is only available in the browser context');
     }
-    const sqlWasm = await import('sql.js');
-    return sqlWasm.default;
+    
+    try {
+      // Load sql.js dynamically only in browser
+      const sqlWasm = await import('sql.js');
+      return sqlWasm.default;
+    } catch (error) {
+      console.error('Failed to load SQL.js:', error);
+      throw new Error('SQL.js failed to load in browser context');
+    }
   }
 
   private async initializeDatabase(): Promise<void> {

@@ -78,7 +78,19 @@ const nextConfig: NextConfig = {
       ...(config.resolve.fallback || {}),
       fs: false,
       path: false,
+      crypto: false,
+      stream: false,
+      util: false,
+      buffer: false,
+      process: false,
     } as any;
+    
+    // Exclude sql.js from server-side bundling
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push('sql.js');
+    }
+    
     return config;
   },
 };
