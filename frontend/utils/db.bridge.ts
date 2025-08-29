@@ -2,7 +2,7 @@
 // Integrates existing Dexie database with new SQLite database
 // Provides unified interface for both databases
 
-import { sqliteDB, type CaseRecord, type StageRecord, type ExportRecord, type CommentRecord, type TaskRecord } from './db.sqlite';
+import type { CaseRecord, StageRecord, ExportRecord, CommentRecord, TaskRecord } from './db.types';
 import { addCase, getAllCases, updateCase, type LegalCase } from './db.dexie';
 
 interface UnifiedCase {
@@ -35,12 +35,25 @@ interface UnifiedStage {
 
 class DatabaseBridge {
   private isInitialized = false;
+  private sqliteReady: Promise<any> | null = null;
+
+  private async getSQLite() {
+    if (typeof window === 'undefined') {
+      throw new Error('SQLite is only available in the browser');
+    }
+    if (!this.sqliteReady) {
+      this.sqliteReady = import('./db.sqlite');
+    }
+    const mod = await this.sqliteReady;
+    return mod.sqliteDB;
+  }
 
   async init(): Promise<void> {
     if (this.isInitialized) return;
 
     try {
       // Initialize SQLite database
+      const sqliteDB = await this.getSQLite();
       await sqliteDB.init();
       
       // Migrate existing data from Dexie to SQLite
@@ -68,6 +81,7 @@ class DatabaseBridge {
 
       for (const legacyCase of existingCases) {
         // Create case in SQLite
+        const sqliteDB = await this.getSQLite();
         const caseId = await sqliteDB.createCase({
           name: legacyCase.name,
           caseType: this.determineCaseType(legacyCase.stages),
@@ -148,6 +162,7 @@ class DatabaseBridge {
     await this.ensureInitialized();
 
     // Create in SQLite (primary database)
+    const sqliteDB = await this.getSQLite();
     const caseId = await sqliteDB.createCase(caseData);
 
     // Also create in Dexie for backward compatibility
@@ -173,12 +188,13 @@ class DatabaseBridge {
 
   async getCase(id: string): Promise<UnifiedCase | null> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.getCase(id);
   }
 
   async updateCase(id: string, updates: Partial<UnifiedCase>): Promise<void> {
     await this.ensureInitialized();
-    
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.updateCase(id, updates);
     
     // Track action
@@ -189,7 +205,7 @@ class DatabaseBridge {
 
   async deleteCase(id: string): Promise<void> {
     await this.ensureInitialized();
-    
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.deleteCase(id);
     
     // Track action
@@ -205,13 +221,14 @@ class DatabaseBridge {
     offset?: number;
   }): Promise<UnifiedCase[]> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.listCases(filters);
   }
 
   // Unified stage operations
   async createStage(stageData: Omit<UnifiedStage, 'id' | 'createdAt'>): Promise<string> {
     await this.ensureInitialized();
-    
+    const sqliteDB = await this.getSQLite();
     const stageId = await sqliteDB.createStage(stageData);
     
     // Track action
@@ -225,6 +242,7 @@ class DatabaseBridge {
 
   async getStagesForCase(caseId: string): Promise<UnifiedStage[]> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.getStagesForCase(caseId);
   }
 
@@ -235,40 +253,47 @@ class DatabaseBridge {
     limit?: number;
   }): Promise<UnifiedCase[]> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.searchCases(query, filters);
   }
 
   // Analytics
   async getAnalytics(timeRange?: { start: string; end: string }) {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.getAnalytics(timeRange);
   }
 
   async trackAction(caseId: string, action: string, metadata?: any, duration?: number): Promise<void> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.trackAction(caseId, action, metadata, duration);
   }
 
   // Export operations
   async createExport(exportData: Omit<ExportRecord, 'id' | 'createdAt'>): Promise<string> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.createExport(exportData);
   }
 
   // User preferences
   async setPreference(key: string, value: string): Promise<void> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.setPreference(key, value);
   }
 
   async getPreference(key: string): Promise<string | null> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.getPreference(key);
   }
 
   // Comments
   async createComment(comment: Omit<CommentRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     const id = await sqliteDB.createComment(comment);
     await sqliteDB.trackAction(comment.caseId, 'comment_created', { stageId: comment.stageId });
     return id;
@@ -276,16 +301,19 @@ class DatabaseBridge {
 
   async listComments(caseId: string, stageId?: string): Promise<CommentRecord[]> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.listComments(caseId, stageId);
   }
 
   async updateComment(id: string, updates: Partial<CommentRecord>): Promise<void> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.updateComment(id, updates);
   }
 
   async deleteComment(id: string, meta: { caseId: string }): Promise<void> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.deleteComment(id);
     await sqliteDB.trackAction(meta.caseId, 'comment_deleted', { id });
   }
@@ -293,6 +321,7 @@ class DatabaseBridge {
   // Tasks
   async createTask(task: Omit<TaskRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     const id = await sqliteDB.createTask(task);
     await sqliteDB.trackAction(task.caseId, 'task_created', { stageId: task.stageId, priority: task.priority, dueDate: task.dueDate });
     return id;
@@ -300,17 +329,20 @@ class DatabaseBridge {
 
   async listTasks(caseId: string, filters?: { stageId?: string; status?: TaskRecord['status']; assignee?: string }): Promise<TaskRecord[]> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.listTasks(caseId, filters);
   }
 
   async updateTask(id: string, updates: Partial<TaskRecord>, meta: { caseId: string }): Promise<void> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.updateTask(id, updates);
     await sqliteDB.trackAction(meta.caseId, 'task_updated', { id, updates });
   }
 
   async deleteTask(id: string, meta: { caseId: string }): Promise<void> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.deleteTask(id);
     await sqliteDB.trackAction(meta.caseId, 'task_deleted', { id });
   }
@@ -318,16 +350,19 @@ class DatabaseBridge {
   // Database maintenance
   async compact(): Promise<void> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.compact();
   }
 
   async exportDatabase(): Promise<Uint8Array> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     return await sqliteDB.exportDatabase();
   }
 
   async importDatabase(data: Uint8Array): Promise<void> {
     await this.ensureInitialized();
+    const sqliteDB = await this.getSQLite();
     await sqliteDB.importDatabase(data);
   }
 
@@ -346,6 +381,7 @@ class DatabaseBridge {
   }> {
     await this.ensureInitialized();
     
+    const sqliteDB = await this.getSQLite();
     const analytics = await sqliteDB.getAnalytics();
     const migrationActions = await this.getMigrationActions();
     
@@ -365,6 +401,7 @@ class DatabaseBridge {
   // Cleanup
   async close(): Promise<void> {
     if (this.isInitialized) {
+      const sqliteDB = await this.getSQLite();
       await sqliteDB.close();
       this.isInitialized = false;
     }

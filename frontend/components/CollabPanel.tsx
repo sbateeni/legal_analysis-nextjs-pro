@@ -1,19 +1,33 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type { CommentRecord, TaskRecord } from '../utils/db.types';
+import type { UnifiedCase } from '../utils/db.bridge';
+import type { Theme } from '../utils/theme';
 
 type PanelProps = {
   caseName: string;
   caseType: string;
-  theme: any;
+  theme: Theme;
   darkMode?: boolean;
   stageName?: string | null;
 };
 
 export default function CollabPanel({ caseName, caseType, theme, darkMode, stageName }: PanelProps) {
   const [initialized, setInitialized] = useState(false);
-  const bridgeRef = useRef<any>(null);
+  type BridgeAPI = {
+    init: () => Promise<void>;
+    listCases: (filters?: { caseType?: string; status?: string; limit?: number; offset?: number }) => Promise<UnifiedCase[]>;
+    createCase: (caseData: { name: string; caseType: string; complexity: 'basic'|'intermediate'|'advanced'; status: 'active'|'archived'|'completed'; description?: string; tags?: string }) => Promise<string>;
+    listComments: (caseId: string, stageId?: string) => Promise<CommentRecord[]>;
+    listTasks: (caseId: string, filters?: { stageId?: string; status?: TaskRecord['status']; assignee?: string }) => Promise<TaskRecord[]>;
+    createComment: (comment: Omit<CommentRecord, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
+    createTask: (task: Omit<TaskRecord, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
+    updateTask: (id: string, updates: Partial<TaskRecord>, meta: { caseId: string }) => Promise<void>;
+    deleteTask: (id: string, meta: { caseId: string }) => Promise<void>;
+  };
+  const bridgeRef = useRef<BridgeAPI | null>(null);
   const [caseId, setCaseId] = useState<string | null>(null);
-  const [comments, setComments] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [comments, setComments] = useState<CommentRecord[]>([]);
+  const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [newComment, setNewComment] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDue, setNewTaskDue] = useState('');
@@ -33,8 +47,8 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
       if (typeof window === 'undefined') return;
       try {
         const mod = await import('../utils/db.bridge');
-        bridgeRef.current = mod.dbBridge;
-        await bridgeRef.current.init();
+        bridgeRef.current = mod.dbBridge as BridgeAPI;
+        await bridgeRef.current!.init();
         setInitialized(true);
       } catch {
         // noop
@@ -48,21 +62,21 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
     (async () => {
       const effectiveName = (caseName && caseName.trim()) ? caseName.trim() : 'قضية بدون اسم';
       // Try to find by listing and matching name
-      const cases = await bridgeRef.current.listCases();
-      const existing = (cases || []).find((c: any) => c.name === effectiveName);
+      const cases = await bridgeRef.current!.listCases();
+      const existing = (cases || []).find((c: UnifiedCase) => c.name === effectiveName);
       if (existing) {
         setCaseId(existing.id);
         return;
       }
       // Create minimal case
-      const id = await bridgeRef.current.createCase({
+      const id = await bridgeRef.current!.createCase({
         name: effectiveName,
         caseType: caseType || 'عام',
         complexity: 'basic',
         status: 'active',
         description: 'Created by collaboration panel',
         tags: 'collab'
-      } as any);
+      });
       setCaseId(id);
     })();
   }, [initialized, caseName, caseType]);
@@ -71,8 +85,8 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
   const loadData = async (cid: string) => {
     const stg = stageName || undefined;
     const [cmts, tks] = await Promise.all([
-      bridgeRef.current.listComments(cid, stg),
-      bridgeRef.current.listTasks(cid, { stageId: stg })
+      bridgeRef.current!.listComments(cid, stg),
+      bridgeRef.current!.listTasks(cid, { stageId: stg })
     ]);
     setComments(cmts);
     setTasks(tks);
@@ -88,12 +102,13 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
     if (!caseId || !newComment.trim()) return;
     setLoading(true);
     try {
-      await bridgeRef.current.createComment({
+      await bridgeRef.current!.createComment({
         caseId,
         stageId: stageName || undefined,
         author: 'أنا',
-        content: newComment.trim()
-      } as any);
+        content: newComment.trim(),
+        parentId: undefined,
+      });
       setNewComment('');
       await loadData(caseId);
     } finally {
@@ -105,14 +120,14 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
     if (!caseId || !newTaskTitle.trim()) return;
     setLoading(true);
     try {
-      await bridgeRef.current.createTask({
+      await bridgeRef.current!.createTask({
         caseId,
         stageId: stageName || undefined,
         title: newTaskTitle.trim(),
         dueDate: newTaskDue || undefined,
         status: 'open',
         priority: newTaskPriority
-      } as any);
+      });
       setNewTaskTitle('');
       setNewTaskDue('');
       setNewTaskPriority('medium');
@@ -208,10 +223,10 @@ export default function CollabPanel({ caseName, caseType, theme, darkMode, stage
                   {t.status === 'done' ? 'مكتملة' : t.status === 'in_progress' ? 'قيد التنفيذ' : 'مفتوحة'} • {t.priority === 'high' ? 'مرتفعة' : t.priority === 'low' ? 'منخفضة' : 'متوسطة'}
                 </div>
                 <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
-                  <button onClick={async () => { await bridgeRef.current.updateTask(t.id, { status: t.status === 'done' ? 'open' : 'done' }, { caseId: caseId! }); await loadData(caseId!); }} style={{
+                  <button onClick={async () => { await bridgeRef.current!.updateTask(t.id, { status: t.status === 'done' ? 'open' : 'done' }, { caseId: caseId! }); await loadData(caseId!); }} style={{
                     background: 'transparent', color: theme.text, border: `1.5px solid ${theme.input}`, borderRadius: 10, padding: '6px 10px', fontWeight: 700, cursor:'pointer'
                   }}>{t.status === 'done' ? 'إعادة فتح' : 'تم'}</button>
-                  <button onClick={async () => { await bridgeRef.current.deleteTask(t.id, { caseId: caseId! }); await loadData(caseId!); }} style={{
+                  <button onClick={async () => { await bridgeRef.current!.deleteTask(t.id, { caseId: caseId! }); await loadData(caseId!); }} style={{
                     background: 'transparent', color: '#dc2626', border: `1.5px solid ${theme.input}`, borderRadius: 10, padding: '6px 10px', fontWeight: 700, cursor:'pointer'
                   }}>حذف</button>
                 </div>
