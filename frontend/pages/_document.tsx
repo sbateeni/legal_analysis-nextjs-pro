@@ -8,6 +8,21 @@ class MyDocument extends Document {
           <meta name="theme-color" content="#6366f1" />
           <link rel="manifest" href="/manifest.json" />
           
+          {/* PWA Meta Tags for iOS */}
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+          <meta name="apple-mobile-web-app-title" content="التحليل القانوني" />
+          <meta name="mobile-web-app-capable" content="yes" />
+          
+          {/* Apple Touch Icons */}
+          <link rel="apple-touch-icon" href="/icon-192x192.svg" />
+          <link rel="apple-touch-icon" sizes="152x152" href="/icon-192x192.svg" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/icon-192x192.svg" />
+          <link rel="apple-touch-icon" sizes="167x167" href="/icon-192x192.svg" />
+          
+          {/* Safari Pinned Tab Icon */}
+          <link rel="mask-icon" href="/icon-192x192.svg" color="#6366f1" />
+          
           {/* Preconnect للخطوط */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
