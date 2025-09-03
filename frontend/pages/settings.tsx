@@ -31,7 +31,7 @@ export default function SettingsPage() {
 }
 
 function SettingsPageContent() {
-  const { theme, darkMode, setDarkMode } = useTheme();
+  const { theme, darkMode, setDarkMode, colorScheme, setColorScheme } = useTheme();
   const [apiKey, setApiKey] = useState('');
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -295,6 +295,131 @@ function SettingsPageContent() {
              <p style={{margin: '4px 0'}}><strong>الوضع الفاتح/الليلي:</strong> اختر المظهر المناسب لعينيك، الوضع الليلي أفضل للاستخدام في الظلام.</p>
              <p style={{margin: '4px 0'}}><strong>الخصوصية:</strong> جميع بياناتك محفوظة محلياً على جهازك فقط، لا نرسل أي شيء لخوادم خارجية.</p>
              <p style={{margin: '4px 0'}}><strong>الأمان:</strong> بياناتك مشفرة ومحمية، حتى لو استخدم شخص آخر جهازك لن يتمكن من الوصول لقضاياك.</p>
+           </div>
+         </div>
+
+         {/* بطاقة اختيار الألوان */}
+         <div className="card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile()? 16:24, marginBottom: 16 }}>
+           <div className="font-headline" style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+             <span style={{fontSize: isMobile()? 22:24}}>🎨</span>
+             <h2 className="headline-sm" style={{margin:0, color: theme.accent2}}>اختيار الألوان</h2>
+           </div>
+           
+           <div style={{marginBottom: 16}}>
+             <label style={{display:'block', marginBottom:8, fontWeight:600, color: theme.accent2}}>اختر السمة اللونية:</label>
+             <div style={{display:'grid', gridTemplateColumns: isMobile()? '1fr 1fr' : '1fr 1fr 1fr', gap: 12}}>
+               {/* السمة الخضراء */}
+               <div 
+                 onClick={() => setColorScheme('green')}
+                 style={{
+                   padding: '16px',
+                   borderRadius: '12px',
+                   border: `2px solid ${colorScheme === 'green' ? theme.accent : theme.border}`,
+                   background: colorScheme === 'green' ? theme.accent + '20' : 'transparent',
+                   cursor: 'pointer',
+                   textAlign: 'center',
+                   transition: 'all 0.2s ease'
+                 }}
+               >
+                 <div style={{width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)', margin: '0 auto 8px auto', border: '2px solid #bbf7d0'}}></div>
+                 <div style={{fontSize: '14px', fontWeight: 600, color: theme.text}}>أخضر</div>
+               </div>
+
+               {/* السمة الزرقاء */}
+               <div 
+                 onClick={() => setColorScheme('blue')}
+                 style={{
+                   padding: '16px',
+                   borderRadius: '12px',
+                   border: `2px solid ${colorScheme === 'blue' ? theme.accent : theme.border}`,
+                   background: colorScheme === 'blue' ? theme.accent + '20' : 'transparent',
+                   cursor: 'pointer',
+                   textAlign: 'center',
+                   transition: 'all 0.2s ease'
+                 }}
+               >
+                 <div style={{width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)', margin: '0 auto 8px auto', border: '2px solid #bfdbfe'}}></div>
+                 <div style={{fontSize: '14px', fontWeight: 600, color: theme.text}}>أزرق</div>
+               </div>
+
+               {/* السمة البنفسجية */}
+               <div 
+                 onClick={() => setColorScheme('purple')}
+                 style={{
+                   padding: '16px',
+                   borderRadius: '12px',
+                   border: `2px solid ${colorScheme === 'purple' ? theme.accent : theme.accent}`,
+                   background: colorScheme === 'purple' ? theme.accent + '20' : 'transparent',
+                   cursor: 'pointer',
+                   textAlign: 'center',
+                   transition: 'all 0.2s ease'
+                 }}
+               >
+                 <div style={{width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)', margin: '0 auto 8px auto', border: '2px solid #ddd6fe'}}></div>
+                 <div style={{fontSize: '14px', fontWeight: 600, color: theme.text}}>بنفسجي</div>
+               </div>
+
+               {/* السمة البرتقالية */}
+               <div 
+                 onClick={() => setColorScheme('orange')}
+                 style={{
+                   padding: '16px',
+                   borderRadius: '12px',
+                   border: `2px solid ${colorScheme === 'orange' ? theme.accent : theme.border}`,
+                   background: colorScheme === 'orange' ? theme.accent + '20' : 'transparent',
+                   cursor: 'pointer',
+                   textAlign: 'center',
+                   transition: 'all 0.2s ease'
+                 }}
+               >
+                 <div style={{width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #fff7ed 0%, #fefce8 100%)', margin: '0 auto 8px auto', border: '2px solid #fed7aa'}}></div>
+                 <div style={{fontSize: '14px', fontWeight: 600, color: theme.text}}>برتقالي</div>
+               </div>
+
+               {/* السمة الوردية */}
+               <div 
+                 onClick={() => setColorScheme('pink')}
+                 style={{
+                   padding: '16px',
+                   borderRadius: '12px',
+                   border: `2px solid ${colorScheme === 'pink' ? theme.accent : theme.border}`,
+                   background: colorScheme === 'pink' ? theme.accent + '20' : 'transparent',
+                   cursor: 'pointer',
+                   textAlign: 'center',
+                   transition: 'all 0.2s ease'
+                 }}
+               >
+                 <div style={{width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)', margin: '0 auto 8px auto', border: '2px solid #fbcfe8'}}></div>
+                 <div style={{fontSize: '14px', fontWeight: 600, color: theme.text}}>وردي</div>
+               </div>
+
+               {/* السمة التركوازية */}
+               <div 
+                 onClick={() => setColorScheme('teal')}
+                 style={{
+                   padding: '16px',
+                   borderRadius: '12px',
+                   border: `2px solid ${colorScheme === 'teal' ? theme.accent : theme.border}`,
+                   background: colorScheme === 'teal' ? theme.accent + '20' : 'transparent',
+                   cursor: 'pointer',
+                   textAlign: 'center',
+                   transition: 'all 0.2s ease'
+                 }}
+               >
+                 <div style={{width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #f0fdfa 0%, #ecfeff 100%)', margin: '0 auto 8px auto', border: '2px solid #99f6e4'}}></div>
+                 <div style={{fontSize: '14px', fontWeight: 600, color: theme.text}}>تركوازي</div>
+               </div>
+             </div>
+           </div>
+
+           <div style={{padding: '12px 16px', background: theme.resultBg, borderRadius: 8, border: `1px solid ${theme.border}`, fontSize: 14, lineHeight: 1.6}}>
+             <h4 style={{margin: '0 0 8px 0', fontSize: 16, color: theme.accent2}}>🎨 شرح اختيار الألوان:</h4>
+             <p style={{margin: '4px 0', color: theme.text}}><strong>السمة الخضراء:</strong> هادئة ومريحة للعين، مناسبة للعمل الطويل.</p>
+             <p style={{margin: '4px 0', color: theme.text}}><strong>السمة الزرقاء:</strong> احترافية وموثوقة، مناسبة للبيئات القانونية.</p>
+             <p style={{margin: '4px 0', color: theme.text}}><strong>السمة البنفسجية:</strong> إبداعية وعصرية، تجمع بين الأناقة والابتكار.</p>
+             <p style={{margin: '4px 0', color: theme.text}}><strong>السمة البرتقالية:</strong> دافئة ومحفزة، مناسبة للعمل النشط.</p>
+             <p style={{margin: '4px 0', color: theme.text}}><strong>السمة الوردية:</strong> لطيفة ومريحة، مناسبة للعمل الإبداعي.</p>
+             <p style={{margin: '4px 0', color: theme.text}}><strong>السمة التركوازية:</strong> منعشة ومتوازنة، مناسبة للعمل المكثف.</p>
            </div>
          </div>
 

@@ -19,7 +19,7 @@ interface NavigationItem {
 }
 
 export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToolbarProps) {
-  const { theme, darkMode, setDarkMode } = useTheme();
+  const { theme, darkMode, setDarkMode, colorScheme } = useTheme();
   const router = useRouter();
   const [isExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -196,6 +196,24 @@ export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToo
               fontWeight: 'bold'
             }}>
               AI-Powered
+            </div>
+            <div style={{
+              padding: '4px 8px',
+              borderRadius: '12px',
+              background: theme.accent2,
+              color: '#fff',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              🎨 {colorScheme === 'green' ? 'أخضر' : 
+                   colorScheme === 'blue' ? 'أزرق' : 
+                   colorScheme === 'purple' ? 'بنفسجي' : 
+                   colorScheme === 'orange' ? 'برتقالي' : 
+                   colorScheme === 'pink' ? 'وردي' : 
+                   colorScheme === 'teal' ? 'تركوازي' : 'أخضر'}
             </div>
           </div>
 
