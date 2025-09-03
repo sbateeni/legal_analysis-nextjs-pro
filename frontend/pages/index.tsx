@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { mapApiErrorToMessage, extractApiError } from '../utils/errors';
-import { saveApiKey, loadApiKey, addCase, getAllCases, updateCase, LegalCase } from '../utils/db';
-import { isMobile } from '../utils/crypto';
+import { mapApiErrorToMessage, extractApiError } from '@utils/errors';
+import { saveApiKey, loadApiKey, addCase, getAllCases, updateCase, LegalCase } from '@utils/db';
+import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
 // تمت إزالة بطاقات المقالات
-import { exportResultsToPDF, exportResultsToDocx } from '../utils/export';
-import { loadExportPreferences } from '../utils/exportSettings';
+import { exportResultsToPDF, exportResultsToDocx } from '@utils/export';
+import { loadExportPreferences } from '@utils/exportSettings';
 import { Button } from '../components/UI';
 // تمت إزالة الودجت المدمج للمدقق المرجعي من الواجهة الرئيسية بناءً على طلب المستخدم
 import CollabPanel from '../components/CollabPanel';
@@ -83,8 +83,8 @@ function HomeContent() {
     // تحميل نموذج مفضّل + تفضيلات لوحة التحكم من SQLite
     (async () => {
       const [{ loadAppSettings }, { dbBridge }] = await Promise.all([
-        import('../utils/appSettings'),
-        import('../utils/db.bridge')
+        import('@utils/appSettings'),
+        import('@utils/db.bridge')
       ]);
       const s = await loadAppSettings();
       setPreferredModel(s.preferredModel || 'gemini-1.5-flash');

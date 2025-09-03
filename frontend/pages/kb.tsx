@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '../contexts/ThemeContext';
-import { isMobile } from '../utils/crypto';
+import { isMobile } from '@utils/crypto';
 
 type KBRecord = {
   id: string;

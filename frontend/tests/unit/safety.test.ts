@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isWithinPalestinianJurisdiction, sanitizeAnswer } from '../utils/safety';
+import { isWithinPalestinianJurisdiction, sanitizeAnswer } from '@utils/safety';
 
 describe('safety utils', () => {
   it('allows neutral Palestinian-context answers', () => {

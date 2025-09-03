@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { isMobile } from '../utils/crypto';
+import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function Privacy() {

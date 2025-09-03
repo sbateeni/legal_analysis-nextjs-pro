@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { CommentRecord, TaskRecord } from '../utils/db.types';
-import type { UnifiedCase } from '../utils/db.bridge';
-import type { Theme } from '../utils/theme';
+import type { CommentRecord, TaskRecord } from '@utils/db.types';
+import type { UnifiedCase } from '@utils/db.bridge';
+import type { Theme } from '@utils/theme';
 
 type PanelProps = {
   caseName: string;

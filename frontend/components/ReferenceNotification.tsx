@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LegalReference } from '../utils/referenceChecker';
+import { LegalReference } from '@utils/referenceChecker';
 
 interface ReferenceNotificationProps {
   reference: LegalReference;

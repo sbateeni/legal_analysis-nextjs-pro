@@ -6,14 +6,14 @@ import {
   AnalysisError, 
   AnalysisContext 
 } from '../../types/analysis';
-import { validateAnalysisRequest, sanitizeText } from '../../utils/validation';
-import { getCachedAnalysis, cacheAnalysis, checkRateLimit } from '../../utils/cache';
+import { validateAnalysisRequest, sanitizeText } from '@utils/validation';
+import { getCachedAnalysis, cacheAnalysis, checkRateLimit } from '@utils/cache';
 import { 
   buildEnhancedPrompt, 
   buildFinalPetitionPrompt,
   determineComplexity,
   determineCaseType 
-} from '../../utils/prompts';
+} from '@utils/prompts';
 import stages from '../../stages';
 
 // تعريف مراحل التحليل القانوني (12 مرحلة)

@@ -6,7 +6,7 @@ import '../styles/responsive.css';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Layout from '../components/Layout';
 import type { NextWebVitalsMetric } from 'next/app';
-import { recordWebVital } from '../utils/metrics';
+import { recordWebVital } from '@utils/metrics';
 // تم حذف نظام المصادقة لجعل الموقع عاماً
 
 export function reportWebVitals(metric: NextWebVitalsMetric) {

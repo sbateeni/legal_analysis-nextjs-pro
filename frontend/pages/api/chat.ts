@@ -2,12 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 import path from 'path';
-import { sanitizeText } from '../../utils/validation';
-import { checkRateLimit } from '../../utils/cache';
+import { sanitizeText } from '@utils/validation';
+import { checkRateLimit } from '@utils/cache';
 import stages from '../../stages';
-import { ChatModelResponseSchema, ChatRequestSchema, ChatModelResponse } from '../../utils/schemas';
-import { chatCacheGet, chatCacheSet, makeChatCacheKey } from '../../utils/chatCache';
-import { isWithinPalestinianJurisdiction, sanitizeAnswer } from '../../utils/safety';
+import { ChatModelResponseSchema, ChatRequestSchema, ChatModelResponse } from '@utils/schemas';
+import { chatCacheGet, chatCacheSet, makeChatCacheKey } from '@utils/chatCache';
+import { isWithinPalestinianJurisdiction, sanitizeAnswer } from '@utils/safety';
 
 interface ChatMessage {
   role: 'user' | 'assistant';

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { isMobile } from '../utils/crypto';
-import { getAllTemplates, addTemplate, updateTemplate, deleteTemplate, getAllCases, LegalTemplate, LegalCase, AnalysisStage } from '../utils/db';
+import { isMobile } from '@utils/crypto';
+import { getAllTemplates, addTemplate, updateTemplate, deleteTemplate, getAllCases, LegalTemplate, LegalCase, AnalysisStage } from '@utils/db';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 
 export default function TemplatesPage() {

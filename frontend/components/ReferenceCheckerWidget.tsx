@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { referenceChecker, type LegalReference } from '../utils/referenceChecker';
+import { referenceChecker, type LegalReference } from '@utils/referenceChecker';
 
 interface ReferenceCheckerWidgetProps {
   onReferenceFound?: (reference: LegalReference) => void;

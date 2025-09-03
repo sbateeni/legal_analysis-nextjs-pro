@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { isMobile } from '../utils/crypto';
+import { isMobile } from '@utils/crypto';
 import { 
   isCameraSupported, 
   captureImage, 
@@ -9,7 +9,7 @@ import {
   sendNotification,
   saveOfflineData,
   onConnectionChange
-} from '../utils/mobile';
+} from '@utils/mobile';
 import { 
   generateStrongPassword,
   validatePasswordStrength,
@@ -17,7 +17,7 @@ import {
   detectXSS,
   detectSQLInjection,
   logSecurityEvent
-} from '../utils/security';
+} from '@utils/security';
 
 interface AdvancedFeaturesProps {
   onImageCapture?: (imageData: string) => void;

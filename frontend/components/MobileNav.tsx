@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useTheme } from '../contexts/ThemeContext';
-import { isMobile } from '../utils/crypto';
+import { isMobile } from '@utils/crypto';
 import { useState, useEffect } from 'react';
 
 // تعريف نوع BeforeInstallPromptEvent

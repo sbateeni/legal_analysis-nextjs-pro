@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Notifications, type Notice } from '../components/Notifications';
 import { useTheme } from '../contexts/ThemeContext';
-import { isMobile } from '../utils/crypto';
+import { isMobile } from '@utils/crypto';
 import { set as idbSet } from 'idb-keyval';
-import { saveApiKey, loadApiKey, getAllCases, saveAllCases, clearAllCases } from '../utils/db';
-import { loadExportPreferences, saveExportPreferences, type ExportPreferences } from '../utils/exportSettings';
-import { loadAppSettings, saveAppSettings, type AppSettings } from '../utils/appSettings';
+import { saveApiKey, loadApiKey, getAllCases, saveAllCases, clearAllCases } from '@utils/db';
+import { loadExportPreferences, saveExportPreferences, type ExportPreferences } from '@utils/exportSettings';
+import { loadAppSettings, saveAppSettings, type AppSettings } from '@utils/appSettings';
 // تم حذف AuthGuard لجعل الموقع عاماً
 // جسر قاعدة البيانات (يُحمّل ديناميكياً وقت الحاجة)
 type BridgeAPI = {

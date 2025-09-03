@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { isMobile } from '../utils/crypto';
+import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases, LegalCase, loadApiKey } from '../utils/db';
-import { loadAppSettings } from '../utils/appSettings';
+import { getAllCases, LegalCase, loadApiKey } from '@utils/db';
+import { loadAppSettings } from '@utils/appSettings';
 import { Button } from '../components/UI';
-import { extractApiError, mapApiErrorToMessage } from '../utils/errors';
+import { extractApiError, mapApiErrorToMessage } from '@utils/errors';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
 // تعريف نوع BeforeInstallPromptEvent

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { referenceChecker, type LegalReference } from '../utils/referenceChecker';
+import { referenceChecker, type LegalReference } from '@utils/referenceChecker';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
 export default function ReferenceCheckerPage() {

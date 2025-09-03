@@ -17,12 +17,12 @@ async function loadBridge() {
   }
   return bridge;
 }
-import { saveAllCases, getAllCases, loadApiKey } from '../utils/db';
-import { isMobile } from '../utils/crypto';
+import { saveAllCases, getAllCases, loadApiKey } from '@utils/db';
+import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
-import { exportResultsToPDF, exportResultsToDocx } from '../utils/export';
+import { exportResultsToPDF, exportResultsToDocx } from '@utils/export';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
 const STAGES = [

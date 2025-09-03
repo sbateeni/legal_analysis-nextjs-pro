@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ChatRequestSchema, ChatModelResponseSchema } from '../utils/schemas';
+import { ChatRequestSchema, ChatModelResponseSchema } from '@utils/schemas';
 
 describe('schemas', () => {
   it('validates a correct chat request', () => {

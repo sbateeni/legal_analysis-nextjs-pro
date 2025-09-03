@@ -29,6 +29,8 @@ frontend/
 │       └── analytics.ts # إحصائيات
 ├── components/          # مكونات React
 │   └── AdvancedFeatures.tsx
+├── lib/                 # إعادة تصدير من utils لاستخدام أسهل
+│   └── index.ts
 ├── utils/              # الأدوات المساعدة
 │   ├── db.ts           # قاعدة البيانات
 │   ├── crypto.ts       # التشفير
@@ -49,6 +51,9 @@ frontend/
 │   └── icon-*.svg     # الأيقونات
 ├── styles/             # ملفات CSS
 │   └── globals.css
+├── tests/
+│   └── e2e/            # اختبارات النهاية
+│       └── basic.spec.ts
 └── package.json        # التبعيات
 ```
 

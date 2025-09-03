@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import MobileNav from './MobileNav';
 import { useTheme } from '../contexts/ThemeContext';
-import { isMobile } from '../utils/crypto';
+import { isMobile } from '@utils/crypto';
 import Image from 'next/image';
 
 // تعريف نوع BeforeInstallPromptEvent

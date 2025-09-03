@@ -36,6 +36,8 @@ frontend/
 │   ├── MobileNav.tsx    # التنقل في الجوال
 │   ├── Notifications.tsx # الإشعارات
 │   └── UI.tsx           # مكونات واجهة المستخدم
+├── lib/                 # واجهة موحدة لإعادة التصدير (من utils)
+│   └── index.ts         # re-exports فقط، لا تغييرات سلوكية
 ├── contexts/            # سياقات React
 │   └── ThemeContext.tsx # سياق الثيم
 ├── utils/              # الأدوات المساعدة
@@ -74,8 +76,10 @@ frontend/
 │   ├── chatCache.test.ts
 │   ├── safety.test.ts
 │   └── schemas.test.ts
-├── tests-e2e/          # اختبارات النهاية
-│   └── basic.spec.ts
+├── tests/
+│   ├── unit/           # اختبارات الوحدة
+│   └── e2e/            # اختبارات النهاية
+│       └── basic.spec.ts
 └── package.json        # التبعيات والإعدادات
 ```
 

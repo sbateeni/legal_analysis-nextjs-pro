@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { referenceChecker, type LegalReference } from '../utils/referenceChecker';
+import { referenceChecker, type LegalReference } from '@utils/referenceChecker';
 
 export default function ReferenceManager() {
   const [references, setReferences] = useState<LegalReference[]>([]);
