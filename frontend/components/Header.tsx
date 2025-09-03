@@ -32,7 +32,24 @@ export default function Header() {
           <span>منصة التحليل القانوني الذكي</span>
         </Link>
         <nav style={{ marginInlineStart: 'auto', display: isMobile() ? 'none' : 'flex', gap: 12 }}>
-          <Link href="/" style={{ color: '#fff', textDecoration: 'none' }}>🏠 الرئيسية</Link>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <button 
+              onClick={() => setDarkMode(!darkMode)} 
+              style={{ 
+                background: 'transparent', 
+                border: '1px solid #ffffff55', 
+                color: '#fff', 
+                borderRadius: 6, 
+                padding: '4px 6px', 
+                cursor: 'pointer',
+                fontSize: '12px'
+              }} 
+              title={darkMode ? 'التبديل للوضع النهاري' : 'التبديل للوضع الليلي'}
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+            <Link href="/" style={{ color: '#fff', textDecoration: 'none' }}>🏠 الرئيسية</Link>
+          </div>
           <Link href="/chat" style={{ color: '#fff', textDecoration: 'none' }}>🤖 المساعد</Link>
           <Link href="/analytics" style={{ color: '#fff', textDecoration: 'none' }}>📊 التحليلات</Link>
           <Link href="/cases" style={{ color: '#fff', textDecoration: 'none' }}>📋 إدارة القضايا</Link>
@@ -48,7 +65,6 @@ export default function Header() {
           <Link href="/templates" style={{ color: '#fff', textDecoration: 'none' }}>🧩 القوالب</Link>
         </nav>
         <NotificationSystem />
-        <button onClick={() => setDarkMode(!darkMode)} style={{ marginInlineStart: 8, background: 'transparent', border: '1px solid #ffffff55', color: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>{darkMode ? '🌙' : '☀️'}</button>
         {isMobile() && (
           <button onClick={() => setShowMenu(s => !s)} style={{ marginInlineStart: 8, background: 'transparent', border: '1px solid #ffffff55', color: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>☰</button>
         )}

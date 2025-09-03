@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SidebarItem {
   id: string;
@@ -12,6 +13,7 @@ interface SidebarItem {
 
 const ElegantSidebar: React.FC = () => {
   const router = useRouter();
+  const { darkMode, setDarkMode } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -221,6 +223,18 @@ const ElegantSidebar: React.FC = () => {
       {/* Navigation Items */}
       <nav className="sidebar-nav">
         <ul className="nav-list">
+          {/* Theme Toggle Button - Above Home */}
+          <li className="nav-item theme-toggle-item">
+            <button 
+              onClick={() => setDarkMode(!darkMode)}
+              className="theme-toggle-btn"
+              title={darkMode ? 'التبديل للوضع النهاري' : 'التبديل للوضع الليلي'}
+            >
+              <span className="nav-icon">{darkMode ? '☀️' : '🌙'}</span>
+              {!isCollapsed && <span className="nav-label">التبديل</span>}
+            </button>
+          </li>
+          
           {sidebarItems.map((item) => (
             <li key={item.id} className="nav-item">
               <Link 
@@ -385,6 +399,40 @@ const ElegantSidebar: React.FC = () => {
         }
 
         .nav-link:hover .nav-icon {
+          transform: scale(1.1);
+        }
+
+        .theme-toggle-item {
+          margin-bottom: 8px;
+        }
+
+        .theme-toggle-btn {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          width: 100%;
+          padding: 14px 18px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(99, 102, 241, 0.2);
+          border-radius: 12px;
+          color: rgba(255, 255, 255, 0.9);
+          cursor: pointer;
+          transition: all 0.4s ease;
+          font-size: 15px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          text-decoration: none;
+        }
+
+        .theme-toggle-btn:hover {
+          background: rgba(99, 102, 241, 0.15);
+          color: #ffffff;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(99, 102, 241, 0.2);
+          border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .theme-toggle-btn:hover .nav-icon {
           transform: scale(1.1);
         }
 

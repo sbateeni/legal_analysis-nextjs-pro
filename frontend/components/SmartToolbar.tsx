@@ -19,7 +19,7 @@ interface NavigationItem {
 }
 
 export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToolbarProps) {
-  const { theme } = useTheme();
+  const { theme, darkMode, setDarkMode } = useTheme();
   const router = useRouter();
   const [isExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -235,6 +235,23 @@ export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToo
                 🔍
               </span>
             </div>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              style={{
+                padding: '8px',
+                borderRadius: '8px',
+                border: `1px solid ${theme.border}`,
+                background: 'transparent',
+                color: theme.text,
+                cursor: 'pointer',
+                fontSize: '16px'
+              }}
+              title={darkMode ? 'التبديل للوضع النهاري' : 'التبديل للوضع الليلي'}
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
 
             {/* Toggle Button */}
             <button

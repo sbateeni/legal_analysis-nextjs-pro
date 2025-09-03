@@ -20,7 +20,7 @@ interface NavigationItem {
 }
 
 export default function SmartSidebar({ isOpen, onClose }: SmartSidebarProps) {
-  const { theme } = useTheme();
+  const { theme, darkMode, setDarkMode } = useTheme();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -272,19 +272,42 @@ export default function SmartSidebar({ isOpen, onClose }: SmartSidebarProps) {
           }}>
             ⚖️ التنقل الذكي
           </h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: theme.text,
-              fontSize: '20px',
-              cursor: 'pointer',
-              padding: '4px'
-            }}
-          >
-            ✕
-          </button>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: theme.text,
+                fontSize: '18px',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease'
+              }}
+              title={darkMode ? 'التبديل للوضع النهاري' : 'التبديل للوضع الليلي'}
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: theme.text,
+                fontSize: '20px',
+                cursor: 'pointer',
+                padding: '4px'
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Search */}

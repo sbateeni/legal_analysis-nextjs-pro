@@ -17,7 +17,7 @@ interface NavigationItem {
 }
 
 export default function FloatingNavigation({ isVisible = true }: FloatingNavigationProps) {
-  const { theme } = useTheme();
+  const { theme, darkMode, setDarkMode } = useTheme();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('main');
@@ -255,34 +255,71 @@ export default function FloatingNavigation({ isVisible = true }: FloatingNavigat
         </div>
       )}
 
-      {/* الزر الرئيسي */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          border: 'none',
-          background: isOpen ? theme.accent : theme.accent2,
-          color: '#fff',
-          fontSize: '24px',
-          cursor: 'pointer',
-          boxShadow: `0 4px 20px ${theme.shadow}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.3s ease',
-          transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = isOpen ? 'rotate(45deg) scale(1.1)' : 'rotate(0deg) scale(1.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = isOpen ? 'rotate(45deg) scale(1)' : 'rotate(0deg) scale(1)';
-        }}
-      >
-        {isOpen ? '✕' : '🧭'}
-      </button>
+      {/* الأزرار */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        alignItems: 'center'
+      }}>
+        {/* زر التبديل */}
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          style={{
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            border: 'none',
+            background: theme.accent2,
+            color: '#fff',
+            fontSize: '20px',
+            cursor: 'pointer',
+            boxShadow: `0 4px 20px ${theme.shadow}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease'
+          }}
+          title={darkMode ? 'التبديل للوضع النهاري' : 'التبديل للوضع الليلي'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          {darkMode ? '☀️' : '🌙'}
+        </button>
+
+        {/* الزر الرئيسي */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            border: 'none',
+            background: isOpen ? theme.accent : theme.accent2,
+            color: '#fff',
+            fontSize: '24px',
+            cursor: 'pointer',
+            boxShadow: `0 4px 20px ${theme.shadow}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease',
+            transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = isOpen ? 'rotate(45deg) scale(1.1)' : 'rotate(0deg) scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = isOpen ? 'rotate(45deg) scale(1)' : 'rotate(0deg) scale(1)';
+          }}
+        >
+          {isOpen ? '✕' : '🧭'}
+        </button>
+      </div>
 
       {/* مؤشر التنبيهات */}
       <div style={{

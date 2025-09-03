@@ -20,7 +20,7 @@ interface NavigationItem {
 }
 
 export default function SidebarToolbar({ isCollapsed = false, onToggle }: SidebarToolbarProps) {
-  const { theme } = useTheme();
+  const { theme, darkMode, setDarkMode } = useTheme();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -288,31 +288,65 @@ export default function SidebarToolbar({ isCollapsed = false, onToggle }: Sideba
           </div>
         )}
         
-        <button
-          onClick={onToggle}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            border: 'none',
-            background: theme.accent2,
-            color: '#fff',
-            fontSize: '16px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-        >
-          {isCollapsed ? '→' : '←'}
-        </button>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          {/* Theme Toggle Button */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: 'none',
+              background: theme.accent2,
+              color: '#fff',
+              fontSize: '16px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease'
+            }}
+            title={darkMode ? 'التبديل للوضع النهاري' : 'التبديل للوضع الليلي'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+
+          <button
+            onClick={onToggle}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: 'none',
+              background: theme.accent2,
+              color: '#fff',
+              fontSize: '16px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            {isCollapsed ? '→' : '←'}
+          </button>
+        </div>
       </div>
 
       {/* Search */}
