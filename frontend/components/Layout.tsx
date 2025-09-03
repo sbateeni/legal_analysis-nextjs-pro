@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import MobileNav from './MobileNav';
+import ModernNavigation from './ModernNavigation';
+import ElegantSidebar from './ElegantSidebar';
 import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '@utils/crypto';
 import Image from 'next/image';
@@ -17,6 +19,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [useModernNavigation] = useState(false);
+  const [useElegantSidebar] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -73,8 +77,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       padding: 0,
       margin: 0,
       transition: 'background 0.4s',
+      display: 'flex',
+      flexDirection: isMobile() ? 'column' : 'row',
     }}>
-      {showHeader && <Header />}
+      {showHeader && !useModernNavigation && !useElegantSidebar && <Header />}
+      {useModernNavigation && <ModernNavigation navigationType="sidebar-toolbar" />}
+      {useElegantSidebar && <ElegantSidebar />}
       {!showHeader && (
         <div>
           <div style={{
@@ -140,10 +148,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <main style={{ maxWidth: 1000, width: '100%', margin: '0 auto', padding: '2rem 1rem' }}>
+      <main style={{ 
+        flex: 1,
+        maxWidth: 'none',
+        width: '100%', 
+        margin: 0, 
+        padding: '2rem 1rem',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        minHeight: '100vh',
+        overflow: 'auto'
+      }}>
         {children}
       </main>
-      <MobileNav />
+      {!useModernNavigation && <MobileNav />}
+      
+
     </div>
   );
 } 

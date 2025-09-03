@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases } from '@utils/db';
+import { getAllCases, getAllEvents, getAllDocuments } from '@utils/db';
 import Link from 'next/link';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
@@ -26,15 +26,76 @@ interface LegalCase {
   createdAt: string;
   stages: AnalysisStage[];
   tags?: string[];
+  status?: 'active' | 'completed' | 'archived';
+  priority?: 'low' | 'medium' | 'high';
+  caseType?: string;
+  clientName?: string;
+  courtName?: string;
+  nextHearing?: string;
+  notes?: string;
+}
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  time?: string;
+  type: 'hearing' | 'deadline' | 'meeting' | 'reminder';
+  caseId?: string;
+  caseName?: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high';
+  completed?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface LegalDocument {
+  id: string;
+  name: string;
+  type: 'pdf' | 'doc' | 'docx' | 'jpg' | 'jpeg' | 'png' | 'txt' | 'other';
+  size: number;
+  caseId?: string;
+  caseName?: string;
+  description?: string;
+  category: 'contract' | 'evidence' | 'correspondence' | 'legal_opinion' | 'court_document' | 'other';
+  uploadedAt: string;
+  lastModified: string;
+  tags?: string[];
+  isPublic: boolean;
+  filePath?: string;
+  mimeType?: string;
+}
+
+interface PredictiveAnalysis {
+  caseId: string;
+  caseName: string;
+  successProbability: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  alternativeStrategies: string[];
+  estimatedDuration: string;
+  complexityScore: number;
+  lastAnalyzed: string;
 }
 
 interface AnalyticsData {
   totalCases: number;
+  activeCases: number;
+  completedCases: number;
+  totalDocuments: number;
+  upcomingEvents: number;
+  averageCompletionTime: number;
+  successRate: number;
+  caseTypes: { [key: string]: number };
+  monthlyTrends: { [key: string]: number };
+  predictiveAnalyses: PredictiveAnalysis[];
   casesByType: Record<string, number>;
   casesByMonth: Record<string, number>;
   averageStagesCompleted: number;
   mostCommonIssues: string[];
-  successRate: number;
   averageCaseLength: number;
   topStages: Array<{ stage: string; count: number }>;
   recentActivity: Array<{ date: string; count: number }>;
@@ -60,16 +121,150 @@ function calculateTextLength(text: string): number {
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 }
 
+// دالة التحليل التنبؤي
+function generatePredictiveAnalyses(cases: LegalCase[]): PredictiveAnalysis[] {
+  return cases.map(caseItem => {
+    const stagesCompleted = caseItem.stages.length;
+    const totalStages = 12;
+    const completionRate = stagesCompleted / totalStages;
+
+    // حساب احتمالية النجاح بناءً على عدة عوامل
+    let successProbability = 0;
+    
+    // عامل التقدم
+    successProbability += completionRate * 30;
+    
+    // عامل الأولوية
+    switch (caseItem.priority) {
+      case 'high':
+        successProbability += 20;
+        break;
+      case 'medium':
+        successProbability += 15;
+        break;
+      case 'low':
+        successProbability += 10;
+        break;
+    }
+
+    // عامل نوع القضية
+    if (caseItem.caseType?.includes('تجاري')) {
+      successProbability += 15;
+    } else if (caseItem.caseType?.includes('جنائي')) {
+      successProbability += 10;
+    } else if (caseItem.caseType?.includes('مدني')) {
+      successProbability += 12;
+    }
+
+    // عامل الوقت المنقضي
+    const daysSinceCreation = (new Date().getTime() - new Date(caseItem.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceCreation < 30) {
+      successProbability += 15;
+    } else if (daysSinceCreation < 90) {
+      successProbability += 10;
+    } else {
+      successProbability += 5;
+    }
+
+    // تحديد مستوى المخاطر
+    let riskLevel: 'low' | 'medium' | 'high' = 'low';
+    if (successProbability < 40) {
+      riskLevel = 'high';
+    } else if (successProbability < 70) {
+      riskLevel = 'medium';
+    }
+
+    // تحديد نقاط القوة والضعف
+    const strengths: string[] = [];
+    const weaknesses: string[] = [];
+
+    if (completionRate > 0.5) {
+      strengths.push('تقدم جيد في المراحل');
+    } else {
+      weaknesses.push('تقدم بطيء في المراحل');
+    }
+
+    if (caseItem.priority === 'high') {
+      strengths.push('أولوية عالية');
+    }
+
+    if (daysSinceCreation > 90) {
+      weaknesses.push('مدة طويلة بدون تقدم');
+    }
+
+    if (caseItem.stages.length === 0) {
+      weaknesses.push('لم يتم البدء في التحليل');
+    } else {
+      strengths.push('تم البدء في التحليل');
+    }
+
+    // اقتراحات استراتيجية
+    const recommendations: string[] = [];
+    if (completionRate < 0.3) {
+      recommendations.push('تسريع وتيرة التحليل');
+      recommendations.push('مراجعة المراحل المكتملة');
+    }
+    if (caseItem.priority === 'low') {
+      recommendations.push('رفع مستوى الأولوية');
+    }
+    if (daysSinceCreation > 60) {
+      recommendations.push('مراجعة شاملة للقضية');
+    }
+
+    // استراتيجيات بديلة
+    const alternativeStrategies: string[] = [
+      'التركيز على النقاط القانونية القوية',
+      'البحث عن سوابق قضائية مشابهة',
+      'تحضير خطة بديلة للمرافعة',
+      'التشاور مع خبراء في المجال'
+    ];
+
+    // تقدير المدة
+    const estimatedDuration = completionRate > 0.5 
+      ? `${Math.ceil((1 - completionRate) * 30)} يوم`
+      : `${Math.ceil((1 - completionRate) * 60)} يوم`;
+
+    // درجة التعقيد
+    const complexityScore = Math.min(100, 
+      (1 - completionRate) * 50 + 
+      (caseItem.priority === 'high' ? 20 : caseItem.priority === 'medium' ? 10 : 5) +
+      (daysSinceCreation > 90 ? 15 : 0)
+    );
+
+    return {
+      caseId: caseItem.id,
+      caseName: caseItem.name,
+      successProbability: Math.min(100, Math.max(0, successProbability)),
+      riskLevel,
+      strengths,
+      weaknesses,
+      recommendations,
+      alternativeStrategies,
+      estimatedDuration,
+      complexityScore,
+      lastAnalyzed: new Date().toISOString()
+    };
+  });
+}
+
 // دالة تحليل البيانات
 function analyzeCases(cases: LegalCase[], isSingleCase: boolean = false): AnalyticsData {
   if (!cases || cases.length === 0) {
     return {
       totalCases: 0,
+      activeCases: 0,
+      completedCases: 0,
+      totalDocuments: 0,
+      upcomingEvents: 0,
+      averageCompletionTime: 0,
+      successRate: 0,
+      caseTypes: {},
+      monthlyTrends: {},
+      predictiveAnalyses: [],
       casesByType: {},
       casesByMonth: {},
       averageStagesCompleted: 0,
       mostCommonIssues: [],
-      successRate: 0,
       averageCaseLength: 0,
       topStages: [],
       recentActivity: [],
@@ -162,13 +357,28 @@ function analyzeCases(cases: LegalCase[], isSingleCase: boolean = false): Analyt
     'عدم تحديد الإطار الزمني للنزاع'
   ];
 
+  // حساب البيانات الجديدة
+  const activeCases = cases.filter(c => c.status === 'active').length;
+  const completedCasesCount = cases.filter(c => c.status === 'completed').length;
+  
+  // التحليل التنبؤي
+  const predictiveAnalyses = generatePredictiveAnalyses(cases);
+
   return {
     totalCases,
+    activeCases,
+    completedCases: completedCasesCount,
+    totalDocuments: 0, // سيتم تحديثه لاحقاً
+    upcomingEvents: 0, // سيتم تحديثه لاحقاً
+    averageCompletionTime: 0, // سيتم تحديثه لاحقاً
+    successRate,
+    caseTypes: casesByType,
+    monthlyTrends: casesByMonth,
+    predictiveAnalyses,
     casesByType,
     casesByMonth,
     averageStagesCompleted,
     mostCommonIssues,
-    successRate,
     averageCaseLength,
     topStages,
     recentActivity
@@ -493,6 +703,170 @@ function AnalyticsPageContent() {
                 </div>
               </div>
             </div>
+
+            {/* التحليل التنبؤي */}
+            {analytics.predictiveAnalyses && analytics.predictiveAnalyses.length > 0 && (
+              <div style={{
+                background: theme.card,
+                padding: '1.5rem',
+                borderRadius: '0.75rem',
+                boxShadow: `0 1px 3px ${theme.shadow}`,
+                marginBottom: '1.5rem'
+              }}>
+                <h2 style={{
+                  color: theme.text,
+                  margin: '0 0 1rem 0',
+                  fontSize: '1.25rem',
+                  fontWeight: 'bold'
+                }}>
+                  🔮 التحليل التنبؤي للقضايا
+                </h2>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                  gap: '1rem'
+                }}>
+                  {analytics.predictiveAnalyses.slice(0, 6).map((analysis) => (
+                    <div key={analysis.caseId} style={{
+                      background: theme.resultBg,
+                      padding: '1rem',
+                      borderRadius: '0.5rem',
+                      border: `1px solid ${theme.border}`,
+                      transition: 'transform 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '0.75rem'
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <h3 style={{
+                            color: theme.text,
+                            margin: '0 0 0.5rem 0',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold'
+                          }}>
+                            {analysis.caseName}
+                          </h3>
+                          <div style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            alignItems: 'center',
+                            marginBottom: '0.5rem'
+                          }}>
+                            <span style={{
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.25rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              color: '#fff',
+                              background: analysis.successProbability >= 70 ? '#10b981' : 
+                                         analysis.successProbability >= 40 ? '#f59e0b' : '#ef4444'
+                            }}>
+                              {analysis.successProbability.toFixed(0)}% نجاح
+                            </span>
+                            <span style={{
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.25rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              color: '#fff',
+                              background: analysis.riskLevel === 'low' ? '#10b981' : 
+                                         analysis.riskLevel === 'medium' ? '#f59e0b' : '#ef4444'
+                            }}>
+                              مخاطر {analysis.riskLevel === 'low' ? 'منخفضة' : 
+                                     analysis.riskLevel === 'medium' ? 'متوسطة' : 'عالية'}
+                            </span>
+                          </div>
+                        </div>
+                        <Link href={`/cases/${analysis.caseId}`}>
+                          <button style={{
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '0.25rem',
+                            border: 'none',
+                            background: theme.accent,
+                            color: '#fff',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
+                          }}>
+                            عرض
+                          </button>
+                        </Link>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div style={{
+                        width: '100%',
+                        height: '0.5rem',
+                        background: theme.border,
+                        borderRadius: '0.25rem',
+                        marginBottom: '0.75rem',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${analysis.successProbability}%`,
+                          height: '100%',
+                          background: analysis.successProbability >= 70 ? '#10b981' : 
+                                     analysis.successProbability >= 40 ? '#f59e0b' : '#ef4444',
+                          transition: 'width 0.3s ease'
+                        }} />
+                      </div>
+
+                      {/* Recommendations */}
+                      <div style={{
+                        background: theme.card,
+                        padding: '0.75rem',
+                        borderRadius: '0.375rem',
+                        border: `1px solid ${theme.border}`
+                      }}>
+                        <h4 style={{
+                          color: theme.text,
+                          margin: '0 0 0.5rem 0',
+                          fontSize: '0.8rem',
+                          fontWeight: 'bold'
+                        }}>
+                          التوصيات
+                        </h4>
+                        <ul style={{
+                          color: theme.text,
+                          margin: '0',
+                          padding: '0 0 0 1rem',
+                          fontSize: '0.75rem',
+                          opacity: 0.8
+                        }}>
+                          {analysis.recommendations.slice(0, 2).map((rec, index) => (
+                            <li key={index}>{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Additional Info */}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '0.75rem',
+                        fontSize: '0.7rem',
+                        color: theme.text,
+                        opacity: 0.6
+                      }}>
+                        <span>المدة: {analysis.estimatedDuration}</span>
+                        <span>التعقيد: {analysis.complexityScore.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'grid', gap: '1.5rem' }}>
               {/* الإحصائيات الأساسية */}

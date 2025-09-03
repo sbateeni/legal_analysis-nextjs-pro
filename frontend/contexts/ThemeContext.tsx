@@ -5,6 +5,7 @@ import { Theme, lightTheme, darkTheme } from '@utils/theme';
 interface ThemeContextValue {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
+  toggleTheme: () => void;
   theme: Theme;
   mounted: boolean;
 }
@@ -34,7 +35,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const theme = useMemo<Theme>(() => (darkMode ? darkTheme : lightTheme), [darkMode]);
 
-  const value = useMemo<ThemeContextValue>(() => ({ darkMode, setDarkMode, theme, mounted }), [darkMode, theme, mounted]);
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+  };
+
+  const value = useMemo<ThemeContextValue>(() => ({ darkMode, setDarkMode, toggleTheme, theme, mounted }), [darkMode, setDarkMode, toggleTheme, theme, mounted]);
 
   return (
     <ThemeContext.Provider value={value}>

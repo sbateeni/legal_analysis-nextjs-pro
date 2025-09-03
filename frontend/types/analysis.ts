@@ -68,9 +68,27 @@ export interface RateLimitInfo {
 
 // Analytics Types
 export interface AnalysisStage {
-  stageName: string;
-  result: string | null;
-  timestamp?: number;
+  id: string;
+  stageIndex: number;
+  stage: string;
+  input: string;
+  output: string;
+  date: string;
+}
+
+export interface LegalCase {
+  id: string;
+  name: string;
+  createdAt: string;
+  stages: AnalysisStage[];
+  tags?: string[];
+  status?: 'active' | 'completed' | 'archived';
+  priority?: 'low' | 'medium' | 'high';
+  caseType?: string;
+  clientName?: string;
+  courtName?: string;
+  nextHearing?: string;
+  notes?: string;
 }
 
 export interface CaseAnalysis {
@@ -94,4 +112,120 @@ export interface AnalyticsData {
   averageCaseLength: number;
   topStages: Array<{ stage: string; count: number }>;
   recentActivity: Array<{ date: string; count: number }>;
+}
+
+// Calendar Types
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string;
+  time?: string;
+  type: 'hearing' | 'deadline' | 'meeting' | 'reminder';
+  caseId?: string;
+  caseName?: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high';
+  completed?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CalendarSettings {
+  defaultView: 'month' | 'week' | 'day';
+  showWeekends: boolean;
+  workingHours: {
+    start: string;
+    end: string;
+  };
+  notifications: {
+    enabled: boolean;
+    beforeMinutes: number[];
+  };
+}
+
+// Document Types
+export interface LegalDocument {
+  id: string;
+  name: string;
+  type: 'pdf' | 'doc' | 'docx' | 'jpg' | 'jpeg' | 'png' | 'txt' | 'other';
+  size: number;
+  caseId?: string;
+  caseName?: string;
+  description?: string;
+  category: 'contract' | 'evidence' | 'correspondence' | 'legal_opinion' | 'court_document' | 'other';
+  uploadedAt: string;
+  lastModified: string;
+  tags?: string[];
+  isPublic: boolean;
+  filePath?: string;
+  mimeType?: string;
+}
+
+export interface DocumentSettings {
+  maxFileSize: number; // in bytes
+  allowedTypes: string[];
+  storageLocation: 'local' | 'cloud';
+  autoBackup: boolean;
+  compressionEnabled: boolean;
+}
+
+// أنواع البيانات للتعاون والمراجعة
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'lawyer' | 'assistant' | 'reviewer';
+  avatar?: string;
+  isOnline: boolean;
+  lastActive: string;
+}
+
+export interface CollaborationInvite {
+  id: string;
+  caseId: string;
+  caseName: string;
+  invitedBy: string;
+  invitedTo: string;
+  role: 'viewer' | 'editor' | 'reviewer';
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface CaseComment {
+  id: string;
+  caseId: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  type: 'comment' | 'suggestion' | 'question' | 'approval';
+  priority: 'low' | 'medium' | 'high';
+  isPrivate: boolean;
+  stageId?: string;
+  documentId?: string;
+  createdAt: string;
+  updatedAt: string;
+  isResolved: boolean;
+  replies?: CaseComment[];
+}
+
+export interface CaseReview {
+  id: string;
+  caseId: string;
+  reviewerId: string;
+  reviewerName: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'needs_revision';
+  feedback: string;
+  suggestions: string[];
+  rating: number;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface CollaborationSettings {
+  allowComments: boolean;
+  allowReviews: boolean;
+  requireApproval: boolean;
+  autoNotify: boolean;
+  defaultRole: 'viewer' | 'editor' | 'reviewer';
 } 

@@ -130,7 +130,23 @@ export default function MobileNav() {
           <div>📊</div>
           <div style={{fontSize:10, marginTop:2}}>التحليلات</div>
         </Link>
-        <Link href="/history" style={{color:'#fff', textAlign:'center', fontSize:20, flex:1, textDecoration:'none'}}>
+                 <Link href="/cases" style={{color:'#fff', textAlign:'center', fontSize:20, flex:1, textDecoration:'none'}}>
+           <div>📋</div>
+           <div style={{fontSize:10, marginTop:2}}>إدارة</div>
+         </Link>
+         <Link href="/calendar" style={{color:'#fff', textAlign:'center', fontSize:20, flex:1, textDecoration:'none'}}>
+           <div>📅</div>
+           <div style={{fontSize:10, marginTop:2}}>التقويم</div>
+         </Link>
+         <Link href="/documents" style={{color:'#fff', textAlign:'center', fontSize:20, flex:1, textDecoration:'none'}}>
+           <div>📁</div>
+           <div style={{fontSize:10, marginTop:2}}>المستندات</div>
+         </Link>
+         <Link href="/collaboration" style={{color:'#fff', textAlign:'center', fontSize:20, flex:1, textDecoration:'none'}}>
+           <div>🤝</div>
+           <div style={{fontSize:10, marginTop:2}}>التعاون</div>
+         </Link>
+         <Link href="/history" style={{color:'#fff', textAlign:'center', fontSize:20, flex:1, textDecoration:'none'}}>
           <div>📑</div>
           <div style={{fontSize:10, marginTop:2}}>القضايا</div>
         </Link>

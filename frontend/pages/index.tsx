@@ -4,6 +4,8 @@ import { mapApiErrorToMessage, extractApiError } from '@utils/errors';
 import { saveApiKey, loadApiKey, addCase, getAllCases, updateCase, LegalCase } from '@utils/db';
 import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
+import LandingPage from '../components/LandingPage';
+
 // تمت إزالة بطاقات المقالات
 import { exportResultsToPDF, exportResultsToDocx } from '@utils/export';
 import { loadExportPreferences } from '@utils/exportSettings';
@@ -35,6 +37,25 @@ const ALL_STAGES = [...STAGES, FINAL_STAGE];
 type PartyRole = 'المشتكي' | 'المشتكى عليه' | 'المدعي' | 'المدعى عليه';
 
 export default function Home() {
+  const [showLandingPage, setShowLandingPage] = useState(true);
+  
+  // Check if user has visited before
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('hasVisited');
+    if (hasVisited) {
+      setShowLandingPage(false);
+    }
+  }, []);
+
+  const handleSkipLanding = () => {
+    setShowLandingPage(false);
+    localStorage.setItem('hasVisited', 'true');
+  };
+
+  if (showLandingPage) {
+    return <LandingPage onSkip={handleSkipLanding} />;
+  }
+
   return <HomeContent />;
 }
 
@@ -47,6 +68,7 @@ function HomeContent() {
   const [activeTab, setActiveTab] = useState<'input' | 'stages' | 'results'>('input');
   const [mounted, setMounted] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+
   const prevApiKey = useRef("");
 
 
@@ -298,6 +320,8 @@ function HomeContent() {
 
   return (
     <>
+
+
       <div style={{
         fontFamily: 'Tajawal, Arial, sans-serif',
         direction: 'rtl',
@@ -306,7 +330,8 @@ function HomeContent() {
         color: theme.text,
         padding: 0,
         margin: 0,
-        transition: 'background 0.4s',
+        marginLeft: '0',
+        transition: 'all 0.3s ease',
       }}>
         <main style={{
           maxWidth: 800,

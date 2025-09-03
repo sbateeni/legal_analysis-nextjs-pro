@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
+import NotificationSystem from './NotificationSystem';
 
 export default function Header() {
   const { darkMode, setDarkMode } = useTheme();
@@ -34,6 +35,10 @@ export default function Header() {
           <Link href="/" style={{ color: '#fff', textDecoration: 'none' }}>🏠 الرئيسية</Link>
           <Link href="/chat" style={{ color: '#fff', textDecoration: 'none' }}>🤖 المساعد</Link>
           <Link href="/analytics" style={{ color: '#fff', textDecoration: 'none' }}>📊 التحليلات</Link>
+          <Link href="/cases" style={{ color: '#fff', textDecoration: 'none' }}>📋 إدارة القضايا</Link>
+          <Link href="/calendar" style={{ color: '#fff', textDecoration: 'none' }}>📅 التقويم</Link>
+          <Link href="/documents" style={{ color: '#fff', textDecoration: 'none' }}>📁 المستندات</Link>
+          <Link href="/collaboration" style={{ color: '#fff', textDecoration: 'none' }}>🤝 التعاون</Link>
           <Link href="/history" style={{ color: '#fff', textDecoration: 'none' }}>📑 القضايا</Link>
           <Link href="/settings" style={{ color: '#fff', textDecoration: 'none' }}>⚙️ الإعدادات</Link>
           <Link href="/about" style={{ color: '#fff', textDecoration: 'none' }}>؟ تعليمات</Link>
@@ -42,6 +47,7 @@ export default function Header() {
           <Link href="/kb" style={{ color: '#fff', textDecoration: 'none' }}>📚 قاعدة المعرفة</Link>
           <Link href="/templates" style={{ color: '#fff', textDecoration: 'none' }}>🧩 القوالب</Link>
         </nav>
+        <NotificationSystem />
         <button onClick={() => setDarkMode(!darkMode)} style={{ marginInlineStart: 8, background: 'transparent', border: '1px solid #ffffff55', color: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>{darkMode ? '🌙' : '☀️'}</button>
         {isMobile() && (
           <button onClick={() => setShowMenu(s => !s)} style={{ marginInlineStart: 8, background: 'transparent', border: '1px solid #ffffff55', color: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>☰</button>
@@ -51,8 +57,12 @@ export default function Header() {
         <div style={{ padding: '8px 12px', display: 'grid', gap: 8, background: '#4f46e5' }}>
           <Link href="/" style={{ color: '#fff', textDecoration: 'none' }}>🏠 الرئيسية</Link>
           <Link href="/chat" style={{ color: '#fff', textDecoration: 'none' }}>🤖 المساعد</Link>
-          <Link href="/analytics" style={{ color: '#fff', textDecoration: 'none' }}>📊 التحليلات</Link>
-          <Link href="/history" style={{ color: '#fff', textDecoration: 'none' }}>📑 القضايا</Link>
+                     <Link href="/analytics" style={{ color: '#fff', textDecoration: 'none' }}>📊 التحليلات</Link>
+           <Link href="/cases" style={{ color: '#fff', textDecoration: 'none' }}>📋 إدارة القضايا</Link>
+           <Link href="/calendar" style={{ color: '#fff', textDecoration: 'none' }}>📅 التقويم</Link>
+           <Link href="/documents" style={{ color: '#fff', textDecoration: 'none' }}>📁 المستندات</Link>
+           <Link href="/collaboration" style={{ color: '#fff', textDecoration: 'none' }}>🤝 التعاون</Link>
+           <Link href="/history" style={{ color: '#fff', textDecoration: 'none' }}>📑 القضايا</Link>
           <Link href="/settings" style={{ color: '#fff', textDecoration: 'none' }}>⚙️ الإعدادات</Link>
           <Link href="/about" style={{ color: '#fff', textDecoration: 'none' }}>؟ تعليمات</Link>
           <Link href="/exports" style={{ color: '#fff', textDecoration: 'none' }}>⬇️ الصادرات</Link>

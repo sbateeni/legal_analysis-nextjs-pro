@@ -68,6 +68,16 @@ export default function TemplatesPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleCopyPreview = async () => {
+    const filled = generateFilled({ id: '__preview__', name, content, createdAt: '', updatedAt: '' } as LegalTemplate);
+    try { await navigator.clipboard.writeText(filled); } catch {}
+  };
+
+  const handleExportPreview = () => {
+    const temp = { id: '__preview__', name, content, createdAt: '', updatedAt: '' } as LegalTemplate;
+    void exportTemplateAsDocx(temp);
+  };
+
   return (
     <div style={{ fontFamily:'Tajawal, Arial, sans-serif', direction:'rtl', minHeight:'100vh', background: theme.background, color: theme.text }}>
       <main style={{ maxWidth: 960, margin: '0 auto', padding: isMobile()? '1rem 0.5rem' : '2rem 1rem' }}>
@@ -94,6 +104,19 @@ export default function TemplatesPage() {
           </div>
           <label style={{display:'block', fontWeight:700, color: theme.accent2, margin:'10px 0 6px'}}>محتوى القالب</label>
           <textarea value={content} onChange={e => setContent(e.target.value)} rows={isMobile()? 10:14} style={{width:'100%', border:`1.5px solid ${theme.input}`, borderRadius:10, padding:10, fontFamily:'Tajawal, Arial, sans-serif'}} />
+          <div style={{marginTop:10, background: theme.card, border:`1px solid ${theme.border}`, borderRadius:10, padding:12}}>
+            <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+              <span>🧪</span>
+              <strong style={{color: theme.accent2}}>معاينة مباشرة</strong>
+            </div>
+            <div style={{whiteSpace:'pre-wrap', color: theme.text}}>
+              {generateFilled({ id: '__preview__', name, content, createdAt: '', updatedAt: '' } as LegalTemplate)}
+            </div>
+            <div style={{display:'flex', gap:8, marginTop:10, flexWrap:'wrap'}}>
+              <button onClick={handleCopyPreview} style={{background:'#0ea5e9', color:'#fff', border:'none', borderRadius:8, padding:'6px 10px', fontWeight:700}}>نسخ المعاينة</button>
+              <button onClick={handleExportPreview} style={{background: theme.accent, color:'#fff', border:'none', borderRadius:8, padding:'6px 10px', fontWeight:700}}>تصدير المعاينة Word</button>
+            </div>
+          </div>
           <div style={{display:'flex', gap:10, flexWrap:'wrap', marginTop:10}}>
             <button onClick={handleSave} style={{background: theme.accent2, color:'#fff', border:'none', borderRadius:8, padding:'8px 14px', fontWeight:800}}>حفظ القالب</button>
             <div style={{color:'#666', fontSize:13}}>المتغيرات المتاحة: {'{{caseName}}'}, {'{{stageSummaries}}'}</div>

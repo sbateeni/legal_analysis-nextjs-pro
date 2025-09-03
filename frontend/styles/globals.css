@@ -1,6 +1,7 @@
 /* ملف الأنماط العامة */
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=PT+Sans:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 /* متغيرات الألوان (Dark Elegant) */
 :root {
@@ -31,7 +32,7 @@ html {
 }
 
 body {
-  font-family: 'PT Sans', 'Tajawal', Arial, sans-serif;
+  font-family: 'Inter', 'Tajawal', 'PT Sans', Arial, sans-serif;
   direction: rtl;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -41,6 +42,8 @@ body {
   background: radial-gradient(1200px 800px at 80% -10%, hsl(230 30% 20% / 0.6), transparent 60%),
               radial-gradient(1200px 800px at 0% 110%, hsl(245 60% 30% / 0.35), transparent 60%),
               var(--background);
+  font-feature-settings: 'liga' 1, 'kern' 1;
+  text-rendering: optimizeLegibility;
 }
 
 /* أدوات الخطوط */
@@ -49,7 +52,12 @@ body {
   letter-spacing: 0.2px;
 }
 .font-body {
-  font-family: 'PT Sans', 'Tajawal', Arial, sans-serif;
+  font-family: 'Inter', 'Tajawal', 'PT Sans', Arial, sans-serif;
+}
+
+.font-arabic {
+  font-family: 'Tajawal', 'Inter', Arial, sans-serif;
+  font-weight: 500;
 }
 
 /* عناوين أنيقة */
