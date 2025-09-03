@@ -16,7 +16,7 @@ type KBRecord = {
 };
 
 export default function KBPage() {
-  const { theme } = useTheme();
+  const { theme, darkMode } = useTheme();
   const [q, setQ] = useState('');
   const [items, setItems] = useState<KBRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,7 +55,7 @@ export default function KBPage() {
               value={q}
               onChange={e => setQ(e.target.value)}
               placeholder="ابحث بالموضوع، الوسوم أو المصدر القانوني"
-              style={{ flex: 1, padding: 12, borderRadius: 10, border: `1px solid ${theme.border}` }}
+              style={{ flex: 1, padding: 12, borderRadius: 10, border: `1px solid ${theme.border}`, background: darkMode ? '#181a2a' : '#fff', color: theme.text }}
             />
             <button onClick={() => search(q)} style={{ padding: '12px 16px', borderRadius: 10, border: 'none', background: theme.accent2, color: '#fff', fontWeight: 700, cursor: 'pointer' }}>بحث</button>
           </div>
@@ -65,7 +65,7 @@ export default function KBPage() {
 
           <div style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             {items.map(item => (
-              <div key={item.id} className="card-ui" style={{ background: '#fff', borderColor: theme.border, padding: 16 }}>
+              <div key={item.id} className="card-ui" style={{ background: theme.resultBg, borderColor: theme.border, padding: 16, color: theme.text }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <div style={{ color: theme.accent, fontWeight: 800 }}>{item.strategy_title}</div>
                   <div style={{ fontSize: 12, opacity: 0.7 }}>{new Date(item.createdAt).toLocaleString()}</div>
@@ -84,7 +84,7 @@ export default function KBPage() {
                 {item.tags?.length > 0 && (
                   <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {item.tags.map((t, i) => (
-                      <span key={i} style={{ background: '#f3f4f6', border: `1px solid ${theme.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 12 }}>#{t}</span>
+                      <span key={i} style={{ background: theme.card, border: `1px solid ${theme.border}`, color: theme.text, borderRadius: 6, padding: '2px 8px', fontSize: 12 }}>#{t}</span>
                     ))}
                   </div>
                 )}

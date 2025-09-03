@@ -106,7 +106,7 @@ type KBRecord = {
 
 function selectRelevantKB(message: string, maxItems = 5): Array<KBRecord> {
   try {
-    const kbPath = path.join(process.cwd(), 'frontend', 'data', 'legal_kb.json');
+    const kbPath = path.join(process.cwd(), 'data', 'legal_kb.json');
     const raw = fs.readFileSync(kbPath, 'utf8');
     const parsed = JSON.parse(raw) as { records: KBRecord[] };
     const q = message.toLowerCase();

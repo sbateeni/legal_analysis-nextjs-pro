@@ -39,6 +39,8 @@ export default function Header() {
           <Link href="/about" style={{ color: '#fff', textDecoration: 'none' }}>؟ تعليمات</Link>
           <Link href="/exports" style={{ color: '#fff', textDecoration: 'none' }}>⬇️ الصادرات</Link>
           <Link href="/reference-checker" style={{ color: '#fff', textDecoration: 'none' }}>🔍 المدقق المرجعي</Link>
+          <Link href="/kb" style={{ color: '#fff', textDecoration: 'none' }}>📚 قاعدة المعرفة</Link>
+          <Link href="/templates" style={{ color: '#fff', textDecoration: 'none' }}>🧩 القوالب</Link>
         </nav>
         <button onClick={() => setDarkMode(!darkMode)} style={{ marginInlineStart: 8, background: 'transparent', border: '1px solid #ffffff55', color: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer' }}>{darkMode ? '🌙' : '☀️'}</button>
         {isMobile() && (
@@ -55,6 +57,9 @@ export default function Header() {
           <Link href="/about" style={{ color: '#fff', textDecoration: 'none' }}>؟ تعليمات</Link>
           <Link href="/exports" style={{ color: '#fff', textDecoration: 'none' }}>⬇️ الصادرات</Link>
           <Link href="/reference-checker" style={{ color: '#fff', textDecoration: 'none' }}>🔍 المدقق المرجعي</Link>
+          <Link href="/kb" style={{ color: '#fff', textDecoration: 'none' }}>📚 قاعدة المعرفة</Link>
+          <Link href="/templates" style={{ color: '#fff', textDecoration: 'none' }}>🧩 القوالب</Link>
+          <Link href="/privacy" style={{ color: '#fff', textDecoration: 'none' }}>🔐 الخصوصية</Link>
         </div>
       )}
     </header>

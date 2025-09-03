@@ -23,7 +23,7 @@ type KBFile = {
   records: KBRecord[];
 };
 
-const KB_PATH = path.join(process.cwd(), 'frontend', 'data', 'legal_kb.json');
+const KB_PATH = path.join(process.cwd(), 'data', 'legal_kb.json');
 
 function readKB(): KBFile {
   const raw = fs.readFileSync(KB_PATH, 'utf8');
