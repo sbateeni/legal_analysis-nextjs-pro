@@ -15,6 +15,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
     satisfactionRate: 0
   });
 
+  // الحصول على الألوان المخصصة للعناصر
+  const getElementColors = () => {
+    if (darkMode) {
+      return {
+        gradient1: `linear-gradient(135deg, ${theme.card} 0%, ${theme.border} 100%)`,
+        gradient2: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
+        gradient3: `linear-gradient(135deg, ${theme.card} 0%, ${theme.input} 100%)`,
+        accentGradient: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`
+      };
+    } else {
+      return {
+        gradient1: `linear-gradient(135deg, ${theme.card} 0%, ${theme.border} 100%)`,
+        gradient2: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`,
+        gradient3: `linear-gradient(135deg, ${theme.card} 0%, ${theme.input} 100%)`,
+        accentGradient: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`
+      };
+    }
+  };
+
+  const elementColors = getElementColors();
+
   // Animate stats on component mount
   useEffect(() => {
     const animateStats = () => {
@@ -114,8 +135,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         fontFamily: 'Tajawal, Inter, Arial, sans-serif',
         direction: 'rtl',
         lineHeight: 1.6,
-        background: 'linear-gradient(135deg, #e0e7ff 0%, #f7f7fa 100%)',
-        color: '#222',
+        background: theme.background,
+        color: theme.text,
         minHeight: '100vh'
       }}>
         <div style={{ padding: '2rem', textAlign: 'center' }}>
@@ -374,7 +395,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .logo-text {
           font-size: 1.5rem;
           font-weight: 700;
-          background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+          background: ${elementColors.accentGradient};
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -398,7 +419,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         }
 
         .skip-btn {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: ${elementColors.accentGradient};
           color: white;
           border: none;
           padding: 12px 24px;
@@ -410,7 +431,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
 
         .skip-btn:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+          box-shadow: 0 8px 20px ${theme.shadow};
         }
 
         .theme-toggle {
@@ -455,7 +476,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
 
         /* Hero Section */
         .hero-section {
-          background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+          background: ${elementColors.gradient3};
           min-height: 100vh;
           display: flex;
           align-items: center;
@@ -494,7 +515,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
           font-size: 3.5rem;
           font-weight: 800;
           margin-bottom: 24px;
-          background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+          background: ${elementColors.accentGradient};
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -503,7 +524,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
 
         .hero-subtitle {
           font-size: 1.25rem;
-          color: rgba(255, 255, 255, 0.9);
+          color: ${theme.text};
           margin-bottom: 40px;
           line-height: 1.8;
         }
@@ -526,15 +547,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: ${elementColors.accentGradient};
           color: white;
           border: none;
-          box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+          box-shadow: 0 8px 24px ${theme.shadow};
         }
 
         .btn-primary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4);
+          box-shadow: 0 12px 32px ${theme.shadow};
         }
 
         .btn-secondary {
@@ -616,7 +637,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
 
         /* Stats Section */
         .stats-section {
-          background: ${darkMode ? 'linear-gradient(135deg, #232946 0%, #393e5c 100%)' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'};
+          background: ${elementColors.gradient1};
           padding: 80px 0;
           color: ${theme.text};
         }
@@ -644,13 +665,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .stat-number {
           font-size: 3rem;
           font-weight: 800;
-          color: #6366f1;
+          color: ${theme.accent};
           margin-bottom: 12px;
         }
 
         .stat-label {
           font-size: 1.1rem;
-          color: #64748b;
+          color: ${theme.text};
+          opacity: 0.8;
           font-weight: 600;
         }
 
@@ -669,13 +691,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .section-title {
           font-size: 2.5rem;
           font-weight: 800;
-          color: #1e293b;
+          color: ${theme.text};
           margin-bottom: 16px;
         }
 
         .section-subtitle {
           font-size: 1.2rem;
-          color: #64748b;
+          color: ${theme.text};
+          opacity: 0.8;
           max-width: 600px;
           margin: 0 auto;
         }
@@ -700,7 +723,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .service-card:hover {
           transform: translateY(-8px);
           box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-          border-color: #6366f1;
+          border-color: ${theme.accent};
         }
 
         .service-icon {
@@ -711,19 +734,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .service-title {
           font-size: 1.5rem;
           font-weight: 700;
-          color: #1e293b;
+          color: ${theme.text};
           margin-bottom: 16px;
         }
 
         .service-description {
-          color: #64748b;
+          color: ${theme.text};
+          opacity: 0.8;
           line-height: 1.7;
         }
 
         /* Features Section */
         .features-section {
           padding: 100px 0;
-          background: ${darkMode ? 'linear-gradient(135deg, #232946 0%, #393e5c 100%)' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'};
+          background: ${elementColors.gradient1};
           color: ${theme.text};
         }
 
@@ -756,19 +780,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .feature-title {
           font-size: 1.5rem;
           font-weight: 700;
-          color: #1e293b;
+          color: ${theme.text};
           margin-bottom: 16px;
         }
 
         .feature-description {
-          color: #64748b;
+          color: ${theme.text};
+          opacity: 0.8;
           line-height: 1.7;
         }
 
         /* CTA Section */
         .cta-section {
           padding: 100px 0;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: ${elementColors.accentGradient};
           text-align: center;
         }
 
@@ -813,7 +838,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
           font-size: 2rem;
           width: 60px;
           height: 60px;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: ${elementColors.accentGradient};
           border-radius: 12px;
           display: flex;
           align-items: center;
@@ -823,12 +848,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .contact-details h4 {
           font-size: 1.2rem;
           font-weight: 700;
-          color: #1e293b;
+          color: ${theme.text};
           margin-bottom: 8px;
         }
 
         .contact-details p {
-          color: #64748b;
+          color: ${theme.text};
+          opacity: 0.8;
         }
 
         .contact-form {
@@ -859,7 +885,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .form-group input:focus,
         .form-group textarea:focus {
           outline: none;
-          border-color: #6366f1;
+          border-color: ${theme.accent};
         }
 
         /* Responsive Design */
