@@ -6,14 +6,14 @@ import { useTheme } from '../contexts/ThemeContext';
 interface SidebarItem {
   id: string;
   label: string;
-  icon: string;
+  icon: keyof typeof IconComponents;
   href: string;
   isActive?: boolean;
 }
 
 const ElegantSidebar: React.FC = () => {
   const router = useRouter();
-  const { darkMode, setDarkMode } = useTheme();
+  const { darkMode, setDarkMode, theme, colorScheme } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -22,83 +22,188 @@ const ElegantSidebar: React.FC = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
+  // الحصول على الألوان المخصصة للعناصر
+  const getElementColors = () => {
+    return {
+      sidebarGradient: `linear-gradient(180deg, ${theme.card} 0%, ${theme.border} 30%, ${theme.input} 70%, ${theme.background} 100%)`,
+      logoGradient: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 50%, ${theme.accent} 100%)`,
+      activeGradient: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 50%, ${theme.accent} 100%)`,
+      buttonGradient: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`
+    };
+  };
+
+  const elementColors = getElementColors();
+
+  // مكونات الأيقونات الجميلة
+  const IconComponents = {
+    dashboard: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+      </svg>
+    ),
+    analytics: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M3 3v18h18"/>
+        <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+      </svg>
+    ),
+    documents: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14,2 14,8 20,8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10,9 9,9 8,9"/>
+      </svg>
+    ),
+    cases: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+    ),
+    chat: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    ),
+    calendar: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    ),
+    collaboration: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    ),
+    templates: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14,2 14,8 20,8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10,9 9,9 8,9"/>
+      </svg>
+    ),
+    exports: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7,10 12,15 17,10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+    ),
+    history: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12,6 12,12 16,14"/>
+      </svg>
+    ),
+    'reference-checker': () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+    ),
+    kb: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+    ),
+    settings: () => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    )
+  };
+
   const sidebarItems: SidebarItem[] = [
     {
       id: 'dashboard',
       label: 'الرئيسية',
-      icon: '🏠',
+      icon: 'dashboard',
       href: '/',
     },
     {
       id: 'analytics',
       label: 'التحليلات',
-      icon: '📊',
+      icon: 'analytics',
       href: '/analytics',
     },
     {
       id: 'documents',
       label: 'المستندات',
-      icon: '📄',
+      icon: 'documents',
       href: '/documents',
     },
     {
       id: 'cases',
       label: 'القضايا',
-      icon: '⚖️',
+      icon: 'cases',
       href: '/cases',
     },
     {
       id: 'chat',
       label: 'المحادثة',
-      icon: '💬',
+      icon: 'chat',
       href: '/chat',
     },
     {
       id: 'calendar',
       label: 'التقويم',
-      icon: '📅',
+      icon: 'calendar',
       href: '/calendar',
     },
     {
       id: 'collaboration',
       label: 'التعاون',
-      icon: '👥',
+      icon: 'collaboration',
       href: '/collaboration',
     },
     {
       id: 'templates',
       label: 'القوالب',
-      icon: '📋',
+      icon: 'templates',
       href: '/templates',
     },
     {
       id: 'exports',
       label: 'التصدير',
-      icon: '📤',
+      icon: 'exports',
       href: '/exports',
     },
     {
       id: 'history',
       label: 'السجل',
-      icon: '🕒',
+      icon: 'history',
       href: '/history',
     },
     {
       id: 'reference-checker',
       label: 'فحص المراجع',
-      icon: '🔍',
+      icon: 'reference-checker',
       href: '/reference-checker',
     },
     {
       id: 'kb',
       label: 'قاعدة المعرفة',
-      icon: '📚',
+      icon: 'kb',
       href: '/kb',
     },
     {
       id: 'settings',
       label: 'الإعدادات',
-      icon: '⚙️',
+      icon: 'settings',
       href: '/settings',
     },
   ];
@@ -242,7 +347,7 @@ const ElegantSidebar: React.FC = () => {
                 className={`nav-link ${isActiveItem(item.href) ? 'active' : ''}`}
                 title={isCollapsed ? item.label : undefined}
               >
-                <span className="nav-icon">{item.icon}</span>
+                <span className="nav-icon">{IconComponents[item.icon]()}</span>
                 {!isCollapsed && <span className="nav-label">{item.label}</span>}
               </Link>
             </li>
@@ -269,9 +374,9 @@ const ElegantSidebar: React.FC = () => {
           position: relative;
           width: 300px;
           height: 100vh;
-          background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 30%, #16213e 70%, #0f1419 100%);
-          border-left: 1px solid rgba(99, 102, 241, 0.2);
-          box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4), -4px 0 16px rgba(99, 102, 241, 0.1);
+          background: ${elementColors.sidebarGradient};
+          border-left: 1px solid ${theme.border};
+          box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4), -4px 0 16px ${theme.shadow};
           display: flex;
           flex-direction: column;
           z-index: 100;
@@ -296,7 +401,7 @@ const ElegantSidebar: React.FC = () => {
           display: flex;
           align-items: center;
           gap: 12px;
-          color: #ffffff;
+          color: ${theme.text};
         }
 
         .sidebar-logo-collapsed {
@@ -315,7 +420,7 @@ const ElegantSidebar: React.FC = () => {
           font-size: 20px;
           font-weight: 800;
           letter-spacing: 0.8px;
-          background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #6366f1 100%);
+          background: ${elementColors.logoGradient};
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -343,7 +448,8 @@ const ElegantSidebar: React.FC = () => {
           align-items: center;
           gap: 18px;
           padding: 16px 20px;
-          color: rgba(255, 255, 255, 0.85);
+          color: ${theme.text};
+          opacity: 0.85;
           text-decoration: none;
           border-radius: 16px;
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -368,7 +474,7 @@ const ElegantSidebar: React.FC = () => {
         }
 
         .nav-link:hover {
-          color: #ffffff;
+          color: ${theme.text};
           background: rgba(255, 255, 255, 0.1);
           transform: translateX(-6px) scale(1.02);
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(99, 102, 241, 0.2);
@@ -379,10 +485,10 @@ const ElegantSidebar: React.FC = () => {
         }
 
         .nav-link.active {
-          color: #ffffff;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+          color: ${theme.text};
+          background: ${elementColors.activeGradient};
           box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4), 0 4px 12px rgba(139, 92, 246, 0.3);
-          border-left: 5px solid #ffffff;
+          border-left: 5px solid ${theme.text};
           transform: translateX(-2px);
         }
 
@@ -413,9 +519,10 @@ const ElegantSidebar: React.FC = () => {
           width: 100%;
           padding: 14px 18px;
           background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(99, 102, 241, 0.2);
+          border: 1px solid ${theme.border};
           border-radius: 12px;
-          color: rgba(255, 255, 255, 0.9);
+          color: ${theme.text};
+          opacity: 0.9;
           cursor: pointer;
           transition: all 0.4s ease;
           font-size: 15px;
@@ -426,7 +533,7 @@ const ElegantSidebar: React.FC = () => {
 
         .theme-toggle-btn:hover {
           background: rgba(99, 102, 241, 0.15);
-          color: #ffffff;
+          color: ${theme.text};
           transform: translateY(-2px);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(99, 102, 241, 0.2);
           border-color: rgba(99, 102, 241, 0.4);
@@ -445,8 +552,8 @@ const ElegantSidebar: React.FC = () => {
 
         .sidebar-footer {
           padding: 24px;
-          border-top: 1px solid rgba(99, 102, 241, 0.2);
-          background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%);
+          border-top: 1px solid ${theme.border};
+          background: linear-gradient(135deg, ${theme.border}20 0%, ${theme.input}20 100%);
           backdrop-filter: blur(10px);
         }
 
@@ -457,9 +564,10 @@ const ElegantSidebar: React.FC = () => {
           width: 100%;
           padding: 14px 18px;
           background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(99, 102, 241, 0.2);
+          border: 1px solid ${theme.border};
           border-radius: 12px;
-          color: rgba(255, 255, 255, 0.9);
+          color: ${theme.text};
+          opacity: 0.9;
           cursor: pointer;
           transition: all 0.4s ease;
           font-size: 15px;
@@ -469,7 +577,7 @@ const ElegantSidebar: React.FC = () => {
 
         .collapse-btn:hover {
           background: rgba(99, 102, 241, 0.15);
-          color: #ffffff;
+          color: ${theme.text};
           transform: translateY(-2px);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(99, 102, 241, 0.2);
           border-color: rgba(99, 102, 241, 0.4);
@@ -699,7 +807,7 @@ const ElegantSidebar: React.FC = () => {
           top: 20px;
           right: 20px;
           z-index: 1001;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: ${elementColors.buttonGradient};
           color: white;
           border: none;
           border-radius: 12px;
