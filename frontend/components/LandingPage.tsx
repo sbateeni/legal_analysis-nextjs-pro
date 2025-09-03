@@ -665,7 +665,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .stat-number {
           font-size: 3rem;
           font-weight: 800;
-          color: ${theme.accent};
+          color: ${darkMode ? 'white' : 'black'};
           margin-bottom: 12px;
         }
 
