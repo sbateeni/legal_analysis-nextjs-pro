@@ -41,15 +41,24 @@ export default function Home() {
   
   // Check if user has visited before
   useEffect(() => {
-    const hasVisited = localStorage.getItem('hasVisited');
-    if (hasVisited) {
-      setShowLandingPage(false);
+    try {
+      const hasVisited = localStorage.getItem('hasVisited');
+      if (hasVisited) {
+        setShowLandingPage(false);
+      }
+    } catch (error) {
+      // إذا فشل الوصول إلى localStorage، نعرض الصفحة الأولى
+      console.warn('Failed to access localStorage:', error);
     }
   }, []);
 
   const handleSkipLanding = () => {
     setShowLandingPage(false);
-    localStorage.setItem('hasVisited', 'true');
+    try {
+      localStorage.setItem('hasVisited', 'true');
+    } catch (error) {
+      console.warn('Failed to save to localStorage:', error);
+    }
   };
 
   if (showLandingPage) {

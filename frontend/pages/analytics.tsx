@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases, getAllEvents, getAllDocuments } from '@utils/db';
+import { getAllCases } from '@utils/db';
 import Link from 'next/link';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
@@ -615,10 +615,10 @@ function AnalyticsPageContent() {
         )}
 
         {error && (
-          <div className="card-panel" style={{ padding: '1.5rem', background: '#fef2f2', borderColor: '#fecaca', color: '#dc2626', textAlign: 'center' }}>
+          <div className="card-panel" style={{ padding: '1.5rem', background: theme.errorBg, borderColor: theme.errorText, color: theme.errorText, textAlign: 'center' }}>
             <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>❌</div>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#dc2626' }}>حدث خطأ في تحليل البيانات</h3>
-            <p style={{ margin: '0 0 1.5rem 0', color: '#dc2626' }}>{error}</p>
+            <h3 style={{ margin: '0 0 1rem 0', color: theme.errorText }}>حدث خطأ في تحليل البيانات</h3>
+            <p style={{ margin: '0 0 1.5rem 0', color: theme.errorText }}>{error}</p>
             <button 
               onClick={fetchAnalytics}
               disabled={loading}
@@ -638,10 +638,10 @@ function AnalyticsPageContent() {
         )}
 
         {analytics && analytics.totalCases === 0 && analytics.note && (
-          <div className="card-panel" style={{ background: '#fef3c7', borderColor: '#fbbf24', textAlign: 'center', padding: '2rem' }}>
+          <div className="card-panel" style={{ background: darkMode ? '#3a2a0a' : '#fef3c7', borderColor: darkMode ? '#92400e' : '#fbbf24', textAlign: 'center', padding: '2rem' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
-            <h3 style={{ color: '#92400e', marginBottom: '1rem' }}>لا توجد بيانات للتحليل حالياً</h3>
-            <p style={{ color: '#92400e', marginBottom: '1.5rem' }}>
+            <h3 style={{ color: darkMode ? '#fbbf24' : '#92400e', marginBottom: '1rem' }}>لا توجد بيانات للتحليل حالياً</h3>
+            <p style={{ color: darkMode ? '#fbbf24' : '#92400e', marginBottom: '1.5rem' }}>
               {analytics.note}
             </p>
                           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -652,9 +652,9 @@ function AnalyticsPageContent() {
                   🤖 بدء محادثة جديدة
                 </Link>
               </div>
-            <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fef3c7', borderRadius: '0.5rem', border: '1px solid #f59e0b' }}>
-              <h4 style={{ color: '#92400e', margin: '0 0 0.5rem 0' }}>💡 ما يمكنك رؤيته في التحليلات:</h4>
-              <ul style={{ color: '#92400e', textAlign: 'right', margin: 0, paddingRight: '1rem' }}>
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: darkMode ? '#3a2a0a' : '#fef3c7', borderRadius: '0.5rem', border: `1px solid ${darkMode ? '#92400e' : '#f59e0b'}` }}>
+              <h4 style={{ color: darkMode ? '#fbbf24' : '#92400e', margin: '0 0 0.5rem 0' }}>💡 ما يمكنك رؤيته في التحليلات:</h4>
+              <ul style={{ color: darkMode ? '#fbbf24' : '#92400e', textAlign: 'right', margin: 0, paddingRight: '1rem' }}>
                 <li>إجمالي عدد القضايا المحللة</li>
                 <li>أنواع القضايا الأكثر شيوعاً</li>
                 <li>معدل النجاح في إكمال التحليل</li>
@@ -894,7 +894,7 @@ function AnalyticsPageContent() {
                 }}>
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📈</div>
                   <h3 style={{ margin: '0 0 0.5rem 0', color: theme.text }}>معدل النجاح</h3>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: darkMode ? '#10b981' : '#059669' }}>
                     {analytics.successRate}%
                   </div>
                 </div>
@@ -908,7 +908,7 @@ function AnalyticsPageContent() {
                 }}>
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎯</div>
                   <h3 style={{ margin: '0 0 0.5rem 0', color: theme.text }}>متوسط الإنجاز</h3>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: darkMode ? '#fbbf24' : '#d97706' }}>
                     {analytics.averageStagesCompleted}%
                   </div>
                 </div>

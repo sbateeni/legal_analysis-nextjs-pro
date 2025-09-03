@@ -290,7 +290,7 @@ function SettingsPageContent() {
            </p>
            
            {/* شرح المظهر والخصوصية */}
-           <div style={{marginTop: 16, padding: '12px 16px', background: '#fef3c7', borderRadius: 8, border: '1px solid #f59e0b', fontSize: 14, lineHeight: 1.6, color: '#92400e'}}>
+           <div style={{marginTop: 16, padding: '12px 16px', background: darkMode ? '#3a2a0a' : '#fef3c7', borderRadius: 8, border: `1px solid ${darkMode ? '#92400e' : '#f59e0b'}`, fontSize: 14, lineHeight: 1.6, color: darkMode ? '#fbbf24' : '#92400e'}}>
              <h4 style={{margin: '0 0 8px 0', fontSize: 16}}>🎨 شرح المظهر والخصوصية:</h4>
              <p style={{margin: '4px 0'}}><strong>الوضع الفاتح/الليلي:</strong> اختر المظهر المناسب لعينيك، الوضع الليلي أفضل للاستخدام في الظلام.</p>
              <p style={{margin: '4px 0'}}><strong>الخصوصية:</strong> جميع بياناتك محفوظة محلياً على جهازك فقط، لا نرسل أي شيء لخوادم خارجية.</p>
@@ -319,7 +319,7 @@ function SettingsPageContent() {
            </div>
            
            {/* شرح القضايا */}
-           <div style={{marginTop: 16, padding: '12px 16px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #22c55e', fontSize: 14, lineHeight: 1.6, color: '#166534'}}>
+           <div style={{marginTop: 16, padding: '12px 16px', background: darkMode ? '#0f2a1a' : '#f0fdf4', borderRadius: 8, border: `1px solid ${darkMode ? '#16a34a' : '#22c55e'}`, fontSize: 14, lineHeight: 1.6, color: darkMode ? '#4ade80' : '#166534'}}>
              <h4 style={{margin: '0 0 8px 0', fontSize: 16}}>📋 شرح إدارة القضايا:</h4>
              <p style={{margin: '4px 0'}}><strong>تصدير القضايا:</strong> يحفظ جميع قضاياك في ملف JSON يمكنك الاحتفاظ به كنسخة احتياطية.</p>
              <p style={{margin: '4px 0'}}><strong>استيراد قضايا:</strong> يمكنك استعادة قضاياك من ملف JSON محفوظ مسبقاً أو نقلها لجهاز آخر.</p>
@@ -336,7 +336,7 @@ function SettingsPageContent() {
           </div>
           
           {/* شرح النماذج */}
-          <div style={{marginBottom: 16, padding: '12px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0'}}>
+          <div style={{marginBottom: 16, padding: '12px 16px', background: darkMode ? '#1e293b' : '#f8fafc', borderRadius: 8, border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`}}>
             <h4 style={{margin: '0 0 8px 0', color: theme.accent2, fontSize: 16}}>🤖 اختيار نموذج الذكاء الاصطناعي:</h4>
             <div style={{fontSize: 14, lineHeight: 1.6, color: '#4a5568'}}>
               <p style={{margin: '4px 0'}}><strong>gemini-1.5-flash</strong> ⭐ <span style={{color: '#10b981'}}>مجاني</span> - سريع ومناسب لمعظم الاستخدامات</p>
@@ -347,9 +347,9 @@ function SettingsPageContent() {
           </div>
 
           {/* شرح حد الطلبات */}
-          <div style={{marginBottom: 16, padding: '12px 16px', background: '#fef3c7', borderRadius: 8, border: '1px solid #f59e0b'}}>
-            <h4 style={{margin: '0 0 8px 0', color: '#92400e', fontSize: 16}}>⚡ حد الطلبات في الدقيقة:</h4>
-            <div style={{fontSize: 14, lineHeight: 1.6, color: '#92400e'}}>
+          <div style={{marginBottom: 16, padding: '12px 16px', background: darkMode ? '#3a2a0a' : '#fef3c7', borderRadius: 8, border: `1px solid ${darkMode ? '#92400e' : '#f59e0b'}`}}>
+            <h4 style={{margin: '0 0 8px 0', color: darkMode ? '#fbbf24' : '#92400e', fontSize: 16}}>⚡ حد الطلبات في الدقيقة:</h4>
+            <div style={{fontSize: 14, lineHeight: 1.6, color: darkMode ? '#fbbf24' : '#92400e'}}>
               <p style={{margin: '4px 0'}}><strong>الرقم 10</strong> يعني: 10 طلبات في الدقيقة الواحدة</p>
               <p style={{margin: '4px 0'}}><strong>الرقم المناسب:</strong></p>
               <ul style={{margin: '4px 0', paddingRight: 16}}>
@@ -381,7 +381,7 @@ function SettingsPageContent() {
           </div>
           
           {/* معلومات إضافية */}
-          <div style={{marginTop: 12, padding: '8px 12px', background: '#ecfdf5', borderRadius: 6, border: '1px solid #10b981', fontSize: 13, color: '#065f46'}}>
+          <div style={{marginTop: 12, padding: '8px 12px', background: darkMode ? '#0f2a1a' : '#ecfdf5', borderRadius: 6, border: `1px solid ${darkMode ? '#16a34a' : '#10b981'}`, fontSize: 13, color: darkMode ? '#4ade80' : '#065f46'}}>
             <strong>ℹ️ ملاحظة:</strong> التكلفة تعتمد على عدد الطلبات ونوع النموذج. gemini-1.5-flash مجاني تماماً، بينما النماذج الأخرى تتطلب رصيد مدفوع من Google.
           </div>
         </div>
