@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases, getAllEvents, getUpcomingEvents } from '@utils/db';
+import { getAllCases, getAllEvents } from '@utils/db';
 import AddEventModal from '../components/AddEventModal';
 import Link from 'next/link';
 
@@ -42,40 +42,18 @@ interface CalendarEvent {
   completed?: boolean;
 }
 
-const lightTheme = {
-  background: 'linear-gradient(135deg, #e0e7ff 0%, #f7f7fa 100%)',
-  card: '#fff',
-  border: '#e0e7ff',
-  accent: '#4f46e5',
-  accent2: '#6366f1',
-  text: '#222',
-  shadow: '#6366f122',
-  resultBg: 'linear-gradient(135deg, #f5f7ff 0%, #e0e7ff 100%)',
-};
 
-const darkTheme = {
-  background: 'linear-gradient(135deg, #232946 0%, #16161a 100%)',
-  card: '#232946',
-  border: '#393e5c',
-  accent: '#a3a8f0',
-  accent2: '#6366f1',
-  text: '#f7f7fa',
-  shadow: '#23294655',
-  resultBg: 'linear-gradient(135deg, #232946 0%, #393e5c 100%)',
-};
 
 export default function CalendarPage() {
   return <CalendarPageContent />;
 }
 
 function CalendarPageContent() {
-  const { theme, darkMode } = useTheme();
-  const [cases, setCases] = useState<LegalCase[]>([]);
+  const { theme } = useTheme();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [selectedDateString, setSelectedDateString] = useState<string>('');
 
@@ -181,10 +159,7 @@ function CalendarPageContent() {
     });
   };
 
-  const getEventsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return events.filter(event => event.date === dateStr);
-  };
+
 
   const getUpcomingEvents = () => {
     const today = new Date();

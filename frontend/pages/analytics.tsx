@@ -35,37 +35,7 @@ interface LegalCase {
   notes?: string;
 }
 
-interface CalendarEvent {
-  id: string;
-  title: string;
-  date: string;
-  time?: string;
-  type: 'hearing' | 'deadline' | 'meeting' | 'reminder';
-  caseId?: string;
-  caseName?: string;
-  description?: string;
-  priority: 'low' | 'medium' | 'high';
-  completed?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
-interface LegalDocument {
-  id: string;
-  name: string;
-  type: 'pdf' | 'doc' | 'docx' | 'jpg' | 'jpeg' | 'png' | 'txt' | 'other';
-  size: number;
-  caseId?: string;
-  caseName?: string;
-  description?: string;
-  category: 'contract' | 'evidence' | 'correspondence' | 'legal_opinion' | 'court_document' | 'other';
-  uploadedAt: string;
-  lastModified: string;
-  tags?: string[];
-  isPublic: boolean;
-  filePath?: string;
-  mimeType?: string;
-}
 
 interface PredictiveAnalysis {
   caseId: string;
@@ -638,10 +608,10 @@ function AnalyticsPageContent() {
         )}
 
         {analytics && analytics.totalCases === 0 && analytics.note && (
-          <div className="card-panel" style={{ background: darkMode ? '#3a2a0a' : '#fef3c7', borderColor: darkMode ? '#92400e' : '#fbbf24', textAlign: 'center', padding: '2rem' }}>
+          <div className="card-panel" style={{ background: '#fef3c7', borderColor: '#fbbf24', textAlign: 'center', padding: '2rem' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
-            <h3 style={{ color: darkMode ? '#fbbf24' : '#92400e', marginBottom: '1rem' }}>لا توجد بيانات للتحليل حالياً</h3>
-            <p style={{ color: darkMode ? '#fbbf24' : '#92400e', marginBottom: '1.5rem' }}>
+            <h3 style={{ color: '#92400e', marginBottom: '1rem' }}>لا توجد بيانات للتحليل حالياً</h3>
+            <p style={{ color: '#92400e', marginBottom: '1.5rem' }}>
               {analytics.note}
             </p>
                           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -652,9 +622,9 @@ function AnalyticsPageContent() {
                   🤖 بدء محادثة جديدة
                 </Link>
               </div>
-            <div style={{ marginTop: '1.5rem', padding: '1rem', background: darkMode ? '#3a2a0a' : '#fef3c7', borderRadius: '0.5rem', border: `1px solid ${darkMode ? '#92400e' : '#f59e0b'}` }}>
-              <h4 style={{ color: darkMode ? '#fbbf24' : '#92400e', margin: '0 0 0.5rem 0' }}>💡 ما يمكنك رؤيته في التحليلات:</h4>
-              <ul style={{ color: darkMode ? '#fbbf24' : '#92400e', textAlign: 'right', margin: 0, paddingRight: '1rem' }}>
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fef3c7', borderRadius: '0.5rem', border: '1px solid #f59e0b' }}>
+              <h4 style={{ color: '#92400e', margin: '0 0 0.5rem 0' }}>💡 ما يمكنك رؤيته في التحليلات:</h4>
+              <ul style={{ color: '#92400e', textAlign: 'right', margin: 0, paddingRight: '1rem' }}>
                 <li>إجمالي عدد القضايا المحللة</li>
                 <li>أنواع القضايا الأكثر شيوعاً</li>
                 <li>معدل النجاح في إكمال التحليل</li>

@@ -8,24 +8,6 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
   const { toggleTheme, darkMode, theme, mounted } = useTheme();
-
-  // تجنب hydration mismatch
-  if (!mounted) {
-    return (
-      <div style={{
-        fontFamily: 'Tajawal, Inter, Arial, sans-serif',
-        direction: 'rtl',
-        lineHeight: 1.6,
-        background: 'linear-gradient(135deg, #e0e7ff 0%, #f7f7fa 100%)',
-        color: '#222',
-        minHeight: '100vh'
-      }}>
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
-          جاري التحميل...
-        </div>
-      </div>
-    );
-  }
   const [stats, setStats] = useState({
     casesAnalyzed: 0,
     users: 0,
@@ -124,6 +106,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
       description: 'حماية كاملة لبياناتك مع تشفير متقدم وخصوصية مضمونة'
     }
   ];
+
+  // تجنب hydration mismatch
+  if (!mounted) {
+    return (
+      <div style={{
+        fontFamily: 'Tajawal, Inter, Arial, sans-serif',
+        direction: 'rtl',
+        lineHeight: 1.6,
+        background: 'linear-gradient(135deg, #e0e7ff 0%, #f7f7fa 100%)',
+        color: '#222',
+        minHeight: '100vh'
+      }}>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          جاري التحميل...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="landing-page">

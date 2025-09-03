@@ -94,7 +94,7 @@ export default function NotificationSystem() {
               newNotifications.push({
                 id: `notification-${event.id}-${minutes}`,
                 title: getNotificationTitle(event, minutes),
-                message: getNotificationMessage(event, minutes),
+                message: getNotificationMessage(event),
                 type: getNotificationType(event, minutes),
                 eventId: event.id,
                 timestamp: now.getTime(),
@@ -133,7 +133,7 @@ export default function NotificationSystem() {
     }
   };
 
-  const getNotificationMessage = (event: CalendarEvent, minutes: number): string => {
+  const getNotificationMessage = (event: CalendarEvent): string => {
     let message = event.title;
     if (event.caseName) {
       message += ` - ${event.caseName}`;

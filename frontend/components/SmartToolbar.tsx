@@ -21,7 +21,7 @@ interface NavigationItem {
 export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToolbarProps) {
   const { theme } = useTheme();
   const router = useRouter();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteItems, setFavoriteItems] = useState<string[]>([]);
 

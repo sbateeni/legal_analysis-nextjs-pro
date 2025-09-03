@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getAllCases, updateCase, getDocumentsByCase } from '@utils/db';
-import { exportResultsToPDF, exportResultsToDocx } from '@utils/export';
+import { exportResultsToPDF } from '@utils/export';
 import Link from 'next/link';
 
 // تعريف أنواع البيانات
@@ -47,27 +47,7 @@ interface LegalDocument {
   mimeType?: string;
 }
 
-const lightTheme = {
-  background: 'linear-gradient(135deg, #e0e7ff 0%, #f7f7fa 100%)',
-  card: '#fff',
-  border: '#e0e7ff',
-  accent: '#4f46e5',
-  accent2: '#6366f1',
-  text: '#222',
-  shadow: '#6366f122',
-  resultBg: 'linear-gradient(135deg, #f5f7ff 0%, #e0e7ff 100%)',
-};
 
-const darkTheme = {
-  background: 'linear-gradient(135deg, #232946 0%, #16161a 100%)',
-  card: '#232946',
-  border: '#393e5c',
-  accent: '#a3a8f0',
-  accent2: '#6366f1',
-  text: '#f7f7fa',
-  shadow: '#23294655',
-  resultBg: 'linear-gradient(135deg, #232946 0%, #393e5c 100%)',
-};
 
 export default function CaseDetailPage() {
   return <CaseDetailPageContent />;
@@ -76,7 +56,7 @@ export default function CaseDetailPage() {
 function CaseDetailPageContent() {
   const router = useRouter();
   const { id } = router.query;
-  const { theme, darkMode } = useTheme();
+  const { theme } = useTheme();
   const [caseItem, setCaseItem] = useState<LegalCase | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);

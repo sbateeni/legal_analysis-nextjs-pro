@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases, getAllEvents, getAllDocuments, getAllTeamMembers, getAllInvites, getAllComments, getAllReviews } from '@utils/db';
-import Link from 'next/link';
+import { getAllCases, getAllTeamMembers, getAllInvites, getAllComments, getAllReviews } from '@utils/db';
+
 import InviteMemberModal from '../components/InviteMemberModal';
 import AddCommentModal from '../components/AddCommentModal';
 
@@ -97,7 +97,7 @@ function CollaborationPageContent() {
   const [collaborationData, setCollaborationData] = useState<CollaborationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'team' | 'invites' | 'comments' | 'reviews'>('team');
-  const [selectedCase, setSelectedCase] = useState<string>('all');
+  const [selectedCase] = useState<string>('all');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
 
@@ -125,10 +125,8 @@ function CollaborationPageContent() {
 
   const loadCollaborationData = async () => {
     try {
-      const [cases, events, documents, teamMembers, invites, comments, reviews] = await Promise.all([
+      const [cases, teamMembers, invites, comments, reviews] = await Promise.all([
         getAllCases(),
-        getAllEvents(),
-        getAllDocuments(),
         getAllTeamMembers(),
         getAllInvites(),
         getAllComments(),
@@ -219,8 +217,6 @@ function CollaborationPageContent() {
       authorName: 'فاطمة علي',
       content: 'هذا التحليل ممتاز، لكن أحتاج مراجعة النقطة الثالثة',
       type: 'comment',
-      priority: 'medium',
-      isPrivate: false,
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       isResolved: false
@@ -232,8 +228,6 @@ function CollaborationPageContent() {
       authorName: 'محمد حسن',
       content: 'أقترح إضافة مرجع قانوني إضافي هنا',
       type: 'suggestion',
-      priority: 'high',
-      isPrivate: false,
       stageId: cases[0]?.stages[0]?.id,
       createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
       updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),

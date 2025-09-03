@@ -260,8 +260,8 @@ export default function FileUploadModal({ isOpen, onClose, onFilesUploaded }: Fi
   const uploadAllFiles = async () => {
     const pendingFiles = uploadFiles.filter(f => f.status === 'pending');
     
-    for (const uploadFile of pendingFiles) {
-      await uploadFile(uploadFile);
+    for (const file of pendingFiles) {
+      await uploadFile(file);
     }
     
     // Check if all files are completed

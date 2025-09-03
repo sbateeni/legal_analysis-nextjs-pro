@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { getAllCases, getAllDocuments, addDocument, deleteDocument } from '@utils/db';
+import { getAllCases, getAllDocuments, deleteDocument } from '@utils/db';
 import FileUploadModal from '../components/FileUploadModal';
 import DocumentPreviewModal from '../components/DocumentPreviewModal';
-import Link from 'next/link';
+
 
 // تعريف أنواع البيانات
 interface AnalysisStage {
@@ -93,20 +93,6 @@ function DocumentsPageContent() {
 
   const handleFilesUploaded = () => {
     loadData(); // إعادة تحميل البيانات
-  };
-
-  const getFileType = (filename: string): LegalDocument['type'] => {
-    const extension = filename.split('.').pop()?.toLowerCase();
-    switch (extension) {
-      case 'pdf': return 'pdf';
-      case 'doc': return 'doc';
-      case 'docx': return 'docx';
-      case 'jpg':
-      case 'jpeg': return 'jpg';
-      case 'png': return 'png';
-      case 'txt': return 'txt';
-      default: return 'other';
-    }
   };
 
   const getFileIcon = (type: string) => {
