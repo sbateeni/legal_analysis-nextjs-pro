@@ -140,11 +140,11 @@ function CasesPageContent() {
   const handleExportCase = async (caseItem: LegalCase) => {
     try {
       const stages = caseItem.stages.map(stage => ({
-        stage: stage.stage,
-        analysis: stage.output
+        title: stage.stage,
+        content: stage.output
       }));
       
-      await exportResultsToPDF(caseItem.name, stages);
+      await exportResultsToPDF(stages, { caseName: caseItem.name });
     } catch (error) {
       console.error('Error exporting case:', error);
     }

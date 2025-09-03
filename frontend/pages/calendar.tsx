@@ -40,6 +40,7 @@ interface CalendarEvent {
   description?: string;
   priority: 'low' | 'medium' | 'high';
   completed?: boolean;
+  createdAt?: string;
 }
 
 
@@ -74,7 +75,6 @@ function CalendarPageContent() {
         nextHearing: c.nextHearing || '',
         notes: c.notes || '',
       }));
-      setCases(formattedCases);
 
       // تحميل الأحداث من قاعدة البيانات
       const savedEvents = await getAllEvents();
@@ -271,7 +271,6 @@ function CalendarPageContent() {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '6px',
-                  border: 'none',
                   background: viewMode === mode.key ? theme.accent : 'transparent',
                   color: viewMode === mode.key ? '#fff' : theme.text,
                   fontSize: '14px',

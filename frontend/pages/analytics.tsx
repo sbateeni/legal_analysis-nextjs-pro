@@ -360,7 +360,7 @@ export default function AnalyticsPage() {
 }
 
 function AnalyticsPageContent() {
-  const { theme } = useTheme();
+  const { theme, darkMode } = useTheme();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

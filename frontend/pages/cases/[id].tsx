@@ -147,11 +147,11 @@ function CaseDetailPageContent() {
     if (!caseItem) return;
     try {
       const stages = caseItem.stages.map(stage => ({
-        stage: stage.stage,
-        analysis: stage.output
+        title: stage.stage,
+        content: stage.output
       }));
       
-      await exportResultsToPDF(caseItem.name, stages);
+      await exportResultsToPDF(stages, { caseName: caseItem.name });
     } catch (error) {
       console.error('Error exporting case:', error);
     }
@@ -549,7 +549,7 @@ function CaseDetailPageContent() {
                         <strong>المراحل المكتملة:</strong> {currentCase?.stages.length} من 12
                       </p>
                       <p style={{ margin: '8px 0' }}>
-                        <strong>آخر تحديث:</strong> {currentCase?.stages.length > 0 
+                        <strong>آخر تحديث:</strong> {currentCase?.stages && currentCase.stages.length > 0 
                           ? new Date(currentCase.stages[currentCase.stages.length - 1].date).toLocaleDateString('ar-SA')
                           : 'لا يوجد'}
                       </p>
