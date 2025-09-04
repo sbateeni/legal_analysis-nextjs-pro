@@ -3,6 +3,8 @@ import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
 import { getAllCases } from '@utils/db';
 import Link from 'next/link';
+import LegalSourcesStatus from '../components/LegalSourcesStatus';
+import LegalUpdatesStatus from '../components/LegalUpdatesStatus';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
 // تعريف نوع BeforeInstallPromptEvent
@@ -49,6 +51,20 @@ interface PredictiveAnalysis {
   estimatedDuration: string;
   complexityScore: number;
   lastAnalyzed: string;
+  legalContext?: {
+    relevantLaws: Array<{
+      title: string;
+      source: string;
+      relevanceScore: number;
+      type: string;
+    }>;
+    legalRecommendations: string[];
+    riskAssessment: {
+      level: 'low' | 'medium' | 'high';
+      factors: string[];
+      mitigationStrategies: string[];
+    };
+  };
 }
 
 interface AnalyticsData {
@@ -577,6 +593,12 @@ function AnalyticsPageContent() {
 
       {/* Main Content */}
       <main className="container" style={{ padding: isMobile() ? '1rem' : '2rem' }}>
+        {/* حالة المصادر القانونية */}
+        <LegalSourcesStatus theme={theme} isMobile={isMobile()} />
+        
+        {/* حالة التحديثات القانونية */}
+        <LegalUpdatesStatus theme={theme} isMobile={isMobile()} />
+        
         {loading && (
           <div className="text-center muted" style={{ padding: '3rem' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
@@ -818,6 +840,33 @@ function AnalyticsPageContent() {
                           ))}
                         </ul>
                       </div>
+
+                      {/* Legal Context */}
+                      {analysis.legalContext && analysis.legalContext.relevantLaws.length > 0 && (
+                        <div style={{
+                          background: '#f0f9ff',
+                          padding: '0.75rem',
+                          borderRadius: '0.375rem',
+                          border: `1px solid #0ea5e9`,
+                          marginTop: '0.75rem'
+                        }}>
+                          <h4 style={{
+                            color: '#0c4a6e',
+                            margin: '0 0 0.5rem 0',
+                            fontSize: '0.8rem',
+                            fontWeight: 'bold'
+                          }}>
+                            📚 القوانين ذات الصلة
+                          </h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            {analysis.legalContext.relevantLaws.slice(0, 2).map((law, idx) => (
+                              <div key={idx} style={{ fontSize: '0.7rem', color: '#0c4a6e' }}>
+                                • {law.title} ({law.source})
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Additional Info */}
                       <div style={{

@@ -1,295 +1,177 @@
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useTheme } from '../contexts/ThemeContext';
+import React from 'react';
 import { isMobile } from '@utils/crypto';
+import { useTheme } from '../contexts/ThemeContext';
 
-// تعريف نوع BeforeInstallPromptEvent
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<{ outcome: 'accepted' | 'dismissed' }>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+export default function AboutPage() {
+  return <AboutPageContent />;
 }
 
-const stages = [
-  'تحديد المشكلة القانونية',
-  'جمع المعلومات والوثائق',
-  'تحليل النصوص القانونية',
-  'تحديد القواعد القانونية المنطبقة',
-  'تحليل السوابق القضائية',
-  'تحليل الفقه القانوني',
-  'تحليل الظروف الواقعية',
-  'تحديد الحلول القانونية الممكنة',
-  'تقييم الحلول القانونية',
-  'اختيار الحل الأمثل',
-  'صياغة الحل القانوني',
-  'تقديم التوصيات',
-  'العريضة القانونية النهائية',
-];
-
-export default function About() {
-  const { theme, darkMode } = useTheme();
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
-    // استماع لحدث beforeinstallprompt
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowInstallButton(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    // التحقق من أن التطبيق مثبت بالفعل
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setShowInstallButton(false);
-    }
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, [mounted]);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    // عرض نافذة التثبيت
-    deferredPrompt.prompt();
-
-    // انتظار اختيار المستخدم
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === 'accepted') {
-      console.log('تم قبول تثبيت التطبيق');
-      setShowInstallButton(false);
-    } else {
-      console.log('تم رفض تثبيت التطبيق');
-    }
-
-    setDeferredPrompt(null);
-  };
+function AboutPageContent() {
+  const { theme } = useTheme();
 
   return (
-    <div style={{ fontFamily: 'Tajawal, Arial, sans-serif', direction: 'rtl', minHeight: '100vh', background: theme.background, color: theme.text, padding: 0, margin: 0 }}>
-      {/* زر تحميل التطبيق - فقط على الهاتف */}
-      {mounted && isMobile() && showInstallButton && (
         <div style={{
-          position: 'fixed',
-          top: 20,
-          left: 20,
-          zIndex: 1000,
-          background: theme.accent,
+      minHeight: '100vh',
+      background: theme.background,
+      color: theme.text,
+      fontFamily: 'Tajawal, Arial, sans-serif'
+    }}>
+      {/* Header */}
+      <header style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
-          padding: '12px 20px',
-          borderRadius: '25px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          cursor: 'pointer',
-          fontWeight: 700,
-          fontSize: 14,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          transition: 'all 0.3s ease',
-          border: 'none',
-          outline: 'none'
-        }}
-        onClick={handleInstallClick}
-        onTouchStart={(e) => {
-          e.currentTarget.style.transform = 'scale(0.95)';
-        }}
-        onTouchEnd={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-        }}
-        >
-          📱 تثبيت التطبيق
+        padding: isMobile() ? '1rem' : '2rem',
+        textAlign: 'center'
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <h1 style={{ margin: '0 0 0.5rem 0', fontSize: isMobile() ? '1.5rem' : '2rem' }}>
+            📖 تعليمات النظام
+          </h1>
+          <p style={{ margin: 0, opacity: 0.9, fontSize: isMobile() ? '0.9rem' : '1rem' }}>
+            دليل شامل لاستخدام نظام التحليل القانوني الفلسطيني
+          </p>
         </div>
-      )}
+      </header>
 
-      <main className="container" style={{ maxWidth: 800, padding: isMobile() ? '1rem 0.5rem' : '2.5rem 1rem' }}>
-        <div className="fade-in-up card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile() ? 20 : 36, marginBottom: isMobile() ? 20 : 32 }}>
-          <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap: isMobile() ? 8 : 10, marginBottom: isMobile() ? 14 : 18}}>
-            <span style={{fontSize: isMobile() ? 28 : 36}}>⚖️</span>
-            <h1 className="headline-lg font-headline" style={{ color: theme.accent, margin: 0 }}>عن المنصة</h1>
-          </div>
-          <p className="font-body" style={{ fontSize: isMobile() ? 16 : 19, marginBottom: isMobile() ? 18 : 22, lineHeight: 1.8, textAlign:'center' }}>
-            <b>منصة التحليل القانوني الذكي</b> هي أداة متقدمة تساعدك على تحليل النصوص القانونية العربية بدقة واحترافية، عبر 13 مرحلة تحليلية متكاملة تغطي جميع الجوانب القانونية، مع دعم التحليل التراكمي المتسلسل (كل مرحلة تعتمد على نتائج السابقة حتى الوصول للعريضة النهائية).
+      {/* Main Content */}
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: isMobile() ? '1rem' : '2rem' }}>
+        <div style={{
+          background: theme.card,
+          padding: isMobile() ? '1rem' : '1.5rem',
+          borderRadius: '0.75rem',
+          boxShadow: `0 1px 3px ${theme.shadow}`,
+          marginBottom: '1.5rem'
+        }}>
+          <h2 style={{ margin: '0 0 1rem 0', color: theme.text }}>🎯 حول النظام</h2>
+          <p style={{ lineHeight: 1.6, marginBottom: '1rem' }}>
+            نظام التحليل القانوني الفلسطيني هو منصة ذكية متخصصة في تحليل القضايا القانونية 
+            باستخدام الذكاء الاصطناعي والمصادر القانونية الفلسطينية الرسمية.
+          </p>
+          <p style={{ lineHeight: 1.6 }}>
+            يوفر النظام تحليلاً شاملاً للقضايا مع إمكانية التنبؤ بنتائجها وتقديم توصيات قانونية 
+            مبنية على القوانين والأحكام الفلسطينية النافذة.
           </p>
         </div>
 
-        {/* الميزات الرئيسية */}
-        <div className="fade-in-up card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile() ? 20 : 24, marginBottom: isMobile() ? 20 : 24 }}>
-          <div style={{margin: isMobile() ? '0 0 16px 0' : '0 0 20px 0', display:'flex', alignItems:'center', gap: isMobile() ? 6 : 8}}>
-            <span style={{fontSize: isMobile() ? 18 : 22}}>🚀</span>
-            <h2 className="headline-sm font-headline" style={{ color: theme.accent2, margin: 0 }}>الميزات الرئيسية:</h2>
-          </div>
-          <div style={{display: 'grid', gridTemplateColumns: isMobile() ? '1fr' : '1fr 1fr', gap: isMobile() ? 12 : 16}}>
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
-                <span style={{fontSize: 20}}>🔍</span>
-                <h3 style={{margin: 0, fontSize: isMobile() ? 16 : 18, color: theme.accent}}>تحليل قانوني متقدم</h3>
-              </div>
-              <p style={{margin: 0, fontSize: isMobile() ? 13 : 14, lineHeight: 1.6}}>13 مرحلة تحليل متسلسلة ومتراكمة تغطي جميع الجوانب القانونية</p>
+        <div style={{
+          background: theme.card,
+          padding: isMobile() ? '1rem' : '1.5rem',
+          borderRadius: '0.75rem',
+          boxShadow: `0 1px 3px ${theme.shadow}`,
+          marginBottom: '1.5rem'
+        }}>
+          <h2 style={{ margin: '0 0 1rem 0', color: theme.text }}>🚀 الميزات الرئيسية</h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile() ? '1fr' : 'repeat(2, 1fr)',
+            gap: '1rem'
+          }}>
+            <div style={{
+              padding: '1rem',
+              background: '#f0f9ff',
+              borderRadius: '0.5rem',
+              border: '1px solid #0ea5e9'
+            }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: '#0c4a6e' }}>🤖 المساعد الذكي</h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#0c4a6e' }}>
+                محادثة ذكية مع مساعد قانوني متخصص في القوانين الفلسطينية
+              </p>
             </div>
             
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
-                <span style={{fontSize: 20}}>🤖</span>
-                <h3 style={{margin: 0, fontSize: isMobile() ? 16 : 18, color: theme.accent}}>مساعد قانوني فلسطيني</h3>
-              </div>
-              <p style={{margin: 0, fontSize: isMobile() ? 13 : 14, lineHeight: 1.6}}>محادثة تفاعلية متخصصة في الإطار القانوني الفلسطيني</p>
+            <div style={{
+              padding: '1rem',
+              background: '#f0fdf4',
+              borderRadius: '0.5rem',
+              border: '1px solid #10b981'
+            }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: '#166534' }}>📊 التحليلات</h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#166534' }}>
+                تحليل تنبؤي للقضايا مع احتمالات النجاح والتوصيات
+              </p>
             </div>
             
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
-                <span style={{fontSize: 20}}>📊</span>
-                <h3 style={{margin: 0, fontSize: isMobile() ? 16 : 18, color: theme.accent}}>تحليلات وإحصائيات</h3>
-              </div>
-              <p style={{margin: 0, fontSize: isMobile() ? 13 : 14, lineHeight: 1.6}}>إحصائيات مفصلة عن القضايا والاستخدام مع رسوم بيانية</p>
+            <div style={{
+              padding: '1rem',
+              background: '#fef3c7',
+              borderRadius: '0.5rem',
+              border: '1px solid #f59e0b'
+            }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: '#92400e' }}>🔍 البحث المتقدم</h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#92400e' }}>
+                بحث دلالي ذكي في القوانين والأحكام الفلسطينية
+              </p>
             </div>
             
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
-                <span style={{fontSize: 20}}>📱</span>
-                <h3 style={{margin: 0, fontSize: isMobile() ? 16 : 18, color: theme.accent}}>تطبيق ويب تقدمي (PWA)</h3>
-              </div>
-              <p style={{margin: 0, fontSize: isMobile() ? 13 : 14, lineHeight: 1.6}}>يمكن تثبيته كتطبيق على الهاتف ويعمل بدون إنترنت (صفحة Offline وSW محسّن)</p>
-            </div>
-            
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
-                <span style={{fontSize: 20}}>💾</span>
-                <h3 style={{margin: 0, fontSize: isMobile() ? 16 : 18, color: theme.accent}}>قاعدة معرفة قانونية</h3>
-              </div>
-              <p style={{margin: 0, fontSize: isMobile() ? 13 : 14, lineHeight: 1.6}}>حفظ الاستراتيجيات القانونية وإعادة استخدامها</p>
-            </div>
-            
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8}}>
-                <span style={{fontSize: 20}}>🔒</span>
-                <h3 style={{margin: 0, fontSize: isMobile() ? 16 : 18, color: theme.accent}}>حماية الخصوصية</h3>
-              </div>
-              <p style={{margin: 0, fontSize: isMobile() ? 13 : 14, lineHeight: 1.6}}>جميع البيانات محفوظة محلياً مع تشفير متقدم</p>
+            <div style={{
+              padding: '1rem',
+              background: '#fdf2f8',
+              borderRadius: '0.5rem',
+              border: '1px solid #ec4899'
+            }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: '#be185d' }}>📋 إدارة القضايا</h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#be185d' }}>
+                إدارة شاملة للقضايا مع التقويم والمستندات
+              </p>
             </div>
           </div>
         </div>
 
-        <div style={{margin: isMobile() ? '24px 0 14px 0' : '32px 0 18px 0', display:'flex', alignItems:'center', gap: isMobile() ? 6 : 8}}>
-          <span style={{fontSize: isMobile() ? 18 : 22}}>🛠️</span>
-          <h2 className="headline-sm font-headline" style={{ color: theme.accent2, margin: 0 }}>طريقة الاستخدام:</h2>
+        <div style={{
+          background: theme.card,
+          padding: isMobile() ? '1rem' : '1.5rem',
+          borderRadius: '0.75rem',
+          boxShadow: `0 1px 3px ${theme.shadow}`,
+          marginBottom: '1.5rem'
+        }}>
+          <h2 style={{ margin: '0 0 1rem 0', color: theme.text }}>📚 المصادر القانونية</h2>
+          <p style={{ lineHeight: 1.6, marginBottom: '1rem' }}>
+            يعتمد النظام على المصادر القانونية الفلسطينية الرسمية:
+          </p>
+          <ul style={{ lineHeight: 1.8, paddingRight: '1.5rem' }}>
+            <li><strong>المقتفي</strong> - منظومة القضاء والتشريع الفلسطيني</li>
+            <li><strong>مقام</strong> - التشريعات والأحكام القضائية</li>
+            <li><strong>قاعدة المعرفة</strong> - الأبحاث والدراسات القانونية</li>
+            <li><strong>المصادر الدولية</strong> - القرارات والأحكام ذات الصلة</li>
+              </ul>
+            </div>
+            
+        <div style={{
+          background: theme.card,
+          padding: isMobile() ? '1rem' : '1.5rem',
+          borderRadius: '0.75rem',
+          boxShadow: `0 1px 3px ${theme.shadow}`,
+          marginBottom: '1.5rem'
+        }}>
+          <h2 style={{ margin: '0 0 1rem 0', color: theme.text }}>⚖️ إخلاء المسؤولية</h2>
+          <div style={{
+            padding: '1rem',
+            background: '#fef2f2',
+            borderRadius: '0.5rem',
+            border: '1px solid #fecaca'
+          }}>
+            <p style={{ margin: 0, color: '#dc2626', lineHeight: 1.6 }}>
+              <strong>تنبيه مهم:</strong> هذا النظام مخصص للتثقيف والدعم القانوني وليس بديلاً عن 
+              استشارة محامٍ مرخص في فلسطين. يُنصح دائماً بالتشاور مع محامٍ متخصص للحصول على 
+              استشارة قانونية رسمية.
+            </p>
+          </div>
         </div>
-        <ol className="font-body" style={{ fontSize: isMobile() ? 15 : 17, marginBottom: isMobile() ? 14 : 18, lineHeight: 1.8, paddingRight: isMobile() ? 16 : 24, background: darkMode ? '#181a2a' : '#f5f7ff', borderRadius: isMobile() ? 10 : 12, padding: isMobile() ? '14px 14px 14px 6px' : '18px 18px 18px 8px', borderColor: theme.border, borderStyle: 'solid', borderWidth: 1 }}>
-          <li>احصل على مفتاح Gemini API الخاص بك من <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{color:theme.accent, textDecoration:'underline'}}>Google AI Studio</a>.</li>
-          <li>أدخل المفتاح في خانة &quot;مفتاح Gemini API&quot; في الصفحة الرئيسية.</li>
-          <li>أدخل النص القانوني الذي ترغب في تحليله واسم القضية (اختياري).</li>
-          <li>اختر المرحلة التحليلية المناسبة أو اتبع التسلسل التراكمي.</li>
-          <li>اضغط على &quot;ابدأ التحليل&quot; وستظهر لك النتيجة خلال ثوانٍ.</li>
-          <li>يمكنك حفظ القضية، تصديرها أو استيرادها لاحقًا.</li>
-          <li>استخدم المساعد القانوني الفلسطيني لأسئلة قانونية محددة.</li>
-          <li>راجع التحليلات والإحصائيات من صفحة التحليلات.</li>
-        </ol>
 
-        <div className="fade-in-up" style={{margin: isMobile() ? '24px 0 14px 0' : '32px 0 18px 0', display:'flex', alignItems:'center', gap: isMobile() ? 6 : 8}}>
-          <span style={{fontSize: isMobile() ? 18 : 22}}>📋</span>
-          <h2 className="headline-sm font-headline" style={{ color: theme.accent2, margin: 0 }}>مراحل التحليل القانوني:</h2>
-        </div>
-        <ul className="font-body" style={{ fontSize: isMobile() ? 15 : 17, marginBottom: isMobile() ? 14 : 18, lineHeight: 1.8, paddingRight: isMobile() ? 16 : 24, background: darkMode ? '#181a2a' : '#f5f7ff', borderRadius: isMobile() ? 10 : 12, padding: isMobile() ? '14px 14px 14px 6px' : '18px 18px 18px 8px', borderColor: theme.border, borderStyle: 'solid', borderWidth: 1 }}>
-          {stages.map((stage, i) => (
-            <li key={i} style={{marginBottom: isMobile() ? 3 : 4}}><b>{i+1}.</b> {stage}</li>
-          ))}
+        <div style={{
+          background: theme.card,
+          padding: isMobile() ? '1rem' : '1.5rem',
+          borderRadius: '0.75rem',
+          boxShadow: `0 1px 3px ${theme.shadow}`
+        }}>
+          <h2 style={{ margin: '0 0 1rem 0', color: theme.text }}>📞 الدعم والمساعدة</h2>
+          <p style={{ lineHeight: 1.6, marginBottom: '1rem' }}>
+            إذا كنت بحاجة إلى مساعدة أو لديك استفسارات حول النظام، يمكنك:
+          </p>
+          <ul style={{ lineHeight: 1.8, paddingRight: '1.5rem' }}>
+            <li>استخدام المساعد الذكي للحصول على إجابات فورية</li>
+            <li>الرجوع إلى دليل الاستخدام في كل صفحة</li>
+            <li>التواصل مع فريق الدعم التقني</li>
         </ul>
-
-        {/* الميزات المتقدمة */}
-        <div className="fade-in-up card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile() ? 20 : 24, marginBottom: isMobile() ? 20 : 24 }}>
-          <div style={{margin: isMobile() ? '0 0 16px 0' : '0 0 20px 0', display:'flex', alignItems:'center', gap: isMobile() ? 6 : 8}}>
-            <span style={{fontSize: isMobile() ? 18 : 22}}>⚡</span>
-            <h2 className="headline-sm font-headline" style={{ color: theme.accent2, margin: 0 }}>الميزات المتقدمة:</h2>
-          </div>
-          <div style={{display: 'grid', gridTemplateColumns: isMobile() ? '1fr' : '1fr 1fr', gap: isMobile() ? 12 : 16}}>
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <h4 style={{margin: '0 0 8px 0', color: theme.accent, fontSize: isMobile() ? 14 : 16}}>المساعد القانوني الفلسطيني</h4>
-              <ul style={{margin: 0, paddingRight: 16, fontSize: isMobile() ? 12 : 13}}>
-                <li>محادثة تفاعلية ذكية</li>
-                <li>اختيار نموذج تكيفي حسب التعقيد/الميزانية</li>
-                <li>أنماط تلخيص: نقاط/مختصر/صياغة قانونية</li>
-                <li>اقتراحات وخطوات تالية</li>
-                <li>مستوى ثقة للإجابات</li>
-                <li>حفظ الاستراتيجيات</li>
-              </ul>
-            </div>
-            
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <h4 style={{margin: '0 0 8px 0', color: theme.accent, fontSize: isMobile() ? 14 : 16}}>نظام التحليلات</h4>
-              <ul style={{margin: 0, paddingRight: 16, fontSize: isMobile() ? 12 : 13}}>
-                <li>إحصائيات مفصلة للقضايا</li>
-                <li>تحليل أنواع القضايا</li>
-                <li>معدل الإنجاز</li>
-                <li>النشاط الأخير</li>
-              </ul>
-            </div>
-            
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <h4 style={{margin: '0 0 8px 0', color: theme.accent, fontSize: isMobile() ? 14 : 16}}>قاعدة المعرفة القانونية</h4>
-              <ul style={{margin: 0, paddingRight: 16, fontSize: isMobile() ? 12 : 13}}>
-                <li>حفظ الاستراتيجيات</li>
-                <li>إعادة استخدام الحلول</li>
-                <li>تصنيف بالموضوعات</li>
-                <li>البحث والتصفية</li>
-              </ul>
-            </div>
-            
-            <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
-              <h4 style={{margin: '0 0 8px 0', color: theme.accent, fontSize: isMobile() ? 14 : 16}}>التطبيق التقدمي (PWA)</h4>
-              <ul style={{margin: 0, paddingRight: 16, fontSize: isMobile() ? 12 : 13}}>
-                <li>تثبيت كتطبيق</li>
-                <li>عمل بدون إنترنت (Offline page)</li>
-                <li>إشعارات ذكية</li>
-                <li>تجربة محسنة</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div className="fade-in-up" style={{margin: isMobile() ? '24px 0 14px 0' : '32px 0 18px 0', display:'flex', alignItems:'center', gap: isMobile() ? 6 : 8}}>
-          <span style={{fontSize: isMobile() ? 18 : 22}}>💡</span>
-          <h2 className="headline-sm font-headline" style={{ color: theme.accent2, margin: 0 }}>ملاحظات هامة:</h2>
-        </div>
-        <ul className="font-body" style={{ fontSize: isMobile() ? 14 : 16, marginBottom: 0, lineHeight: 1.8, paddingRight: isMobile() ? 16 : 24, background: darkMode ? '#181a2a' : '#f5f7ff', borderRadius: isMobile() ? 10 : 12, padding: isMobile() ? '14px 14px 14px 6px' : '18px 18px 18px 8px', border: `1px solid ${theme.border}` }}>
-          <li>المنصة مجانية حاليًا، وقد تصبح باشتراك لاحقًا.</li>
-          <li>كل مستخدم يحتاج لمفتاح Gemini API خاص به (لا تشارك مفتاحك مع الآخرين).</li>
-          <li>النتائج تعتمد على دقة النص المدخل وصحة المفتاح.</li>
-          <li>لا نخزن نصوصك أو مفاتيحك على خوادمنا؛ قد تمر الطلبات عبر دالة خادم لمعالجتها ثم تُرسل إلى خدمات Google AI ولا تُخزن لدينا.</li>
-          <li>جميع القضايا والمفاتيح تحفظ محليًا على جهازك فقط باستخدام قاعدة بيانات المتصفح (IndexedDB)، مع إمكانية تصدير واستيراد القضايا.</li>
-          <li>واجهة متجاوبة بالكامل تدعم الوضع الليلي، الخطوط العربية، وRTL.</li>
-          <li>يوجد زر لمسح كل البيانات، ومؤشرات تحميل وتنبيهات ذكية.</li>
-          <li>المساعد القانوني متخصص في الإطار القانوني الفلسطيني فقط.</li>
-          <li>يمكن حفظ المحادثات والاستراتيجيات في قاعدة المعرفة القانونية.</li>
-        </ul>
-        
-        <div className="text-center" style={{ color: theme.accent2, fontSize: isMobile() ? 14 : 16, marginTop: isMobile() ? 14 : 18 }}>
-          &larr; <Link href="/" style={{color:theme.accent, textDecoration:'underline', fontWeight:700}}>العودة للصفحة الرئيسية</Link>
-        </div>
-        
-        <div className="badge" style={{marginTop: isMobile() ? 20 : 32, background:'#fffbe6', color:'#b7791f', borderRadius: isMobile() ? 6 : 8, padding: isMobile() ? '8px 14px' : '10px 18px', display:'inline-block', fontWeight:700, fontSize: isMobile() ? 12 : 14, boxShadow:'0 1px 4px #b7791f22'}}>
-          ⚠️ جميع بياناتك (القضايا والمفاتيح) تحفظ محليًا على جهازك فقط ولا يتم رفعها إلى أي خادم.
-        </div>
-        
-        <div style={{marginTop: isMobile() ? 18 : 24, textAlign:'center'}}>
-          <Link href="/privacy" style={{color:theme.accent, textDecoration:'underline', fontWeight:700, fontSize: isMobile() ? 13 : 15}}>سياسة الخصوصية</Link>
-        </div>
-        
-        <div className="card-panel" style={{marginTop: isMobile() ? 24 : 36, background:'#e0e7ff', color:'#222', borderRadius: isMobile() ? 8 : 10, padding: isMobile() ? '14px 14px' : '18px 18px', fontWeight:700, fontSize: isMobile() ? 13 : 15, boxShadow:'0 1px 4px #4f46e522', lineHeight: 1.8, borderColor: '#e0e7ff'}}>
-          <span style={{color:theme.accent, fontSize: isMobile() ? 16 : 18}}>🔒 ملاحظات حول الأمان والتخزين على Vercel:</span><br/>
-          جميع عمليات الحفظ تتم <b>محليًا في متصفحك فقط</b> باستخدام قاعدة بيانات المتصفح (IndexedDB)، ولا يتم إرسال أي بيانات إلى خوادم Vercel أو أي طرف خارجي.<br/>
-          <span style={{color:'#b7791f'}}>إذا فتحت الموقع من جهاز أو متصفح جديد، لن تجد بياناتك القديمة لأنها محفوظة محليًا فقط.</span><br/>
-          إذا قمت بمسح بيانات المتصفح (Clear Site Data)، ستُحذف القضايا والمفاتيح نهائيًا.<br/>
-          <span style={{color:theme.accent2}}>للحفاظ على بياناتك أو نقلها لجهاز آخر، استخدم ميزة تصدير/استيراد القضايا من واجهة الموقع.</span>
         </div>
       </main>
     </div>

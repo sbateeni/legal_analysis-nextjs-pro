@@ -224,10 +224,46 @@ const ElegantSidebar: React.FC = () => {
       href: '/rag',
     },
     {
+      id: 'advanced-search',
+      label: 'البحث المتقدم',
+      icon: 'rag',
+      href: '/advanced-search',
+    },
+    {
+      id: 'legal-updates',
+      label: 'التحديثات القانونية',
+      icon: 'rag',
+      href: '/legal-updates',
+    },
+    {
       id: 'resources',
       label: 'الموارد',
       icon: 'resources',
       href: '/resources',
+    },
+    {
+      id: 'about',
+      label: 'تعليمات النظام',
+      icon: 'settings',
+      href: '/about',
+    },
+    {
+      id: 'privacy',
+      label: 'الخصوصية',
+      icon: 'settings',
+      href: '/privacy',
+    },
+    {
+      id: 'offline',
+      label: 'وضع عدم الاتصال',
+      icon: 'settings',
+      href: '/offline',
+    },
+    {
+      id: 'navigation-demo',
+      label: 'تجربة التنقل',
+      icon: 'settings',
+      href: '/navigation-demo',
     },
     {
       id: 'settings',

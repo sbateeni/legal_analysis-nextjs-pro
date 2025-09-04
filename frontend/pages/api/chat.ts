@@ -8,6 +8,7 @@ import stages from '../../stages';
 import { ChatModelResponseSchema, ChatRequestSchema, ChatModelResponse } from '@utils/schemas';
 import { chatCacheGet, chatCacheSet, makeChatCacheKey } from '@utils/chatCache';
 import { isWithinPalestinianJurisdiction, sanitizeAnswer } from '@utils/safety';
+import { extractLegalContext, buildLegalContextString, optimizeLegalQuery } from '@utils/legalContextService';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -26,7 +27,8 @@ function buildChatPrompt(
     currentStage?: number;
     previousAnalysis?: string;
   },
-  kbSnippets?: Array<{ strategy_title: string; strategy_steps: string[]; legal_basis: Array<{ source: string; article?: string }> }>
+  kbSnippets?: Array<{ strategy_title: string; strategy_steps: string[]; legal_basis: Array<{ source: string; article?: string }> }>,
+  legalContext?: string
 ): string {
   const contextInfo = context ? `
 السياق الحالي:
@@ -54,6 +56,10 @@ ${conversationHistory.slice(-5).map(msg => `${msg.role === 'user' ? 'المست�
 ${kbSnippets.map((s, i) => `(${i+1}) ${s.strategy_title}\n- خطوات مختصرة: ${s.strategy_steps.slice(0,3).join(' | ')}\n- أساس قانوني: ${s.legal_basis.map(b=>`${b.source}${b.article?` ${b.article}`:''}`).slice(0,2).join(' ؛ ')}`).join('\n\n')}
 ` : '';
 
+  const legalContextSection = legalContext ? `
+${legalContext}
+` : '';
+
   // نطلب من النموذج إخراج JSON منظم
   const jsonSpec = `
 أخرج نتيجتك حصراً بصيغة JSON صالحة وفق المخطط التالي دون أي نص إضافي خارج JSON:
@@ -71,6 +77,7 @@ ${kbSnippets.map((s, i) => `(${i+1}) ${s.strategy_title}\n- خطوات مختص�
 ${contextInfo}
 ${stagesList}
 ${kbSection}
+${legalContextSection}
 ${history}
 
 ${jsonSpec}
@@ -220,8 +227,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // بناء prompt وطلب JSON
     const kb = mode === 'legal' ? selectRelevantKB(cleanMessage, 5) : [];
     const kbSnippets = kb.map(k => ({ strategy_title: k.strategy_title, strategy_steps: k.strategy_steps, legal_basis: k.legal_basis?.map(b => ({ source: b.source, article: b.article })) || [] }));
+    
+    // استخراج السياق القانوني من المصادر الرسمية (محسن)
+    let legalContext = '';
+    if (mode === 'legal') {
+      try {
+        const optimizedQuery = optimizeLegalQuery(cleanMessage);
+        const legalContextResult = await extractLegalContext(
+          optimizedQuery, 
+          3, 
+          context?.previousAnalysis?.slice(0, 500), // استخدام السياق الحالي
+          context?.caseType // استخدام نوع القضية
+        );
+        if (legalContextResult.status === 'success' && legalContextResult.results.length > 0) {
+          legalContext = buildLegalContextString(legalContextResult.results);
+        }
+      } catch (error) {
+        console.warn('فشل في استخراج السياق القانوني:', error);
+      }
+    }
+    
     const prompt = mode === 'legal'
-      ? buildChatPrompt(cleanMessage, conversationHistory as ChatMessage[], context, kbSnippets)
+      ? buildChatPrompt(cleanMessage, conversationHistory as ChatMessage[], context, kbSnippets, legalContext)
       : `أنت مساعد عام محترف يجيب بإيجاز ووضوح. أجب بالعربية الفصحى، وابتعد عن الإفتاء القانوني المتخصص ما لم يُطلب صراحة.\n\nالسؤال:\n${cleanMessage}\n\nسياق المحادثة (إن وجد):\n${(conversationHistory as ChatMessage[]).slice(-6).map(m => `${m.role}: ${m.content}`).join('\n')}`;
 
     const genAI = new GoogleGenerativeAI(apiKey);

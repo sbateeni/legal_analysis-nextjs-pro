@@ -6,6 +6,7 @@ import { loadAppSettings } from '@utils/appSettings';
 import { Button } from '../components/UI';
 import { PalestinianPromptTemplates } from '@utils/prompts';
 import { extractApiError, mapApiErrorToMessage } from '@utils/errors';
+import LegalSourcesStatus from '../components/LegalSourcesStatus';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
 // تعريف نوع BeforeInstallPromptEvent
@@ -21,6 +22,12 @@ interface ChatMessage {
   suggestions?: string[];
   nextSteps?: string[];
   confidence?: number;
+  legalSources?: Array<{
+    title: string;
+    source: string;
+    url: string;
+    type: string;
+  }>;
 }
 
 export default function ChatPage() {
@@ -265,7 +272,8 @@ function ChatPageContent() {
           timestamp: data.timestamp,
           suggestions: data.suggestions,
           nextSteps: data.nextSteps,
-          confidence: data.confidence
+          confidence: data.confidence,
+          legalSources: data.legalSources
         };
         setMessages(prev => [...prev, assistantMessage]);
       }
@@ -454,6 +462,9 @@ function ChatPageContent() {
         margin: '0 auto',
         padding: isMobile() ? '1rem 0.5rem' : '2rem 1rem'
       }}>
+        {/* حالة المصادر القانونية */}
+        <LegalSourcesStatus theme={theme} isMobile={isMobile()} />
+        
         <div className="card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile() ? 16 : 24, marginBottom: 16 }}>
           {!apiKey && (
             <div style={{
@@ -633,6 +644,46 @@ function ChatPageContent() {
                           <li key={idx} style={{ marginBottom: 6 }}>{step}</li>
                         ))}
                       </ol>
+                    </div>
+                  )}
+
+                  {/* Legal Sources */}
+                  {message.role === 'assistant' && message.legalSources && message.legalSources.length > 0 && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <div style={{ fontSize: '0.95rem', marginBottom: '0.5rem', fontWeight: 700, color: theme.accent2 }}>
+                        📚 المصادر القانونية المستخدمة:
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {message.legalSources.map((source, idx) => (
+                          <div key={idx} style={{
+                            padding: '0.5rem',
+                            background: '#f8fafc',
+                            borderRadius: '0.375rem',
+                            border: `1px solid ${theme.border}`,
+                            fontSize: '0.85rem'
+                          }}>
+                            <div style={{ fontWeight: 600, color: theme.text, marginBottom: '0.25rem' }}>
+                              {source.title}
+                            </div>
+                            <div style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                              {source.source} • {source.type}
+                            </div>
+                            <a 
+                              href={source.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              style={{
+                                color: theme.accent2,
+                                textDecoration: 'none',
+                                fontSize: '0.8rem',
+                                fontWeight: 600
+                              }}
+                            >
+                              🔗 عرض المصدر
+                            </a>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

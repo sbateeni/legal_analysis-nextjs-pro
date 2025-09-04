@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Header from './Header';
-import MobileNav from './MobileNav';
 import ModernNavigation from './ModernNavigation';
 import ElegantSidebar from './ElegantSidebar';
 import { useTheme } from '../contexts/ThemeContext';
@@ -167,9 +166,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }}>
         {children}
       </main>
-      {/* إظهار MobileNav فقط إذا لم يكن ElegantSidebar مفعل */}
-      {!useElegantSidebar && !useModernNavigation && <MobileNav />}
-      
+      {/* تم حذف MobileNav لتجنب تضارب مع البانر الجانبي */}
 
     </div>
   );

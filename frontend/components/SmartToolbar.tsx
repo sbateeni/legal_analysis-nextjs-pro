@@ -41,14 +41,22 @@ export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToo
     // الأدوات
     { id: 'templates', label: 'القوالب', icon: '📝', href: '/templates', category: 'tools', priority: 1 },
     { id: 'kb', label: 'قاعدة المعرفة', icon: '📚', href: '/kb', category: 'tools', priority: 2 },
-    { id: 'reference-checker', label: 'المدقق المرجعي', icon: '🔍', href: '/reference-checker', category: 'tools', priority: 3 },
-    { id: 'exports', label: 'الصادرات', icon: '⬇️', href: '/exports', category: 'tools', priority: 4 },
+    { id: 'rag', label: 'البحث القانوني', icon: '🔍', href: '/rag', category: 'tools', priority: 3 },
+    { id: 'advanced-search', label: 'البحث المتقدم', icon: '🔍', href: '/advanced-search', category: 'tools', priority: 4, isNew: true },
+    { id: 'legal-updates', label: 'التحديثات القانونية', icon: '🔄', href: '/legal-updates', category: 'tools', priority: 5, isNew: true },
+    { id: 'reference-checker', label: 'المدقق المرجعي', icon: '🔍', href: '/reference-checker', category: 'tools', priority: 6 },
+    { id: 'exports', label: 'الصادرات', icon: '⬇️', href: '/exports', category: 'tools', priority: 7 },
+    { id: 'resources', label: 'الموارد', icon: '📚', href: '/resources', category: 'tools', priority: 8 },
     
     // الإعدادات
-    { id: 'history', label: 'التاريخ', icon: '📑', href: '/history', category: 'settings', priority: 1 },
-    { id: 'settings', label: 'الإعدادات', icon: '⚙️', href: '/settings', category: 'settings', priority: 2 },
-    { id: 'about', label: 'تعليمات', icon: '❓', href: '/about', category: 'settings', priority: 3 },
-    { id: 'navigation-demo', label: 'تجربة التنقل', icon: '🧭', href: '/navigation-demo', category: 'tools', priority: 5, isNew: true },
+    { id: 'about', label: 'تعليمات النظام', icon: '📖', href: '/about', category: 'settings', priority: 1 },
+    { id: 'history', label: 'التاريخ', icon: '📑', href: '/history', category: 'settings', priority: 2 },
+    { id: 'settings', label: 'الإعدادات', icon: '⚙️', href: '/settings', category: 'settings', priority: 3 },
+    { id: 'privacy', label: 'الخصوصية', icon: '🔒', href: '/privacy', category: 'settings', priority: 4 },
+    { id: 'offline', label: 'وضع عدم الاتصال', icon: '📱', href: '/offline', category: 'settings', priority: 5 },
+    
+    // صفحات إضافية
+    { id: 'navigation-demo', label: 'تجربة التنقل', icon: '🧭', href: '/navigation-demo', category: 'tools', priority: 9, isNew: true },
   ];
 
   // تصنيف العناصر حسب الفئة
@@ -292,9 +300,13 @@ export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToo
         {/* Navigation */}
         <div style={{
           display: 'flex',
-          gap: '8px',
+          gap: '12px',
           overflowX: 'auto',
-          paddingBottom: '4px'
+          paddingBottom: '8px',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-start',
+          maxHeight: '300px',
+          overflowY: 'auto'
         }}>
           {/* المفضلة */}
           {favoriteItemsList.length > 0 && (
@@ -416,8 +428,9 @@ export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToo
             <div key={category} style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '4px',
-              minWidth: '80px'
+              gap: '6px',
+              minWidth: '120px',
+              maxWidth: '200px'
             }}>
               <div style={{
                 fontSize: '10px',
@@ -430,23 +443,25 @@ export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToo
               </div>
               <div style={{
                 display: 'flex',
-                gap: '4px'
+                gap: '6px',
+                flexWrap: 'wrap',
+                justifyContent: 'flex-start'
               }}>
-                {categorizedItems[category].slice(0, 4).map((item) => (
+                {categorizedItems[category].map((item) => (
                   <Link key={item.id} href={item.href} style={{ textDecoration: 'none' }}>
                     <div style={{
-                      padding: '8px',
-                      borderRadius: '8px',
+                      padding: '6px',
+                      borderRadius: '6px',
                       background: router.pathname === item.href ? theme.accent : theme.resultBg,
                       color: router.pathname === item.href ? '#fff' : theme.text,
-                      fontSize: '16px',
+                      fontSize: '14px',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      minWidth: '40px',
-                      height: '40px',
+                      minWidth: '32px',
+                      height: '32px',
                       position: 'relative'
                     }}
                     onMouseEnter={(e) => {
