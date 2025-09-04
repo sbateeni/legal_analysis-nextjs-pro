@@ -43,10 +43,11 @@ export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToo
     { id: 'kb', label: 'قاعدة المعرفة', icon: '📚', href: '/kb', category: 'tools', priority: 2 },
     { id: 'rag', label: 'البحث القانوني', icon: '🔍', href: '/rag', category: 'tools', priority: 3 },
     { id: 'advanced-search', label: 'البحث المتقدم', icon: '🔍', href: '/advanced-search', category: 'tools', priority: 4, isNew: true },
-    { id: 'legal-updates', label: 'التحديثات القانونية', icon: '🔄', href: '/legal-updates', category: 'tools', priority: 5, isNew: true },
-    { id: 'reference-checker', label: 'المدقق المرجعي', icon: '🔍', href: '/reference-checker', category: 'tools', priority: 6 },
-    { id: 'exports', label: 'الصادرات', icon: '⬇️', href: '/exports', category: 'tools', priority: 7 },
-    { id: 'resources', label: 'الموارد', icon: '📚', href: '/resources', category: 'tools', priority: 8 },
+    { id: 'intelligent-stages', label: 'مراحل التحليل الذكية', icon: '⚖️', href: '/intelligent-stages', category: 'tools', priority: 5, isNew: true },
+    { id: 'legal-updates', label: 'التحديثات القانونية', icon: '🔄', href: '/legal-updates', category: 'tools', priority: 9, isNew: true },
+    { id: 'reference-checker', label: 'المدقق المرجعي', icon: '🔍', href: '/reference-checker', category: 'tools', priority: 9 },
+    { id: 'exports', label: 'الصادرات', icon: '⬇️', href: '/exports', category: 'tools', priority: 10 },
+    { id: 'resources', label: 'الموارد', icon: '📚', href: '/resources', category: 'tools', priority: 11 },
     
     // الإعدادات
     { id: 'about', label: 'تعليمات النظام', icon: '📖', href: '/about', category: 'settings', priority: 1 },
@@ -56,7 +57,7 @@ export default function SmartToolbar({ isCollapsed = false, onToggle }: SmartToo
     { id: 'offline', label: 'وضع عدم الاتصال', icon: '📱', href: '/offline', category: 'settings', priority: 5 },
     
     // صفحات إضافية
-    { id: 'navigation-demo', label: 'تجربة التنقل', icon: '🧭', href: '/navigation-demo', category: 'tools', priority: 9, isNew: true },
+    { id: 'navigation-demo', label: 'تجربة التنقل', icon: '🧭', href: '/navigation-demo', category: 'tools', priority: 12, isNew: true },
   ];
 
   // تصنيف العناصر حسب الفئة

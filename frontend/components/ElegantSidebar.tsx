@@ -230,6 +230,12 @@ const ElegantSidebar: React.FC = () => {
       href: '/advanced-search',
     },
     {
+      id: 'intelligent-stages',
+      label: 'مراحل التحليل الذكية',
+      icon: 'analytics',
+      href: '/intelligent-stages',
+    },
+    {
       id: 'legal-updates',
       label: 'التحديثات القانونية',
       icon: 'rag',
