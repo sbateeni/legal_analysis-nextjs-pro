@@ -185,6 +185,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { message, apiKey, conversationHistory = [], context } = parsed.data;
+    const mode = ((req.headers['x-mode'] as string) || 'legal').toLowerCase();
 
     // تنظيف الرسالة
     const cleanMessage = sanitizeText(message);
@@ -217,9 +218,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // بناء prompt وطلب JSON
-    const kb = selectRelevantKB(cleanMessage, 5);
+    const kb = mode === 'legal' ? selectRelevantKB(cleanMessage, 5) : [];
     const kbSnippets = kb.map(k => ({ strategy_title: k.strategy_title, strategy_steps: k.strategy_steps, legal_basis: k.legal_basis?.map(b => ({ source: b.source, article: b.article })) || [] }));
-    const prompt = buildChatPrompt(cleanMessage, conversationHistory as ChatMessage[], context, kbSnippets);
+    const prompt = mode === 'legal'
+      ? buildChatPrompt(cleanMessage, conversationHistory as ChatMessage[], context, kbSnippets)
+      : `أنت مساعد عام محترف يجيب بإيجاز ووضوح. أجب بالعربية الفصحى، وابتعد عن الإفتاء القانوني المتخصص ما لم يُطلب صراحة.\n\nالسؤال:\n${cleanMessage}\n\nسياق المحادثة (إن وجد):\n${(conversationHistory as ChatMessage[]).slice(-6).map(m => `${m.role}: ${m.content}`).join('\n')}`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const preferredModel = modelName;

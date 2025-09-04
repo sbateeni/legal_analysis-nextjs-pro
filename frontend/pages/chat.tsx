@@ -41,6 +41,7 @@ function ChatPageContent() {
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
   const [preferredModel, setPreferredModel] = useState<string>('gemini-1.5-flash');
+  const [chatMode, setChatMode] = useState<'legal' | 'general'>('legal');
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const CHAT_STORAGE_KEY_PREFIX = 'legal_chat_';
@@ -60,6 +61,11 @@ function ChatPageContent() {
     });
     // تحميل نموذج مفضّل
     loadAppSettings().then(s => setPreferredModel(s.preferredModel || 'gemini-1.5-flash'));
+    // وضع الدردشة المفضل
+    try {
+      const m = localStorage.getItem('chat_mode');
+      if (m === 'general' || m === 'legal') setChatMode(m);
+    } catch {}
 
     // معالجة تثبيت التطبيق كتطبيق أيقونة
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -207,6 +213,7 @@ function ChatPageContent() {
         headers: {
           'Content-Type': 'application/json',
           'x-model': preferredModel,
+          'x-mode': chatMode,
         },
         body: JSON.stringify({
           message: messageToSend,
@@ -507,6 +514,11 @@ function ChatPageContent() {
                 </div>
               )}
               <div style={{display:'flex', gap:8, flexWrap: 'wrap'}}>
+                {/* وضع الدردشة */}
+                <div style={{ display:'inline-flex', border:`1px solid ${theme.border}`, borderRadius: 10, overflow:'hidden' }}>
+                  <button type="button" onClick={()=>{ setChatMode('legal'); try{localStorage.setItem('chat_mode','legal')}catch{}}} style={{ padding:'6px 10px', fontWeight:800, background: chatMode==='legal'? theme.accent : 'transparent', color: chatMode==='legal'? '#fff' : theme.text, border:'none', cursor:'pointer' }}>⚖️ قانوني</button>
+                  <button type="button" onClick={()=>{ setChatMode('general'); try{localStorage.setItem('chat_mode','general')}catch{}}} style={{ padding:'6px 10px', fontWeight:800, background: chatMode==='general'? theme.accent : 'transparent', color: chatMode==='general'? '#fff' : theme.text, border:'none', cursor:'pointer' }}>🌐 عام</button>
+                </div>
                 <Button onClick={copyTranscript} ariaLabel="نسخ المحادثة كاملة" variant="info" style={{ background: '#0ea5e9' }}>نسخ المحادثة</Button>
                 <Button onClick={handleSaveStrategy} disabled={saving || !messages.length} ariaLabel="حفظ كاستراتيجية" variant="success" style={{ background: saving || !messages.length ? '#9ca3af' : '#10b981', cursor: saving || !messages.length ? 'not-allowed' : 'pointer' }}>{saving ? '⏳' : '💾 حفظ كاستراتيجية'}</Button>
                 <Button onClick={clearChat} disabled={messages.length === 0} ariaLabel="حذف المحادثة" variant="danger" style={{ background: messages.length === 0 ? '#9ca3af' : '#ef4444', cursor: messages.length === 0 ? 'not-allowed' : 'pointer' }}>
