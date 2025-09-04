@@ -189,16 +189,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
             <h1 className="hero-title">
               منصة التحليل القانوني الذكي
             </h1>
+            <div className="hero-badges">
+              <span className="badge ai">مدعوم بالذكاء الاصطناعي</span>
+              <span className="badge ps">مختص بالقضاء الفلسطيني</span>
+            </div>
             <p className="hero-subtitle">
               منصة مجانية للتحليل القانوني المدعوم بالذكاء الاصطناعي
               <br />
               نحن نقدم حلولاً قانونية متطورة لتحليل القضايا وإعداد المذكرات
             </p>
             <div className="hero-buttons">
-              <Link href="/" className="btn-primary">
+              <Link href="/" className="skip-btn">
                 ابدأ التحليل الآن
               </Link>
-              <Link href="/about" className="btn-secondary">
+              <Link href="/about" className="skip-btn">
                 تعرف علينا أكثر
               </Link>
             </div>
@@ -207,10 +211,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
             <div className="hero-graphic">
               <div className="legal-icon">⚖️</div>
               <div className="floating-elements">
+                <div className="floating-item">🤖</div>
+                <div className="floating-item">⚖️</div>
                 <div className="floating-item">📊</div>
                 <div className="floating-item">📝</div>
-                <div className="floating-item">🔍</div>
-                <div className="floating-item">📚</div>
               </div>
             </div>
           </div>
@@ -367,10 +371,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
           top: 0;
           left: 0;
           right: 0;
-          background: rgba(15, 15, 35, 0.95);
+          background: ${elementColors.accentGradient};
           backdrop-filter: blur(20px);
           z-index: 1000;
-          border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+          box-shadow: 0 8px 24px ${theme.shadow};
         }
 
         .header-content {
@@ -388,14 +393,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         }
 
         .logo-icon {
-          font-size: 2rem;
-          filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.3));
+          font-size: 2.25rem;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
         }
 
         .logo-text {
-          font-size: 1.5rem;
-          font-weight: 700;
-          background: ${elementColors.accentGradient};
+          font-size: 2.25rem; /* تكبير بمقدار 50% تقريباً */
+          font-weight: 800;
+          letter-spacing: 0.5px;
+          background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.85) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -408,14 +414,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         }
 
         .nav-link {
-          color: rgba(255, 255, 255, 0.8);
+          color: rgba(255, 255, 255, 0.9);
           text-decoration: none;
-          font-weight: 600;
-          transition: color 0.3s ease;
+          font-weight: 700;
+          transition: color 0.3s ease, transform 0.2s ease;
         }
 
         .nav-link:hover {
-          color: white;
+          color: #ffffff;
+          transform: translateY(-1px);
         }
 
         .skip-btn {
@@ -490,12 +497,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         .hero-section::before {
           content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+          inset: 0;
+          background: url('/DeWatermark.ai_1756309976798.jpeg') center/cover no-repeat;
+          opacity: 0.22;
+          filter: saturate(1.05) contrast(1.05) brightness(${darkMode ? 0.6 : 0.85});
         }
 
         .hero-content {
@@ -508,23 +513,49 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         }
 
         .hero-text {
-          color: white;
+          color: #000000;
+        }
+
+        .hero-badges {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
+        }
+
+        .badge {
+          padding: 6px 12px;
+          border-radius: 999px;
+          font-weight: 800;
+          font-size: 0.9rem;
+          color: #000000;
+          background: #ffffff;
+          border: 1px solid rgba(0,0,0,0.15);
+        }
+
+        .badge.ai {
+          background: #e0f2fe;
+          color: #000000;
+          border-color: #7dd3fc;
+        }
+
+        .badge.ps {
+          background: #dcfce7;
+          color: #000000;
+          border-color: #86efac;
         }
 
         .hero-title {
           font-size: 3.5rem;
           font-weight: 800;
           margin-bottom: 24px;
-          background: ${elementColors.accentGradient};
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: #000000;
           line-height: 1.2;
         }
 
         .hero-subtitle {
           font-size: 1.25rem;
-          color: ${theme.text};
+          color: #000000;
           margin-bottom: 40px;
           line-height: 1.8;
         }
@@ -544,6 +575,29 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
           transition: all 0.3s ease;
           display: inline-block;
           text-align: center;
+        }
+
+        /* تطبيق نمط زر التخطي على أزرار الهيرو بحجم كبير وملفت */
+        .hero-buttons .skip-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px 32px;
+          border-radius: 12px;
+          font-weight: 800;
+          font-size: 1.15rem;
+          letter-spacing: 0.2px;
+          text-decoration: none;
+          box-shadow: 0 8px 24px ${theme.shadow};
+          background: #000000;
+          color: #ffffff;
+          border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .hero-buttons .skip-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px ${theme.shadow};
+          background: #111111;
         }
 
         .btn-primary {

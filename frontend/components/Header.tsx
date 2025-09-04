@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
 import NotificationSystem from './NotificationSystem';
@@ -7,6 +8,7 @@ import NotificationSystem from './NotificationSystem';
 export default function Header() {
   const { darkMode, setDarkMode } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleResize = () => {
@@ -15,6 +17,27 @@ export default function Header() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Prefetch للمسارات الشائعة لتحسين التنقل على Vercel
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') return;
+    const routesToPrefetch = [
+      '/', '/chat', '/analytics', '/cases', '/calendar', '/documents', '/collaboration', '/history', '/settings', '/about', '/exports', '/reference-checker', '/kb', '/templates', '/privacy'
+    ];
+    const doPrefetch = () => {
+      try {
+        routesToPrefetch.forEach((r) => {
+          // تجاهل المسار الحالي
+          if (typeof router.pathname === 'string' && router.pathname === r) return;
+          router.prefetch(r).catch(() => {});
+        });
+      } catch {}
+    };
+    if (typeof window !== 'undefined') {
+      const ric = (window as any).requestIdleCallback || ((cb: any) => setTimeout(cb, 300));
+      ric(() => doPrefetch());
+    }
+  }, [router]);
 
   return (
     <header style={{

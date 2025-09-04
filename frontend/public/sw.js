@@ -62,6 +62,11 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET
   if (request.method !== 'GET') return;
 
+  // استثناء مسارات HMR و Next assets حتى لا نكسر Fast Refresh
+  if (url.pathname.startsWith('/_next/') || url.pathname.includes('hot-update')) {
+    return;
+  }
+
   // API: network-first with short timeout
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(

@@ -20,6 +20,19 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     // تم حذف تهيئة نظام المصادقة
 
+    // لا تسجّل Service Worker أثناء التطوير لتجنب تعارض Fast Refresh
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister().catch(()=>{})));
+        }
+        if (typeof caches !== 'undefined') {
+          caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+        }
+      } catch {}
+      return;
+    }
+
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       // تتبّع وجود تفاعل لتحديد ما إذا كان هذا تشغيلًا جديدًا أم أثناء العمل
       const markInteracted = () => {

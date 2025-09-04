@@ -19,7 +19,7 @@ import stages from '../../stages';
 // تعريف مراحل التحليل القانوني (12 مرحلة)
 const STAGES = Object.keys(stages);
 
-// دالة استدعاء Gemini API
+// دالة استدعاء Gemini API مع مهلة وإعادة المحاولة وفallback
 async function callGeminiAPI(prompt: string, apiKey: string, modelName?: string): Promise<string> {
   if (!apiKey) throw new Error('يرجى إدخال مفتاح Gemini API الخاص بك.');
   
@@ -28,9 +28,49 @@ async function callGeminiAPI(prompt: string, apiKey: string, modelName?: string)
   const model = genAI.getGenerativeModel({ model: name });
   
   try {
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
+  const executeWithTimeout = async (ms: number) => {
+    return await Promise.race([
+      (async () => {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+      })(),
+      new Promise<string>((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), ms))
+    ]);
+  };
+
+  // محاولات محدودة + fallback للنموذج
+  const candidates = [name, 'gemini-1.5-flash', 'gemini-1.5-pro'];
+  const tried = new Set<string>();
+  let lastError: unknown = null;
+  for (let i = 0; i < candidates.length; i++) {
+    const m = candidates[i];
+    if (tried.has(m)) continue;
+    tried.add(m);
+    try {
+      const altModel = genAI.getGenerativeModel({ model: m });
+      const res = await Promise.race([
+        (async () => {
+          const r = await altModel.generateContent(prompt);
+          const rr = await r.response;
+          return rr.text();
+        })(),
+        executeWithTimeout(20000)
+      ]);
+      return res as string;
+    } catch (err) {
+      lastError = err;
+      // إعادة المحاولة السريعة مرة واحدة في حالة أخطاء الشبكة المؤقتة
+      try {
+        const res2 = await executeWithTimeout(20000);
+        return res2 as string;
+      } catch (e2) {
+        lastError = e2;
+        continue;
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('فشل الاستدعاء بعد محاولات متعددة');
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف';
     if (errorMessage.includes('API_KEY')) {
@@ -72,6 +112,8 @@ function handleError(error: unknown): AnalysisError {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     return res.status(405).json({ error: 'Method not allowed', message: 'Method not allowed' });
   }
 
@@ -92,12 +134,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // التحقق من صحة المدخلات
     const validationError = validateAnalysisRequest(request);
     if (validationError) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return res.status(400).json({ ...validationError, error: validationError.message });
     }
 
     // التحقق من Rate Limiting
     const rateLimit = checkRateLimit(request.apiKey);
     if (!rateLimit.allowed) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return res.status(429).json({
         code: 'RATE_LIMIT_EXCEEDED',
         message: `تم تجاوز الحد المسموح من الطلبات. يرجى المحاولة بعد ${Math.ceil((rateLimit.resetTime - Date.now()) / 1000)} ثانية`,
@@ -112,6 +158,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // معالجة طلب العريضة النهائية
     if (request.finalPetition && request.stageIndex === -1) {
       if (!request.previousSummaries || request.previousSummaries.length === 0) {
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         return res.status(400).json({ 
           code: 'VALIDATION_ERROR',
           message: 'يرجى تحليل المراحل أولاً قبل إنشاء العريضة النهائية.',
@@ -137,6 +185,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         // استخدم نموذج أقوى للعريضة النهائية
         const analysis = await callGeminiAPI(petitionPrompt, request.apiKey, 'gemini-1.5-pro');
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         return res.status(200).json({ 
           stage: 'العريضة النهائية', 
           analysis,
@@ -145,12 +195,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
     } catch (error: unknown) {
         const analysisError = handleError(error);
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         return res.status(500).json({ code: analysisError.code, message: analysisError.message, error: analysisError.message, details: analysisError.details });
       }
     }
 
     // معالجة التحليل العادي لكل مرحلة
     if (request.stageIndex < 0 || request.stageIndex >= STAGES.length) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return res.status(400).json({ 
         code: 'VALIDATION_ERROR',
         message: 'رقم المرحلة غير صحيح',
@@ -162,6 +216,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const stageDetails = stages[stageName];
 
     if (!stageDetails) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return res.status(400).json({ 
         code: 'STAGE_NOT_FOUND',
         message: 'المرحلة غير موجودة',
@@ -172,6 +228,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // التحقق من Cache
     const cachedAnalysis = getCachedAnalysis(request.text, request.stageIndex, preferredModel);
     if (cachedAnalysis) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return res.status(200).json({ 
         stage: stageName, 
         analysis: cachedAnalysis,
@@ -199,27 +257,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // اختيار النموذج تلقائياً حسب مستوى التعقيد
       const stageComplexity = stageDetails.complexity || determineComplexity(request.text);
       const modelForStage = stageComplexity === 'advanced' ? 'gemini-1.5-pro' : preferredModel || 'gemini-1.5-flash';
-      const analysis = await callGeminiAPI(prompt, request.apiKey, modelForStage);
+      // إذا كان النص طويلاً جداً، نقسمه إلى أجزاء ونحلل كل جزء على حدة ثم ندمج النتائج
+      const MAX_CHUNK = 6000; // أحرف تقريبية لكل جزء
+      let analysis: string;
+      if (request.text.length > MAX_CHUNK * 1.2) {
+        const chunks: string[] = [];
+        for (let i = 0; i < request.text.length; i += MAX_CHUNK) {
+          chunks.push(request.text.slice(i, i + MAX_CHUNK));
+        }
+        const chunkResults: string[] = [];
+        for (let i = 0; i < chunks.length; i++) {
+          const chunkPrompt = buildEnhancedPrompt(stageDetails, chunks[i], trimmedSummaries, context);
+          const r = await callGeminiAPI(chunkPrompt, request.apiKey, modelForStage);
+          chunkResults.push(`(جزء ${i + 1}/${chunks.length})\n${r}`);
+        }
+        analysis = chunkResults.join('\n\n');
+      } else {
+        analysis = await callGeminiAPI(prompt, request.apiKey, modelForStage);
+      }
       
       // حفظ في Cache
       cacheAnalysis(request.text, request.stageIndex, analysis, modelForStage);
+
+      // توليد ملخص تلقائي مختصر عند طول الاستجابة
+      let summary: string | undefined;
+      if (analysis.length > 2000) {
+        try {
+          const summaryPrompt = `لخص باحتراف بالعربية النص التالي في نقاط موجزة (5-7 نقاط كحد أقصى) دون فقدان المضمون القانوني:\n\n${analysis.slice(0, 8000)}`;
+          summary = await callGeminiAPI(summaryPrompt, request.apiKey, modelForStage);
+        } catch {}
+      }
 
       const response: AnalysisResponse = {
         stage: stageName,
         analysis,
         timestamp: Date.now(),
-        stageIndex: request.stageIndex
+        stageIndex: request.stageIndex,
+        ...(summary ? { summary } as any : {})
       };
 
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return res.status(200).json(response);
     } catch (error: unknown) {
       const analysisError = handleError(error);
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return res.status(500).json({ code: analysisError.code, message: analysisError.message, error: analysisError.message, details: analysisError.details });
     }
 
   } catch (error: unknown) {
     console.error('Error in analyze API:', error);
     const analysisError = handleError(error);
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     return res.status(500).json({ code: analysisError.code, message: analysisError.message, error: analysisError.message, details: analysisError.details });
   }
 } 
