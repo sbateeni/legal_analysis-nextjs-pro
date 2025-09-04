@@ -14,6 +14,7 @@ export interface StageDetails {
   optional?: boolean; // هل المرحلة اختيارية
   prerequisites?: string[]; // مراحل يجب إكمالها مسبقاً
   deadlines?: string[]; // مواعيد قانونية/سقوط مهمة
+  jurisdictionHints?: string[]; // تلميحات اختصاص/مواد فلسطينية مختصرة لتعزيز الدقة عند نقص المعطيات
 }
 
 export interface StageDetailsMap {

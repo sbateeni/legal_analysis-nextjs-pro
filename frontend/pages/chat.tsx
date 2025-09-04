@@ -4,6 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { getAllCases, LegalCase, loadApiKey } from '@utils/db';
 import { loadAppSettings } from '@utils/appSettings';
 import { Button } from '../components/UI';
+import { PalestinianPromptTemplates } from '@utils/prompts';
 import { extractApiError, mapApiErrorToMessage } from '@utils/errors';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
@@ -155,6 +156,33 @@ function ChatPageContent() {
       return;
     }
 
+    // كاش محلي دلالي بسيط: إعادة استخدام إجابة سابقة لنفس السؤال ضمن نفس المحادثة
+    const normalized = messageToSend.replace(/\s+/g, ' ').trim().toLowerCase();
+    const findCachedAnswer = (): string | null => {
+      for (let i = messages.length - 1; i >= 1; i--) {
+        const m = messages[i - 1];
+        const a = messages[i];
+        if (m.role === 'user' && a.role === 'assistant') {
+          const nm = m.content.replace(/\s+/g, ' ').trim().toLowerCase();
+          if (nm === normalized) {
+            return a.content;
+          }
+        }
+      }
+      return null;
+    };
+    const cachedAnswer = findCachedAnswer();
+    if (!overrideMessage && cachedAnswer) {
+      // أضف السؤال والجواب مباشرة دون استدعاء الشبكة
+      const userMessage: ChatMessage = { role: 'user', content: messageToSend, timestamp: Date.now() };
+      const assistantMessage: ChatMessage = { role: 'assistant', content: cachedAnswer, timestamp: Date.now() } as ChatMessage;
+      setMessages(prev => [...prev, userMessage, assistantMessage]);
+      setLastUserMessage(messageToSend);
+      setInputMessage('');
+      scrollToBottom();
+      return;
+    }
+
     const userMessage: ChatMessage = {
       role: 'user',
       content: messageToSend,
@@ -200,16 +228,40 @@ function ChatPageContent() {
         throw new Error(mapApiErrorToMessage(code, message));
       }
 
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: data.message,
-        timestamp: data.timestamp,
-        suggestions: data.suggestions,
-        nextSteps: data.nextSteps,
-        confidence: data.confidence
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
+      const ENABLE_PROGRESSIVE_DISPLAY = true;
+      if (ENABLE_PROGRESSIVE_DISPLAY) {
+        const baseMsg: ChatMessage = {
+          role: 'assistant',
+          content: '',
+          timestamp: data.timestamp,
+          suggestions: data.suggestions,
+          nextSteps: data.nextSteps,
+          confidence: data.confidence
+        };
+        setMessages(prev => [...prev, baseMsg]);
+        const full = String(data.message || '');
+        let i = 0;
+        const step = Math.max(20, Math.floor(full.length / 50));
+        const interval = setInterval(() => {
+          i = Math.min(full.length, i + step);
+          setMessages(prev => {
+            const copy = [...prev];
+            copy[copy.length - 1] = { ...copy[copy.length - 1], content: full.slice(0, i) };
+            return copy;
+          });
+          if (i >= full.length) clearInterval(interval);
+        }, 20);
+      } else {
+        const assistantMessage: ChatMessage = {
+          role: 'assistant',
+          content: data.message,
+          timestamp: data.timestamp,
+          suggestions: data.suggestions,
+          nextSteps: data.nextSteps,
+          confidence: data.confidence
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      }
     } catch (err: unknown) {
       if (typeof err === 'object' && err !== null && 'name' in err && (err as { name?: string }).name === 'AbortError') {
         setError('تم إيقاف الطلب');
@@ -330,6 +382,20 @@ function ChatPageContent() {
     el.style.height = `${next}px`;
   };
 
+  // Quick prompt template helpers
+  const applyFactualExtraction = () => {
+    const base = inputMessage.trim() || lastUserMessage || '';
+    setInputMessage(PalestinianPromptTemplates.factualExtraction(base || 'اكتب هنا النص المراد استخراج وقائعه...'));
+  };
+  const applyLegalBasis = () => {
+    const topic = inputMessage.trim() || lastUserMessage || 'موضوع قانوني محدد';
+    setInputMessage(PalestinianPromptTemplates.legalBasisPS(topic));
+  };
+  const applyPleadingSkeleton = () => {
+    const ctx = inputMessage.trim() || lastUserMessage || 'سياق مختصر للقضية';
+    setInputMessage(PalestinianPromptTemplates.pleadingSkeleton(ctx));
+  };
+
   useEffect(() => {
     autoResizeInput();
   }, [inputMessage, isLoading]);
@@ -377,7 +443,7 @@ function ChatPageContent() {
 
       {/* بطاقة تذكير إعداد المفتاح + اختيار القضية */}
       <div style={{
-        maxWidth: 1000,
+        maxWidth: 1200,
         margin: '0 auto',
         padding: isMobile() ? '1rem 0.5rem' : '2rem 1rem'
       }}>
@@ -421,6 +487,8 @@ function ChatPageContent() {
           </div>
         </div>
 
+        {/* تخطيط بعرضين: المحادثة + شريط جانبي للسياق */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile()? '1fr' : '2fr 1fr', gap: 12 }}>
         {/* بطاقة المحادثة */}
         <div className="card-ui" style={{ background: theme.card, borderColor: theme.border, padding: 0, overflow: 'hidden' }}>
           <div style={{padding: isMobile()? 14:18, borderBottom: `1px solid ${theme.border}`, background: 'rgba(99,102,241,0.06)'}}>
@@ -444,6 +512,14 @@ function ChatPageContent() {
                 <Button onClick={clearChat} disabled={messages.length === 0} ariaLabel="حذف المحادثة" variant="danger" style={{ background: messages.length === 0 ? '#9ca3af' : '#ef4444', cursor: messages.length === 0 ? 'not-allowed' : 'pointer' }}>
                   🗑️ حذف المحادثة {messages.length > 0 && `(${messages.length})`}
                 </Button>
+                {selectedCaseId && (
+                  <a href="#" onClick={(e)=>{e.preventDefault();
+                    const s = cases.find(c=>c.id===selectedCaseId)?.stages || [];
+                    if (!s.length) return setError('لا توجد مخرجات سابقة لفحص المراجع');
+                    const recent = s[s.length-1].output || '';
+                    setInputMessage(prev => `${prev}\n\n[مرجع] تحقق من المراجع القانونية المذكورة وبيّن مدى دقتها وأحدثيتها، وصحّح إن لزم:\n${recent.slice(0, 4000)}`);
+                  }} style={{ textDecoration:'none', padding:'6px 10px', border:`1px solid ${theme.border}`, borderRadius:8, background:'#fff7ed', color:'#9a3412', fontWeight:700 }}>🔎 فحص المراجع</a>
+                )}
               </div>
             </div>
             <div style={{marginTop:6, color:'#6b7280', fontSize: isMobile()? 13:14}}>اسأل ضمن الإطار القانوني الفلسطيني لتحصل على إجابات مبنية على القوانين والأنظمة الفلسطينية</div>
@@ -630,6 +706,14 @@ function ChatPageContent() {
             background: theme.card,
             borderTop: `1px solid ${theme.border}`
           }}>
+            {/* Quick Actions (Mobile only) */}
+            {isMobile() && (
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <button onClick={applyFactualExtraction} type="button" style={{ background:'#eef2ff', border:`1px solid ${theme.border}`, color:'#4338ca', borderRadius:8, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>🧩 استخراج الوقائع</button>
+                <button onClick={applyLegalBasis} type="button" style={{ background:'#ecfeff', border:`1px solid ${theme.border}`, color:'#0e7490', borderRadius:8, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>📚 أساس قانوني فلسطيني</button>
+                <button onClick={applyPleadingSkeleton} type="button" style={{ background:'#f0fdf4', border:`1px solid ${theme.border}`, color:'#166534', borderRadius:8, padding:'6px 10px', fontWeight:700, cursor:'pointer' }}>📄 هيكل عريضة</button>
+              </div>
+            )}
             <div style={{
               display: 'flex',
               gap: '0.5rem',
@@ -663,6 +747,45 @@ function ChatPageContent() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* الشريط الجانبي للسياق */}
+        <aside className="card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile()? 12:16, height: '100%', alignSelf:'start' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+            <span>🗂️</span>
+            <b style={{ color: theme.accent2 }}>سياق القضية</b>
+          </div>
+          {selectedCaseId ? (
+            <>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>{cases.find(c=>c.id===selectedCaseId)?.name}</div>
+              <div style={{ fontSize: 13, color:'#6b7280', marginBottom: 10 }}>
+                مراحل مكتملة: {cases.find(c=>c.id===selectedCaseId)?.stages.length || 0}
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 8, color: theme.accent2 }}>آخر 3 مراحل:</div>
+              <ul style={{ margin: 0, paddingRight: 16 }}>
+                {([...((cases.find(c=>c.id===selectedCaseId)?.stages)||[])]
+                  .sort((a,b)=>b.stageIndex-a.stageIndex)
+                  .slice(0,3)
+                  .map(s => (
+                    <li key={s.id} style={{ marginBottom:6 }}>
+                      <b>{s.stage}</b>
+                      <div style={{ fontSize:12, opacity:0.8 }}>{(s.output||'').slice(0,80)}...</div>
+                    </li>
+                  )))}
+              </ul>
+            </>
+          ) : (
+            <div style={{ fontSize: 13, color:'#6b7280' }}>اختر قضية لعرض السياق هنا</div>
+          )}
+          {/* Quick Actions (Desktop only) */}
+          {!isMobile() && (
+            <div style={{ marginTop: 12, display:'flex', flexDirection:'column', gap:8 }}>
+              <button onClick={applyFactualExtraction} type="button" style={{ background:'#eef2ff', border:`1px solid ${theme.border}`, color:'#4338ca', borderRadius:8, padding:'6px 10px', fontWeight:700, cursor:'pointer', width:'100%' }}>🧩 استخراج الوقائع</button>
+              <button onClick={applyLegalBasis} type="button" style={{ background:'#ecfeff', border:`1px solid ${theme.border}`, color:'#0e7490', borderRadius:8, padding:'6px 10px', fontWeight:700, cursor:'pointer', width:'100%' }}>📚 أساس قانوني فلسطيني</button>
+              <button onClick={applyPleadingSkeleton} type="button" style={{ background:'#f0fdf4', border:`1px solid ${theme.border}`, color:'#166534', borderRadius:8, padding:'6px 10px', fontWeight:700, cursor:'pointer', width:'100%' }}>📄 هيكل عريضة</button>
+            </div>
+          )}
+        </aside>
         </div>
       </div>
 

@@ -7,7 +7,7 @@ import {
   AnalysisContext 
 } from '../../types/analysis';
 import { validateAnalysisRequest, sanitizeText } from '@utils/validation';
-import { getCachedAnalysis, cacheAnalysis, checkRateLimit } from '@utils/cache';
+import { getCachedAnalysis, cacheAnalysis, checkRateLimit, checkRateLimitForKey } from '@utils/cache';
 import { 
   buildEnhancedPrompt, 
   buildFinalPetitionPrompt,
@@ -121,6 +121,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // تنظيف وتحقق من المدخلات
   const { text, stageIndex, apiKey, previousSummaries, finalPetition, partyRole } = req.body;
   const preferredModel = (req.headers['x-model'] as string) || 'gemini-1.5-flash';
+  const budget = ((req.headers['x-budget'] as string) || 'medium').toLowerCase() as 'low' | 'medium' | 'high';
+  const summaryStyle = ((req.headers['x-summary-style'] as string) || 'bullets').toLowerCase() as 'bullets' | 'brief' | 'legalese';
     
     const request: AnalysisRequest = {
       text: sanitizeText(text || ''),
@@ -140,7 +142,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // التحقق من Rate Limiting
-    const rateLimit = checkRateLimit(request.apiKey);
+    // Rate limit: استخدم apiKey، وإن لم يوجد فاستعمل IP كبديل
+    const ip = (req.headers['x-real-ip'] as string) || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const rateKey = request.apiKey || `ip:${ip}`;
+    const rateLimit = checkRateLimitForKey(rateKey);
     if (!rateLimit.allowed) {
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -254,9 +259,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const prompt = buildEnhancedPrompt(stageDetails, request.text, trimmedSummaries, context);
 
     try {
-      // اختيار النموذج تلقائياً حسب مستوى التعقيد
+      // اختيار النموذج تكيفياً حسب التعقيد والميزانية
       const stageComplexity = stageDetails.complexity || determineComplexity(request.text);
-      const modelForStage = stageComplexity === 'advanced' ? 'gemini-1.5-pro' : preferredModel || 'gemini-1.5-flash';
+      let modelForStage = preferredModel || 'gemini-1.5-flash';
+      if (budget === 'low') {
+        modelForStage = 'gemini-1.5-flash';
+      } else if (budget === 'high') {
+        modelForStage = stageComplexity === 'advanced' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+      } else {
+        // medium: استخدم pro فقط عندما تكون متقدمة بوضوح
+        modelForStage = stageComplexity === 'advanced' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+      }
       // إذا كان النص طويلاً جداً، نقسمه إلى أجزاء ونحلل كل جزء على حدة ثم ندمج النتائج
       const MAX_CHUNK = 6000; // أحرف تقريبية لكل جزء
       let analysis: string;
@@ -279,11 +292,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // حفظ في Cache
       cacheAnalysis(request.text, request.stageIndex, analysis, modelForStage);
 
-      // توليد ملخص تلقائي مختصر عند طول الاستجابة
+      // توليد ملخص تلقائي مع أنماط مختلفة عند طول الاستجابة
       let summary: string | undefined;
       if (analysis.length > 2000) {
         try {
-          const summaryPrompt = `لخص باحتراف بالعربية النص التالي في نقاط موجزة (5-7 نقاط كحد أقصى) دون فقدان المضمون القانوني:\n\n${analysis.slice(0, 8000)}`;
+          let summaryPrompt = '';
+          const snippet = analysis.slice(0, 8000);
+          if (summaryStyle === 'bullets') {
+            summaryPrompt = `لخّص النص التالي في نقاط موجزة وواضحة (5-7 نقاط)، مع لغة عربية بسيطة ودقة قانونية:\n\n${snippet}`;
+          } else if (summaryStyle === 'brief') {
+            summaryPrompt = `قدّم خلاصة قصيرة لا تتجاوز 4 جمل بالنثر العربي الفصيح، تحافظ على الجوهر القانوني دون تفصيل:\n\n${snippet}`;
+          } else {
+            // legalese
+            summaryPrompt = `صُغ خلاصة قانونية رسمية بلهجة مذكّرات فلسطينية موجزة (3-5 جمل) مع إحالات مقتضبة حينما تتوفر:\n\n${snippet}`;
+          }
           summary = await callGeminiAPI(summaryPrompt, request.apiKey, modelForStage);
         } catch {}
       }

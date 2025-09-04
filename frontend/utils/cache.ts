@@ -9,7 +9,8 @@ const rateLimitCache = new Map<string, RateLimitInfo>();
 // إعدادات Cache
 const CACHE_EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 ساعة
 const RATE_LIMIT_WINDOW = 60 * 1000; // دقيقة واحدة
-const MAX_REQUESTS_PER_WINDOW = 10; // 10 طلبات في الدقيقة
+const DEFAULT_MAX_REQUESTS_PER_WINDOW = 10; // افتراضي: 10 طلبات في الدقيقة
+const ENV_MAX_PER_MIN = Number(process.env.RATE_LIMIT_PER_MIN || '') || DEFAULT_MAX_REQUESTS_PER_WINDOW;
 
 // دالة إنشاء مفتاح Cache
 export function createCacheKey(text: string, stageIndex: number, modelName: string = 'gemini-1.5-flash'): string {
@@ -59,18 +60,23 @@ export function cacheAnalysis(text: string, stageIndex: number, analysis: string
 
 // دالة التحقق من Rate Limiting
 export function checkRateLimit(apiKey: string): { allowed: boolean; remaining: number; resetTime: number } {
+  return checkRateLimitForKey(apiKey, ENV_MAX_PER_MIN);
+}
+
+// نسخة أدق تسمح بتحديد المفتاح والحد
+export function checkRateLimitForKey(key: string, maxPerWindow: number = ENV_MAX_PER_MIN): { allowed: boolean; remaining: number; resetTime: number } {
   const now = Date.now();
-  const rateLimitInfo = rateLimitCache.get(apiKey);
+  const rateLimitInfo = rateLimitCache.get(key);
   
   if (!rateLimitInfo) {
     // أول طلب لهذا API Key
     const newRateLimitInfo: RateLimitInfo = {
-      apiKey,
+      apiKey: key,
       requests: [now],
       lastReset: now
     };
-    rateLimitCache.set(apiKey, newRateLimitInfo);
-    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1, resetTime: now + RATE_LIMIT_WINDOW };
+    rateLimitCache.set(key, newRateLimitInfo);
+    return { allowed: true, remaining: Math.max(0, maxPerWindow - 1), resetTime: now + RATE_LIMIT_WINDOW };
   }
   
   // التحقق من إعادة تعيين النافذة الزمنية
@@ -87,8 +93,8 @@ export function checkRateLimit(apiKey: string): { allowed: boolean; remaining: n
   );
   
   const currentRequests = rateLimitInfo.requests.length;
-  const allowed = currentRequests <= MAX_REQUESTS_PER_WINDOW;
-  const remaining = Math.max(0, MAX_REQUESTS_PER_WINDOW - currentRequests);
+  const allowed = currentRequests <= maxPerWindow;
+  const remaining = Math.max(0, maxPerWindow - currentRequests);
   const resetTime = rateLimitInfo.lastReset + RATE_LIMIT_WINDOW;
   
   return { allowed, remaining, resetTime };

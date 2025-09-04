@@ -205,8 +205,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(cached);
     }
 
-    // Rate limiting
-    const rateLimit = checkRateLimit(apiKey);
+    // Rate limiting مع بديل IP
+    const ip = (req.headers['x-real-ip'] as string) || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const rateKey = apiKey || `ip:${ip}`;
+    const rateLimit = checkRateLimit(rateKey);
     if (!rateLimit.allowed) {
       return res.status(429).json({
         code: 'RATE_LIMIT_EXCEEDED',

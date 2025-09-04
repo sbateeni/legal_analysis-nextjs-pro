@@ -56,6 +56,7 @@ export default function Home() {
     setShowLandingPage(false);
     try {
       localStorage.setItem('hasVisited', 'true');
+      localStorage.setItem('start_on_stages', '1');
     } catch (error) {
       console.warn('Failed to save to localStorage:', error);
     }
@@ -161,6 +162,17 @@ function HomeContent() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('resize', checkScreenSize);
     };
+  }, []);
+
+  // ابدأ مباشرة على تبويب مراحل التحليل إذا أتينا من CTA
+  useEffect(() => {
+    try {
+      const start = localStorage.getItem('start_on_stages');
+      if (start === '1') {
+        setActiveTab('stages');
+        localStorage.removeItem('start_on_stages');
+      }
+    } catch {}
   }, []);
 
   // حفظ نوع القضية محلياً
@@ -401,6 +413,30 @@ function HomeContent() {
                 }}
               >
                 🆕 قضية جديدة
+              </button>
+              <Link
+                href="/chat"
+                style={{
+                  background: 'transparent', color: theme.accent2, border: `1px solid ${theme.accent2}`, borderRadius: 8,
+                  padding: isSmallScreen ? '8px 16px' : '6px 14px', fontWeight: 700, fontSize: isSmallScreen ? 14 : 16,
+                  textDecoration: 'none', boxShadow: `0 1px 4px ${theme.shadow}`, letterSpacing: 1, transition: 'all 0.2s',
+                  width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6
+                }}
+                title="فتح المحادثة الذكية"
+              >
+                💬 المحادثة
+              </Link>
+              <button
+                onClick={() => { try { localStorage.removeItem('hasVisited'); } catch {} window.location.href = '/'; }}
+                style={{
+                  background: 'transparent', color: theme.text, border: `1px solid ${theme.input}`, borderRadius: 8,
+                  padding: isSmallScreen ? '8px 16px' : '6px 14px', fontWeight: 700, fontSize: isSmallScreen ? 14 : 16,
+                  cursor: 'pointer', boxShadow: `0 1px 4px ${theme.shadow}`, letterSpacing: 1, transition: 'all 0.2s',
+                  width: 'auto',
+                }}
+                title="العودة لشاشة الترحيب"
+              >
+                🏠 العودة لشاشة الترحيب
               </button>
               {showInstallPrompt && (
                 <button

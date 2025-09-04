@@ -159,7 +159,7 @@ export default function About() {
                 <span style={{fontSize: 20}}>📱</span>
                 <h3 style={{margin: 0, fontSize: isMobile() ? 16 : 18, color: theme.accent}}>تطبيق ويب تقدمي (PWA)</h3>
               </div>
-              <p style={{margin: 0, fontSize: isMobile() ? 13 : 14, lineHeight: 1.6}}>يمكن تثبيته كتطبيق على الهاتف ويعمل بدون إنترنت</p>
+              <p style={{margin: 0, fontSize: isMobile() ? 13 : 14, lineHeight: 1.6}}>يمكن تثبيته كتطبيق على الهاتف ويعمل بدون إنترنت (صفحة Offline وSW محسّن)</p>
             </div>
             
             <div style={{background: darkMode ? '#1e1e2e' : '#f8fafc', padding: isMobile() ? 12 : 16, borderRadius: 8, border: `1px solid ${theme.border}`}}>
@@ -216,6 +216,8 @@ export default function About() {
               <h4 style={{margin: '0 0 8px 0', color: theme.accent, fontSize: isMobile() ? 14 : 16}}>المساعد القانوني الفلسطيني</h4>
               <ul style={{margin: 0, paddingRight: 16, fontSize: isMobile() ? 12 : 13}}>
                 <li>محادثة تفاعلية ذكية</li>
+                <li>اختيار نموذج تكيفي حسب التعقيد/الميزانية</li>
+                <li>أنماط تلخيص: نقاط/مختصر/صياغة قانونية</li>
                 <li>اقتراحات وخطوات تالية</li>
                 <li>مستوى ثقة للإجابات</li>
                 <li>حفظ الاستراتيجيات</li>
@@ -246,7 +248,7 @@ export default function About() {
               <h4 style={{margin: '0 0 8px 0', color: theme.accent, fontSize: isMobile() ? 14 : 16}}>التطبيق التقدمي (PWA)</h4>
               <ul style={{margin: 0, paddingRight: 16, fontSize: isMobile() ? 12 : 13}}>
                 <li>تثبيت كتطبيق</li>
-                <li>عمل بدون إنترنت</li>
+                <li>عمل بدون إنترنت (Offline page)</li>
                 <li>إشعارات ذكية</li>
                 <li>تجربة محسنة</li>
               </ul>

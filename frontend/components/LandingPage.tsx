@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface LandingPageProps {
@@ -183,6 +184,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
 
       {/* Hero Section */}
       <section className="hero-section">
+        <div className="hero-bg" aria-hidden="true">
+          <Image
+            src="/DeWatermark.ai_1756309976798.jpeg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectFit: 'cover', opacity: 0.22, filter: `saturate(1.05) contrast(1.05) brightness(${darkMode ? 0.6 : 0.85})` }}
+          />
+          <div className="hero-overlay" />
+        </div>
         <div className="container">
           <div className="hero-content">
           <div className="hero-text">
@@ -199,11 +211,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
               نحن نقدم حلولاً قانونية متطورة لتحليل القضايا وإعداد المذكرات
             </p>
             <div className="hero-buttons">
-              <Link href="/" className="skip-btn">
-                ابدأ التحليل الآن
-              </Link>
-              <Link href="/about" className="skip-btn">
-                تعرف علينا أكثر
+              <button
+                className="skip-btn btn-primary-solid"
+                onClick={onSkip}
+                type="button"
+              >
+                <span className="btn-content"><span className="btn-icon">🚀</span><span>ابدأ التحليل الآن</span></span>
+              </button>
+              <Link href="/about" className="skip-btn btn-primary-solid">
+                <span className="btn-content"><span className="btn-icon">🚀</span><span>تعرف علينا أكثر</span></span>
               </Link>
             </div>
           </div>
@@ -296,9 +312,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
             <p className="cta-subtitle">
               انضم إلى آلاف المحامين والمستشارين القانونيين الذين يثقون بمنصتنا
             </p>
-            <Link href="/" className="btn-primary btn-large">
+            <button
+              type="button"
+              className="btn-primary btn-large"
+              onClick={onSkip}
+            >
               ابدأ التحليل الآن مجاناً
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -494,13 +514,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
           margin-left: calc(-50vw + 50%);
         }
 
-        .hero-section::before {
-          content: '';
+        .hero-bg {
           position: absolute;
           inset: 0;
-          background: url('/DeWatermark.ai_1756309976798.jpeg') center/cover no-repeat;
-          opacity: 0.22;
-          filter: saturate(1.05) contrast(1.05) brightness(${darkMode ? 0.6 : 0.85});
+          z-index: 0;
+        }
+
+        .hero-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.12) 100%);
+          pointer-events: none;
         }
 
         .hero-content {
@@ -509,7 +533,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
           gap: 60px;
           align-items: center;
           position: relative;
-          z-index: 2;
+          z-index: 1;
         }
 
         .hero-text {
@@ -593,6 +617,36 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
           color: #ffffff;
           border: 1px solid rgba(255,255,255,0.15);
         }
+        /* Global selectors to ensure Link <a> receives identical styling */
+        :global(.hero-buttons .skip-btn) {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px 32px;
+          border-radius: 12px;
+          font-weight: 800;
+          font-size: 1.15rem;
+          letter-spacing: 0.2px;
+          text-decoration: none;
+          box-shadow: 0 8px 24px ${theme.shadow};
+        }
+        :global(.btn-primary-solid) {
+          background: #000000;
+          color: #ffffff !important;
+          border: 1px solid rgba(255,255,255,0.15);
+        }
+        :global(.btn-outline) {
+          background: transparent;
+          color: #000000;
+          border: 2px solid #000000;
+          box-shadow: none;
+        }
+
+        .btn-content { display:inline-flex; align-items:center; gap:8px; }
+        .btn-icon { display:inline-block; }
+
+        .btn-primary-solid { background: #000; color: #fff; border-color: rgba(255,255,255,0.15); }
+        .btn-outline { background: transparent; color: #000; border: 2px solid #000; box-shadow: none; }
 
         .hero-buttons .skip-btn:hover {
           transform: translateY(-2px);

@@ -7,6 +7,7 @@ const RUNTIME = `runtime-${VERSION}`;
 const PRECACHE_URLS = [
   '/manifest.json',
   '/favicon.ico',
+  '/offline',
 ];
 
 self.addEventListener('install', (event) => {
@@ -81,14 +82,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation/documents: network-first then cache
+  // Navigation/documents: network-first then cache مع صفحة Offline إن توفرت
   if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
       fetch(request).then((response) => {
         const copy = response.clone();
         caches.open(RUNTIME).then((cache) => cache.put(request, copy));
         return response;
-      }).catch(() => caches.match(request).then((res) => res || caches.match('/')))
+      }).catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        const offline = await caches.match('/offline');
+        return offline || Response.error();
+      })
     );
     return;
   }
