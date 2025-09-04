@@ -4,7 +4,7 @@ import json
 import os
 import pathlib
 import time
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, parse_qs
 
 import requests
 from bs4 import BeautifulSoup
@@ -54,6 +54,81 @@ def extract_links(html: str, base: str) -> list[str]:
         seen.add(l)
         unique.append(l)
     return unique
+
+
+def extract_links_site_specific(html: str, base: str) -> list[str]:
+    """Best-effort site-specific link extraction to improve recall for known portals.
+
+    Falls back to generic when no special rules match.
+    """
+    parsed = urlparse(base)
+    host = parsed.netloc.lower()
+    soup = BeautifulSoup(html, "html.parser")
+
+    candidates: list[str] = []
+
+    def norm(h: str) -> str:
+        return urljoin(base, h.strip())
+
+    try:
+        if "muqtafi.birzeit.edu" in host:
+            # Muqtafi often uses paths like /pg/ and detail pages referencing rules
+            for a in soup.select('a[href*="pg/"], a[href*="rule"], a[href*="law"], a[href*="Legislation" i], a[href^="javascript:"]'):
+                href = a.get("href", "").strip()
+                if not href:
+                    continue
+                # Transform javascript: postbacks that point to PDFPre.aspx?PDFPath=...
+                if href.lower().startswith("javascript:") and "pdfpre.aspx?pdfpath=" in href.lower():
+                    # naive pull of the query segment inside the javascript call
+                    # e.g., javascript:WebForm_DoPostBackWithOptions(... "PDFPre.aspx?PDFPath=Uploads/legislation/202102.pdf" ...)
+                    try:
+                        start = href.lower().index("pdfpre.aspx?pdfpath=")
+                        query_part = href[start:]
+                        # stop at last quote or parenthesis
+                        for stop_char in ["'", '"', ")"]:
+                            if stop_char in query_part:
+                                query_part = query_part.split(stop_char)[0]
+                        pre_url = norm(query_part)
+                        candidates.append(pre_url)
+                        # also add direct pdf URL if possible
+                        pr = urlparse(pre_url)
+                        q = parse_qs(pr.query)
+                        pdf_rel = (q.get("PDFPath") or q.get("pdfpath") or [None])[0]
+                        if pdf_rel:
+                            candidates.append(norm(pdf_rel))
+                        continue
+                    except Exception:
+                        pass
+                candidates.append(norm(href))
+        elif host.endswith("moj.pna.ps"):
+            # Ministry of Justice portal; look for legislation sections and Arabic anchors
+            for a in soup.select("a[href]"):
+                text = (a.get_text(" ", strip=True) or "").lower()
+                href = a.get("href", "")
+                if not href:
+                    continue
+                href_l = href.lower()
+                if any(w in text for w in ["تشريع", "قانون", "لوائح", "أنظمة"]) or \
+                   any(k in href_l for k in ["/legislation", "/laws", "law", "legis"]):
+                    candidates.append(norm(href))
+    except Exception:
+        candidates = []
+
+    # If nothing special found, return generic
+    if not candidates:
+        return extract_links(html, base)
+
+    # also include generic essentials from the same page to avoid missing PDFs
+    generic = extract_links(html, base)
+    all_links = candidates + generic
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for link in all_links:
+        if link in seen:
+            continue
+        seen.add(link)
+        uniq.append(link)
+    return uniq
 
 
 def sha1(s: str) -> str:
@@ -116,11 +191,32 @@ def crawl(seed_url: str, out_dir: pathlib.Path, max_pages: int, rate: float, ena
         print("[seed-error]", seed_url, e)
         return
 
-    links = extract_links(resp.text, seed_url)[:max_pages]
+    links = extract_links_site_specific(resp.text, seed_url)[:max_pages]
     for link in links:
         time.sleep(rate)
         try:
-            if link.lower().endswith(".pdf"):
+            # Skip non-http(s)
+            scheme = urlparse(link).scheme.lower()
+            if scheme not in ("http", "https"):
+                # Special case: constructed PDFPre.aspx candidate without scheme -> normalize
+                link = urljoin(seed_url, link)
+                scheme = urlparse(link).scheme.lower()
+                if scheme not in ("http", "https"):
+                    print("[skip-non-http]", link)
+                    continue
+
+            # Handle Muqtafi PDFPre.aspx links that embed a PDF path
+            lower_link = link.lower()
+            if "pdfpre.aspx" in lower_link:
+                pr = urlparse(link)
+                q = parse_qs(pr.query)
+                pdf_rel = (q.get("PDFPath") or q.get("pdfpath") or [None])[0]
+                if pdf_rel:
+                    direct_pdf = urljoin(link, pdf_rel)
+                    link = direct_pdf
+                    lower_link = link.lower()
+
+            if lower_link.endswith(".pdf"):
                 r = fetch(link)
                 fid = sha1(link)
                 fpath = files_dir / f"{fid}.pdf"
