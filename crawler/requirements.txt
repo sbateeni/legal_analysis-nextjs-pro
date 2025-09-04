@@ -1,0 +1,9 @@
+requests>=2.32.0
+beautifulsoup4>=4.12.2
+pdfminer.six>=20231228
+python-dateutil>=2.9.0
+pytesseract>=0.3.10
+pdf2image>=1.17.0
+Pillow>=10.3.0
+faiss-cpu>=1.8.0.post1
+sentence-transformers>=3.0.1
