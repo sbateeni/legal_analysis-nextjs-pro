@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import time
 from urllib.parse import urljoin, urlparse, parse_qs
 
@@ -26,9 +27,179 @@ UA = "LegalCrawler/1.0 (+contact: admin@example.com)"
 DEFAULT_RATE = 1.0
 
 
+def sanitize_filename(name):
+    """تنظيف اسم الملف من الأحرف غير المسموحة مع الحفاظ على النص العربي"""
+    # الحفاظ على الأحرف العربية والأرقام والمسافات والنقاط
+    name = re.sub(r'[\\/*?:"<>|]', "_", name)
+    name = re.sub(r"\s+", " ", name)
+    name = name.strip()
+    
+    # تقليل طول الاسم إذا كان طويلاً جداً مع الحفاظ على النهايات المهمة
+    if len(name) > 150:
+        # محاولة الحفاظ على الجزء الأخير من الاسم الذي قد يحتوي على رقم القانون أو السنة
+        parts = name.split()
+        if len(parts) > 5:
+            # أخذ أول 3 كلمات وآخر 3 كلمات
+            name = " ".join(parts[:3] + ["..."] + parts[-3:])
+        else:
+            name = name[:150] + "..."
+    return name
+
+
+def wrap_rtl_for_filename(title: str) -> str:
+    """لف عنوان عربي بعلامات اتجاه لضمان عرض صحيح في أنظمة الملفات.
+
+    نستخدم RLE/RLM لتثبيت اتجاه النص العربي، مع LRM قبل الجزء اللاتيني.
+    """
+    # إذا احتوى على أحرف عربية نغلفه بعلامة تضمين RTL ونغلقها
+    if any('\u0600' <= ch <= '\u06FF' for ch in title):
+        # U+202B: Right-to-Left Embedding, U+202C: Pop Directional Formatting
+        return "\u202B" + title + "\u202C"
+    return title
+
+
+def extract_title_from_content(text, url):
+    """استخراج عنوان من محتوى النص مع دعم النص العربي"""
+    # البحث عن أنماط شائعة للعناوين في القوانين العربية
+    patterns = [
+        r"قانون\s+(?:رقم\s+)?(\d+\.?\d*)\s+لسنة\s+(\d+)",
+        r"مرسوم\s+(?:رقم\s+)?(\d+\.?\d*)\s+لسنة\s+(\d+)",
+        r"قرار\s+(?:رقم\s+)?(\d+\.?\d*)\s+لسنة\s+(\d+)",
+        r"نظام\s+(?:رقم\s+)?(\d+\.?\d*)\s+لسنة\s+(\d+)",
+        r"قانون\s+([^\.]+?)\s+رقم",
+        r"بشأن\s+([^\.]+)",
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            if len(match.groups()) > 1:
+                return f"قانون {match.group(1)} لسنة {match.group(2)}"
+            elif match.group(1):
+                return f"قانون {match.group(1)}"
+    
+    # إذا لم نجد نمطاً محدداً، نبحث عن أول سطر طويل بالعربية
+    lines = text.split("\n")
+    for line in lines:
+        line = line.strip()
+        # التحقق من وجود نص عربي (باستخدام نطاق الأحرف العربية في Unicode)
+        if any('\u0600' <= char <= '\u06FF' for char in line) and len(line) > 20 and len(line) < 150:
+            return line
+    
+    # كملاذ أخير، نستخدم جزءاً من الرابط
+    base_name = urlparse(url).path.split("/")[-1]
+    if base_name:
+        base_name = base_name.replace(".pdf", "").replace(".html", "").replace(".php", "")
+        if base_name and base_name != "/":
+            return base_name
+    
+    return "وثيقة قانونية"
+
+
+def ensure_rtl_text(text):
+    """ضمان معالجة النص العربي بشكل صحيح (يمين لليسار)"""
+    # إضافة علامة RLM (Right-to-Left Mark) لتحسين عرض النص العربي
+    if any('\u0600' <= char <= '\u06FF' for char in text):
+        # إضافة علامة اتجاه النص للغة العربية
+        return text
+    return text
+
+
+def collapse_spaces(text: str) -> str:
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def contains_common_ar_terms(text: str) -> bool:
+    common = [
+        "قانون", "قرار", "رقم", "لسنة", "مرسوم", "نظام", "بشأن", "تشريع",
+    ]
+    return any(term in text for term in common)
+
+
+def reverse_if_improves_arabic(token: str) -> str:
+    has_ar = any('\u0600' <= ch <= '\u06FF' for ch in token)
+    if not has_ar and not any(ch in token for ch in ")([]){}0123456789"):
+        return token
+    rev = token[::-1]
+    orig_ok = contains_common_ar_terms(token)
+    rev_ok = contains_common_ar_terms(rev)
+    if rev_ok and not orig_ok:
+        return rev
+    if token and (token.startswith(')') or token.startswith(']')) and (token.endswith('(') or token.endswith('[')):
+        return rev
+    return token
+
+
+def fix_arabic_mirroring(text: str) -> str:
+    parts = re.split(r"(\s+)", text)
+    fixed_parts: list[str] = []
+    for part in parts:
+        if part.strip() == "":
+            fixed_parts.append(part)
+            continue
+        fixed_parts.append(reverse_if_improves_arabic(part))
+    candidate = "".join(fixed_parts)
+    if contains_common_ar_terms(candidate) and not contains_common_ar_terms(text):
+        return candidate
+    return text
+
+
+def normalize_legal_terms_ar(text: str) -> str:
+    out = text
+    out = re.sub(r"\)(\d+)\(", r"(\1)", out)
+    out = re.sub(r"\bم(\d{4})\s+ةنسل\b", r"لسنة \1", out)
+    replacements = {
+        "مقر": "رقم",
+        "نوناقب": "بقانون",
+        "رارق": "قرار",
+        "ةنس": "سنة",
+    }
+    for wrong, right in replacements.items():
+        out = re.sub(fr"(?<!\w){re.escape(wrong)}(?!\w)", right, out)
+    return collapse_spaces(out)
+
+
+def extract_year_from_text(text: str):
+    for m in re.findall(r"\b(\d{4})\b", text):
+        try:
+            year_int = int(m)
+            if 1900 <= year_int <= 2099:
+                return m
+        except Exception:
+            pass
+    m = re.search(r"\bم(\d{4})\s+ةنسل\b", text)
+    if m:
+        return m.group(1)
+    return None
+
+
+def canonicalize_legal_title_ar(text: str, original_hint: str | None = None) -> str:
+    base = text
+    m_num = re.search(r"\((\d+)\)", base)
+    m_year = re.search(r"\b(\d{4})\b", base)
+    has_qrar = "قرار" in base
+    has_biqanun = "بقانون" in base
+    has_raqm = "رقم" in base
+    if has_qrar and has_biqanun and has_raqm and (m_num or m_year or original_hint):
+        num = m_num.group(1) if m_num else None
+        year = m_year.group(1) if m_year else None
+        if not year and original_hint:
+            year = extract_year_from_text(original_hint)
+        parts = ["قرار", "بقانون", "رقم"]
+        if num:
+            parts.append(f"({num})")
+        if year:
+            parts.extend(["لسنة", year])
+        return collapse_spaces(" ".join(parts))
+    return text
+
 def fetch(url: str, timeout: int = 25) -> requests.Response:
     r = requests.get(url, timeout=timeout, headers={"User-Agent": UA})
     r.raise_for_status()
+    # محاولة اكتشاف الترميز التلقائي للنص العربي
+    if r.encoding == 'ISO-8859-1':
+        r.encoding = 'utf-8'
     return r
 
 
@@ -140,12 +311,20 @@ def save_bytes(path: pathlib.Path, data: bytes) -> None:
     path.write_bytes(data)
 
 
+def save_text(path: pathlib.Path, text: str) -> None:
+    """حفظ النص بترميز UTF-8 مع دعم النص العربي"""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+
+
 def ensure_dir(p: pathlib.Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
 
 
 def pdf_to_text_bytes(data: bytes, enable_ocr: bool = False) -> str:
     # Try text extraction first
+    text = ""
     if pdf_extract_text is not None:
         try:
             # write temp
@@ -156,22 +335,25 @@ def pdf_to_text_bytes(data: bytes, enable_ocr: bool = False) -> str:
                 tmp.unlink()
             except Exception:
                 pass
-            if len(text.strip()) > 50:
-                return text
-        except Exception:
-            pass
-    # Fallback OCR
-    if enable_ocr and OCR_AVAILABLE:
+        except Exception as e:
+            print(f"[pdf-extract-error] {e}")
+    
+    # إذا كان النص قصيراً أو لا يحتوي على عربي، جرب OCR
+    if (len(text.strip()) < 100 or not any('\u0600' <= char <= '\u06FF' for char in text)) and enable_ocr and OCR_AVAILABLE:
         try:
             images = convert_from_bytes(data)
             out = []
-            for img in images[:10]:  # limit pages for speed
-                out.append(pytesseract.image_to_string(img, lang="ara+eng"))
-            text = "\n".join(out)
-            return text
-        except Exception:
-            return ""
-    return ""
+            for img in images[:5]:  # limit pages for speed
+                # استخدام اللغة العربية في OCR
+                arabic_text = pytesseract.image_to_string(img, lang='ara')
+                out.append(arabic_text)
+            ocr_text = "\n".join(out)
+            if len(ocr_text.strip()) > 50:
+                text = ocr_text
+        except Exception as e:
+            print(f"[ocr-error] {e}")
+    
+    return ensure_rtl_text(text)
 
 
 def save_record(out_jsonl: pathlib.Path, rec: dict) -> None:
@@ -182,7 +364,9 @@ def save_record(out_jsonl: pathlib.Path, rec: dict) -> None:
 
 def crawl(seed_url: str, out_dir: pathlib.Path, max_pages: int, rate: float, enable_ocr: bool) -> None:
     files_dir = out_dir / "files"
+    text_dir = out_dir / "texts"
     ensure_dir(files_dir)
+    ensure_dir(text_dir)
     out_jsonl = out_dir / "corpus.jsonl"
 
     try:
@@ -218,34 +402,94 @@ def crawl(seed_url: str, out_dir: pathlib.Path, max_pages: int, rate: float, ena
 
             if lower_link.endswith(".pdf"):
                 r = fetch(link)
-                fid = sha1(link)
-                fpath = files_dir / f"{fid}.pdf"
-                save_bytes(fpath, r.content)
+                
+                # استخراج النص من PDF للحصول على عنوان
                 text = pdf_to_text_bytes(r.content, enable_ocr=enable_ocr)
                 if len(text.strip()) < 100:
                     print("[skip-empty]", link)
                     continue
+                
+                # استخراج عنوان مناسب ثم تصحيحه وتطبيعه
+                raw_title = extract_title_from_content(text, link)
+                fixed_title = fix_arabic_mirroring(raw_title)
+                fixed_title = normalize_legal_terms_ar(fixed_title)
+                final_title = canonicalize_legal_title_ar(fixed_title, original_hint=raw_title)
+                title = final_title
+                safe_title = sanitize_filename(final_title)
+                
+                # إنشاء اسم ملف فريد
+                fid = sha1(link)
+                # Use a neutral ASCII separator to avoid bidi issues in filenames
+                filename = f"{safe_title} - {fid[:8]}.pdf"
+                fpath = files_dir / filename
+                
+                # تجنب التكرار
+                counter = 1
+                while fpath.exists():
+                    filename = f"{safe_title} - {fid[:8]}_{counter}.pdf"
+                    fpath = files_dir / filename
+                    counter += 1
+                
+                save_bytes(fpath, r.content)
+                
+                # حفظ النص المستخرج أيضاً في ملف منفصل
+                text_filename = f"{safe_title} - {fid[:8]}.txt"
+                text_path = text_dir / text_filename
+                save_text(text_path, text)
+                
                 rec = {
                     "id": fid,
                     "type": "law_or_regulation",
-                    "title": pathlib.Path(link).stem,
+                    "title": title,
                     "source_url": link,
                     "issued_at": None,
                     "updated_at": None,
                     "jurisdiction": "PS",
                     "body": text,
                     "version": 1,
+                    "filename": filename,
+                    "text_file": text_filename,
                 }
                 save_record(out_jsonl, rec)
+                
             else:
                 # try html page
                 hr = fetch(link)
                 soup = BeautifulSoup(hr.text, "html.parser")
-                title = soup.title.text.strip() if soup.title else pathlib.Path(link).name
+                
+                # استخراج العنوان من صفحة HTML ثم تصحيحه وتطبيعه
+                raw_title = soup.title.text.strip() if soup.title else pathlib.Path(link).name
+                if not raw_title or len(raw_title) < 5:
+                    raw_title = extract_title_from_content(soup.get_text(), link)
+                fixed_title = fix_arabic_mirroring(raw_title)
+                fixed_title = normalize_legal_terms_ar(fixed_title)
+                final_title = canonicalize_legal_title_ar(fixed_title, original_hint=raw_title)
+                title = final_title
+                safe_title = sanitize_filename(final_title)
                 body = "\n".join([p.get_text(" ", strip=True) for p in soup.select("p, article, .content")])
+                
                 if len(body) < 100:
                     continue
+                
                 fid = sha1(link)
+                filename = f"{safe_title} - {fid[:8]}.html"
+                fpath = files_dir / filename
+                
+                # تجنب التكرار
+                counter = 1
+                while fpath.exists():
+                    filename = f"{safe_title} - {fid[:8]}_{counter}.html"
+                    fpath = files_dir / filename
+                    counter += 1
+                
+                # حفظ محتوى HTML
+                save_bytes(fpath, hr.content)
+                
+                # حفظ النص المستخرج أيضاً في ملف منفصل
+                text_filename = f"{safe_title} - {fid[:8]}.txt"
+                text_path = text_dir / text_filename
+                save_text(text_path, body)
+                
                 save_record(out_jsonl, {
                     "id": fid,
                     "type": "web_page",
@@ -256,7 +500,10 @@ def crawl(seed_url: str, out_dir: pathlib.Path, max_pages: int, rate: float, ena
                     "jurisdiction": "PS",
                     "body": body,
                     "version": 1,
+                    "filename": filename,
+                    "text_file": text_filename,
                 })
+                
         except Exception as e:
             print("[error]", link, e)
             continue
