@@ -1,6 +1,6 @@
 /**
- * خدمة التحديث التلقائي للمصادر القانونية
- * نظام مراقبة وتحديث تلقائي للقوانين والأحكام الفلسطينية
+ * خدمة التحديث اليدوي للمصادر القانونية
+ * نظام مراقبة وتحديث يدوي للقوانين والأحكام الفلسطينية باستخدام Gemini AI
  */
 
 export interface LegalSource {
@@ -42,11 +42,9 @@ export class LegalUpdateService {
   private sources: LegalSource[] = [];
   private updates: LegalUpdate[] = [];
   private notifications: UpdateNotification[] = [];
-  private updateInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     this.initializeSources();
-    this.startAutoUpdate();
   }
 
   /**
@@ -98,29 +96,44 @@ export class LegalUpdateService {
   }
 
   /**
-   * بدء التحديث التلقائي
+   * استدعاء Gemini API لتحليل المحتوى القانوني
    */
-  private startAutoUpdate(): void {
-    // تحديث كل ساعة
-    this.updateInterval = setInterval(() => {
-      this.checkForUpdates();
-    }, 60 * 60 * 1000);
+  private async callGeminiAPI(content: string, prompt: string): Promise<string> {
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: `${prompt}\n\nالمحتوى:\n${content}`,
+          model: 'gemini-1.5-flash'
+        }),
+      });
 
-    // تحديث فوري عند البدء
-    this.checkForUpdates();
+      if (!response.ok) {
+        throw new Error('فشل في استدعاء Gemini API');
+      }
+
+      const result = await response.json();
+      return result.result || 'لم يتم الحصول على نتيجة';
+    } catch (error) {
+      console.error('خطأ في استدعاء Gemini API:', error);
+      return 'خطأ في التحليل';
+    }
   }
 
   /**
-   * فحص التحديثات
+   * فحص التحديثات من المصادر الحقيقية
    */
   private async checkForUpdates(): Promise<void> {
-    console.log('🔍 فحص التحديثات القانونية...');
+    console.log('🔍 فحص التحديثات القانونية من المصادر الرسمية...');
     
     for (const source of this.sources) {
       if (!source.isActive) continue;
 
       try {
-        await this.checkSourceUpdates(source);
+        await this.checkRealSourceUpdates(source);
       } catch (error) {
         console.error(`خطأ في فحص مصدر ${source.name}:`, error);
         this.createNotification({
@@ -134,131 +147,125 @@ export class LegalUpdateService {
   }
 
   /**
-   * فحص تحديثات مصدر محدد
+   * فحص تحديثات مصدر حقيقي
    */
-  private async checkSourceUpdates(source: LegalSource): Promise<void> {
-    // محاكاة فحص التحديثات
-    const hasUpdates = Math.random() > 0.7; // 30% احتمال وجود تحديثات
-
-    if (hasUpdates) {
-      const newUpdates = this.generateMockUpdates(source);
+  private async checkRealSourceUpdates(source: LegalSource): Promise<void> {
+    try {
+      console.log(`🔍 فحص مصدر: ${source.name}`);
       
-      for (const update of newUpdates) {
-        this.addUpdate(update);
-        this.createNotification({
-          type: this.getNotificationType(update.type),
-          title: `تحديث في ${source.name}`,
-          message: update.summary,
-          priority: update.importance,
-          actionUrl: update.url
-        });
-      }
-
-      // تحديث وقت آخر تحديث
-      source.lastUpdate = new Date();
-    }
-  }
-
-  /**
-   * إنشاء تحديثات وهمية للاختبار
-   */
-  private generateMockUpdates(source: LegalSource): LegalUpdate[] {
-    const updateTypes: Array<'new' | 'modified' | 'repealed'> = ['new', 'modified', 'repealed'];
-    const importanceLevels: Array<'low' | 'medium' | 'high' | 'critical'> = ['low', 'medium', 'high', 'critical'];
-    
-    const numUpdates = Math.floor(Math.random() * 3) + 1; // 1-3 تحديثات
-    const updates: LegalUpdate[] = [];
-
-    for (let i = 0; i < numUpdates; i++) {
-      const type = updateTypes[Math.floor(Math.random() * updateTypes.length)];
-      const importance = importanceLevels[Math.floor(Math.random() * importanceLevels.length)];
-      
-      updates.push({
-        id: `update_${Date.now()}_${i}`,
-        sourceId: source.id,
-        title: this.generateUpdateTitle(type, source.type),
-        content: this.generateUpdateContent(type),
-        type,
-        date: new Date(),
-        url: `${source.url}/update/${Date.now()}`,
-        importance,
-        affectedLaws: this.generateAffectedLaws(),
-        summary: this.generateUpdateSummary(type, importance)
+      // محاولة جلب البيانات من المصدر الحقيقي
+      const response = await fetch(source.url, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        // إضافة timeout
+        signal: AbortSignal.timeout(10000) // 10 ثواني
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const htmlContent = await response.text();
+      
+      // استخدام Gemini لتحليل المحتوى
+      const analysisPrompt = `قم بتحليل هذا المحتوى القانوني من ${source.name} وحدد:
+1. هل هناك تحديثات جديدة؟
+2. ما نوع التحديثات (قوانين جديدة، تعديلات، إلغاءات)؟
+3. ما أهميتها (منخفضة، متوسطة، عالية، حرجة)؟
+4. اكتب ملخصاً مختصراً للتحديثات
+
+أجب بصيغة JSON:
+{
+  "hasUpdates": true/false,
+  "updates": [
+    {
+      "type": "new/modified/repealed",
+      "title": "عنوان التحديث",
+      "importance": "low/medium/high/critical",
+      "summary": "ملخص التحديث"
+    }
+  ]
+}`;
+
+      const geminiResponse = await this.callGeminiAPI(htmlContent, analysisPrompt);
+      
+      try {
+        const analysis = JSON.parse(geminiResponse);
+        
+        if (analysis.hasUpdates && analysis.updates) {
+          for (const updateData of analysis.updates) {
+            const update: LegalUpdate = {
+              id: `update_${Date.now()}_${Math.random()}`,
+              sourceId: source.id,
+              title: updateData.title,
+              content: await this.callGeminiAPI(htmlContent, `اكتب محتوى مفصلاً عن: ${updateData.title}`),
+              type: updateData.type,
+              date: new Date(),
+              url: source.url,
+              importance: updateData.importance,
+              summary: updateData.summary
+            };
+
+            this.addUpdate(update);
+            this.createNotification({
+              type: this.getNotificationType(update.type),
+              title: `تحديث في ${source.name}`,
+              message: update.summary,
+              priority: update.importance,
+              actionUrl: update.url
+            });
+          }
+        }
+      } catch (parseError) {
+        console.error('خطأ في تحليل استجابة Gemini:', parseError);
+        // إنشاء تحديث عام في حالة فشل التحليل
+        this.createGeneralUpdate(source, htmlContent);
+      }
+
+    } catch (error) {
+      console.error(`خطأ في جلب البيانات من ${source.name}:`, error);
+      throw error;
     }
 
-    return updates;
+    // تحديث وقت آخر فحص
+    source.lastUpdate = new Date();
   }
 
   /**
-   * إنشاء عنوان التحديث
+   * إنشاء تحديث عام عند فشل التحليل المفصل
    */
-  private generateUpdateTitle(type: string, sourceType: string): string {
-    const titles = {
-      new: {
-        legislation: 'قانون جديد: قانون حماية البيانات الشخصية',
-        judgment: 'حكم جديد: قضية الملكية الفكرية',
-        gazette: 'إعلان جديد: تعديلات على قانون العمل',
-        research: 'بحث جديد: التحول الرقمي في القضاء'
-      },
-      modified: {
-        legislation: 'تعديل على قانون العقوبات الفلسطيني',
-        judgment: 'تعديل حكم: قضية التعويضات',
-        gazette: 'تعديل إعلان: لوائح البناء',
-        research: 'تحديث بحث: الإجراءات القضائية'
-      },
-      repealed: {
-        legislation: 'إلغاء قانون: قانون الضرائب القديم',
-        judgment: 'إلغاء حكم: قضية منتهية الصلاحية',
-        gazette: 'إلغاء إعلان: قرارات قديمة',
-        research: 'إلغاء بحث: دراسة منتهية الصلاحية'
-      }
+  private async createGeneralUpdate(source: LegalSource, content: string): Promise<void> {
+    const summary = await this.callGeminiAPI(
+      content, 
+      `اكتب ملخصاً مختصراً (3-4 جمل) عن آخر التحديثات في ${source.name}`
+    );
+
+    const update: LegalUpdate = {
+      id: `update_${Date.now()}_${Math.random()}`,
+      sourceId: source.id,
+      title: `تحديث في ${source.name}`,
+      content: summary,
+      type: 'new',
+      date: new Date(),
+      url: source.url,
+      importance: 'medium',
+      summary: summary.substring(0, 200) + '...'
     };
 
-    return titles[type as keyof typeof titles]?.[sourceType as keyof typeof titles.new] || 'تحديث قانوني';
+    this.addUpdate(update);
+    this.createNotification({
+      type: 'new_law',
+      title: `تحديث في ${source.name}`,
+      message: summary.substring(0, 100) + '...',
+      priority: 'medium',
+      actionUrl: source.url
+    });
   }
 
-  /**
-   * إنشاء محتوى التحديث
-   */
-  private generateUpdateContent(type: string): string {
-    const contents = {
-      new: 'تم إصدار قانون جديد يهدف إلى حماية حقوق المواطنين وتحسين الخدمات القانونية. يتضمن القانون أحكاماً جديدة حول...',
-      modified: 'تم تعديل القانون المذكور ليتوافق مع التطورات الحديثة والمتطلبات الجديدة. التعديلات تشمل...',
-      repealed: 'تم إلغاء هذا القانون لعدم مواكبته للتطورات الحديثة. سيتم استبداله بقانون جديد قريباً...'
-    };
 
-    return contents[type as keyof typeof contents] || 'تحديث في المحتوى القانوني';
-  }
-
-  /**
-   * إنشاء القوانين المتأثرة
-   */
-  private generateAffectedLaws(): string[] {
-    const laws = [
-      'قانون العقوبات الفلسطيني',
-      'قانون الإجراءات المدنية',
-      'قانون العمل الفلسطيني',
-      'قانون الملكية الفكرية',
-      'قانون حماية المستهلك'
-    ];
-
-    const numAffected = Math.floor(Math.random() * 3) + 1;
-    return laws.slice(0, numAffected);
-  }
-
-  /**
-   * إنشاء ملخص التحديث
-   */
-  private generateUpdateSummary(type: string, importance: string): string {
-    const summaries = {
-      new: `تم إضافة ${importance === 'critical' ? 'قانون مهم جداً' : 'تحديث قانوني جديد'} يتطلب مراجعة فورية`,
-      modified: `تم تعديل ${importance === 'critical' ? 'قانون حساس' : 'قانون موجود'} قد يؤثر على القضايا الحالية`,
-      repealed: `تم إلغاء ${importance === 'critical' ? 'قانون أساسي' : 'قانون'} قد يؤثر على المراجع القانونية`
-    };
-
-    return summaries[type as keyof typeof summaries] || 'تحديث في النظام القانوني';
-  }
 
   /**
    * الحصول على نوع الإشعار
@@ -353,30 +360,36 @@ export class LegalUpdateService {
   }
 
   /**
-   * إيقاف التحديث التلقائي
-   */
-  public stopAutoUpdate(): void {
-    if (this.updateInterval) {
-      clearInterval(this.updateInterval);
-      this.updateInterval = null;
-    }
-  }
-
-  /**
-   * إعادة تشغيل التحديث التلقائي
-   */
-  public restartAutoUpdate(): void {
-    this.stopAutoUpdate();
-    this.startAutoUpdate();
-  }
-
-  /**
-   * تحديث يدوي للمصادر
+   * تحديث يدوي للمصادر باستخدام Gemini AI
    */
   public async manualUpdate(): Promise<void> {
-    console.log('🔄 بدء التحديث اليدوي...');
-    await this.checkForUpdates();
-    console.log('✅ تم التحديث اليدوي بنجاح');
+    console.log('🔄 بدء التحديث اليدوي باستخدام Gemini AI...');
+    
+    try {
+      await this.checkForUpdates();
+      console.log('✅ تم التحديث اليدوي بنجاح');
+      
+      // إنشاء إشعار نجاح التحديث
+      this.createNotification({
+        type: 'system_update',
+        title: 'تم التحديث بنجاح',
+        message: `تم فحص ${this.sources.filter(s => s.isActive).length} مصدر قانوني باستخدام Gemini AI`,
+        priority: 'medium'
+      });
+      
+    } catch (error) {
+      console.error('❌ فشل في التحديث اليدوي:', error);
+      
+      // إنشاء إشعار فشل التحديث
+      this.createNotification({
+        type: 'system_update',
+        title: 'فشل في التحديث',
+        message: 'حدث خطأ أثناء فحص المصادر القانونية',
+        priority: 'high'
+      });
+      
+      throw error;
+    }
   }
 }
 

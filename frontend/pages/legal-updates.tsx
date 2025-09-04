@@ -45,10 +45,7 @@ export default function LegalUpdatesPage() {
 
   useEffect(() => {
     fetchData();
-    
-    // تحديث كل دقيقة
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
+    // لا يوجد تحديث تلقائي - التحديث يدوي فقط للحفاظ على التوكينز
   }, []);
 
   const fetchData = async () => {
@@ -247,6 +244,23 @@ export default function LegalUpdatesPage() {
           </div>
         )}
 
+        {/* Warning Message */}
+        <div style={{
+          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+          border: '2px solid #f59e0b',
+          padding: '1rem',
+          borderRadius: '0.75rem',
+          marginBottom: '1.5rem',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#92400e', marginBottom: '0.5rem' }}>
+            ⚠️ تنبيه مهم
+          </div>
+          <div style={{ fontSize: '0.9rem', color: '#92400e' }}>
+            التحديث يدوي فقط للحفاظ على التوكينز. يتم استخدام Gemini AI لتحليل المحتوى من المصادر الرسمية.
+          </div>
+        </div>
+
         {/* Controls */}
         <div style={{
           background: theme.card,
@@ -351,7 +365,7 @@ export default function LegalUpdatesPage() {
                 fontSize: '0.9rem'
               }}
             >
-              {isLoading ? '🔄 جاري التحديث...' : '🔄 تحديث يدوي'}
+              {isLoading ? '🔄 جاري التحديث مع Gemini AI...' : '🤖 تحديث يدوي مع Gemini AI'}
             </button>
           </div>
         </div>
