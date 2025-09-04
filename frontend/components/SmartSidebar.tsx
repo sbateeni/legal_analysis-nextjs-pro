@@ -108,6 +108,15 @@ export default function SmartSidebar({ isOpen, onClose }: SmartSidebarProps) {
       description: 'قاعدة المعرفة القانونية الفلسطينية'
     },
     { 
+      id: 'rag', 
+      label: 'نظام RAG', 
+      icon: '🏛️', 
+      href: '/rag', 
+      category: 'tools',
+      description: 'نظام البحث والاسترجاع المعزز للقوانين الفلسطينية',
+      isNew: true
+    },
+    { 
       id: 'reference-checker', 
       label: 'المدقق المرجعي', 
       icon: '🔍', 

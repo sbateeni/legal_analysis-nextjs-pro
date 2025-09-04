@@ -80,10 +80,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       display: 'flex',
       flexDirection: isMobile() ? 'column' : 'row',
     }}>
-      {showHeader && !useModernNavigation && !useElegantSidebar && <Header />}
-      {useModernNavigation && <ModernNavigation navigationType="sidebar-toolbar" />}
+      {/* إظهار ElegantSidebar إذا كان مفعل */}
       {useElegantSidebar && <ElegantSidebar />}
-      {!showHeader && (
+      
+      {/* إظهار ModernNavigation إذا كان مفعل */}
+      {useModernNavigation && <ModernNavigation navigationType="sidebar-toolbar" />}
+      
+      {/* إظهار Header فقط إذا لم يكن ElegantSidebar أو ModernNavigation مفعل */}
+      {!useElegantSidebar && !useModernNavigation && showHeader && <Header />}
+      
+      {/* إظهار البانر فقط إذا لم يكن أي من المكونات السابقة مفعل */}
+      {!useElegantSidebar && !useModernNavigation && !showHeader && (
         <div>
           <div style={{
             width: '100%',
@@ -160,7 +167,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }}>
         {children}
       </main>
-      {!useModernNavigation && <MobileNav />}
+      {/* إظهار MobileNav فقط إذا لم يكن ElegantSidebar مفعل */}
+      {!useElegantSidebar && !useModernNavigation && <MobileNav />}
       
 
     </div>
