@@ -153,12 +153,12 @@ const FuturisticHeader: React.FC<FuturisticHeaderProps> = ({
                     alignItems: 'center',
                     gap: '8px'
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
                     e.currentTarget.style.color = darkMode ? '#ffffff' : '#000000';
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.background = `${colors.neonGradient}22`;
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
                     e.currentTarget.style.color = darkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(26, 26, 46, 0.8)';
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.background = 'transparent';
@@ -196,11 +196,11 @@ const FuturisticHeader: React.FC<FuturisticHeaderProps> = ({
                     position: 'relative',
                     transition: 'all 0.3s ease'
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
                     e.currentTarget.style.transform = 'scale(1.1)';
                     e.currentTarget.style.boxShadow = `0 0 20px ${colors.neonBlue}`;
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
                     e.currentTarget.style.transform = 'scale(1)';
                     e.currentTarget.style.boxShadow = 'none';
                   }}

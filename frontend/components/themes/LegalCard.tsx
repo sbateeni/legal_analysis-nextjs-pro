@@ -102,12 +102,12 @@ const LegalCard: React.FC<LegalCardProps> = ({
       style={baseStyles}
       className={className}
       onClick={onClick}
-      onMouseEnter={(e) => {
+      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
         if (hoverable) {
           Object.assign(e.currentTarget.style, hoverStyles);
         }
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
         if (hoverable) {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = 'none';
