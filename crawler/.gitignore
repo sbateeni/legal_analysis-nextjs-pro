@@ -1,8 +1,0 @@
-out/
-*.db
-*.log
-__pycache__/
-*.sqlite
-*.pdf
-*.doc
-*.docx
