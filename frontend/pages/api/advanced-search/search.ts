@@ -171,15 +171,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     };
 
-    // تحديد رمز الاستجابة المناسب
-    let statusCode = 200;
-    if (searchResponse.status === 'error') {
-      statusCode = 500;
-    } else if (searchResponse.results.length === 0) {
-      statusCode = 204; // No Content
-    }
-
-    res.status(statusCode).json(enhancedResponse);
+    // أعِد دائماً JSON مع 200 لتجنب فشل response.json() على الواجهة
+    // يتضمن ذلك حالة النتائج الفارغة
+    res.status(200).json(enhancedResponse);
 
   } catch (error) {
     console.error('خطأ في API البحث المتقدم:', error);

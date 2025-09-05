@@ -84,5 +84,4 @@ export interface StrategyPayload {
   tags?: string[];
 }
 
-// إعادة تصدير نوع القضية لاستخدام موحّد عبر مكونات الدردشة
-export { LegalCase } from '@utils/db';
+// لا نعيد التصدير هنا لتفادي مشاكل isolatedModules. استخدم import type من '@utils/db' مباشرة.

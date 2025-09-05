@@ -1,5 +1,6 @@
 import React from 'react';
-import { AnalyticsData, LegalCase } from './types';
+import type { LegalCase } from '@utils/db';
+import { AnalyticsData } from './types';
 import { isMobile } from '@utils/crypto';
 import QuickActions from './QuickActions';
 

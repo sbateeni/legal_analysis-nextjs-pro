@@ -1,87 +1,60 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
 
-// تحميل ملف corpus.jsonl
-const loadCorpus = () => {
+type MaqamKind = 'legislation' | 'judgments' | 'gap';
+
+const MAQAM_CFG: Record<MaqamKind, { url: string; name: string; type: string }> = {
+  legislation: { url: 'https://maqam.najah.edu/legislation/', name: 'مقام - التشريعات', type: 'legislation' },
+  judgments: { url: 'https://maqam.najah.edu/judgments/', name: 'مقام - الأحكام القضائية', type: 'judgment' },
+  gap: { url: 'https://maqam.najah.edu/gap/', name: 'مقام - قاعدة المعرفة', type: 'research' },
+};
+
+async function fetchMaqam(kind: MaqamKind) {
+  const cfg = MAQAM_CFG[kind];
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 10000);
   try {
-    const corpusPath = path.join(process.cwd(), 'crawler', 'out', 'corpus.jsonl');
-    const fileContent = fs.readFileSync(corpusPath, 'utf-8');
-    const documents = fileContent.trim().split('\n').map(line => JSON.parse(line));
-    return documents;
-  } catch (error) {
-    console.error('خطأ في تحميل corpus.jsonl:', error);
+    const res = await fetch(cfg.url, { method: 'GET', signal: controller.signal, headers: { 'User-Agent': 'Legal-Analysis/1.0' } as any });
+    clearTimeout(id);
+    const html = await res.text();
+    const items: { title: string; url: string; source: string; type: string }[] = [];
+    const linkRegex = /<a\s+href=\"([^\"]+)\"[^>]*>([^<]{4,200})<\/a>/gmi;
+    const seen = new Set<string>();
+    let match: RegExpExecArray | null;
+    while ((match = linkRegex.exec(html)) && items.length < 30) {
+      const href = match[1];
+      const text = match[2].replace(/\s+/g, ' ').trim();
+      if (!href || !text) continue;
+      if (/^\s*[«←→»]$/.test(text)) continue;
+      if (/^(الرئيسية|أقسام الموقع|حول الموقع|تسجيل الدخول|الاشتراك|اتصل بنا)$/i.test(text)) continue;
+      const absUrl = href.startsWith('http') ? href : new URL(href, cfg.url).toString();
+      if (seen.has(absUrl)) continue;
+      seen.add(absUrl);
+      items.push({ title: text, url: absUrl, source: cfg.name, type: cfg.type });
+    }
+    return items;
+  } catch (e) {
+    clearTimeout(id);
+    console.warn('RAG Maqam fetch failed:', kind, e);
     return [];
   }
-};
+}
 
-// البحث البسيط في النصوص
-const simpleSearch = (query: string, documents: any[], topK: number = 5) => {
-  const queryWords = query.toLowerCase().split(/\s+/);
-  
-  const scoredDocs = documents.map(doc => {
-    const content = (doc.body || '').toLowerCase();
-    const title = (doc.title || '').toLowerCase();
-    
-    let score = 0;
-    
-    // البحث في العنوان
-    queryWords.forEach(word => {
-      if (title.includes(word)) score += 2;
-    });
-    
-    // البحث في المحتوى
-    queryWords.forEach(word => {
-      const matches = (content.match(new RegExp(word, 'g')) || []).length;
-      score += matches * 0.1;
-    });
-    
-    // استخراج مقتطف
-    const excerpt = extractExcerpt(content, query, 200);
-    
-    return {
-      document: doc,
-      score,
-      excerpt
-    };
-  });
-  
-  // ترتيب حسب النتيجة
-  scoredDocs.sort((a, b) => b.score - a.score);
-  
-  return scoredDocs.slice(0, topK).map(item => ({
-    title: item.document.title,
-    excerpt: item.excerpt,
-    source_url: item.document.source_url || '',
-    similarity_score: Math.min(item.score / 10, 1), // تحويل النتيجة إلى نسبة
-    document_type: item.document.type || 'law_or_regulation',
-    jurisdiction: item.document.jurisdiction || 'PS',
-    document_id: item.document.id
-  }));
-};
-
-// استخراج مقتطف من النص
-const extractExcerpt = (text: string, query: string, maxLength: number) => {
-  const queryWords = query.toLowerCase().split(/\s+/);
-  let bestPos = 0;
-  let bestScore = 0;
-  
-  for (let i = 0; i < text.length - maxLength; i += 50) {
-    const excerpt = text.substr(i, maxLength);
-    let score = 0;
-    
-    queryWords.forEach(word => {
-      if (excerpt.includes(word)) score++;
-    });
-    
-    if (score > bestScore) {
-      bestScore = score;
-      bestPos = i;
-    }
+async function maybeSummarizeWithGemini(title: string): Promise<string> {
+  try {
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) return '';
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const prompt = `لخّص بإيجاز شديد (سطر واحد) الموضوع التالي بصياغة عربية قانونية رسمية: ${title}`;
+    const result = await model.generateContent(prompt);
+    const text = result?.response?.text?.();
+    return typeof text === 'string' ? text.slice(0, 220) : '';
+  } catch {
+    return '';
   }
-  
-  return text.substr(bestPos, maxLength).trim();
-};
+}
 
 // البحث في القوانين
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -99,15 +72,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const documents = loadCorpus();
-    const results = simpleSearch(query, documents, top_k);
-    
-    res.json({
-      status: 'success',
-      query,
-      results,
-      total_found: results.length
-    });
+    // جلب حي من Maqam (تشريعات/أحكام/أبحاث)
+    const [leg, judg, gap] = await Promise.all([
+      fetchMaqam('legislation'),
+      fetchMaqam('judgments'),
+      fetchMaqam('gap'),
+    ]);
+
+    let items = [...leg, ...judg, ...gap];
+    const q = query.trim();
+    if (q) items = items.filter(x => x.title.includes(q));
+
+    // بناء نتائج RAG بالشكل الحالي مع مقتطف ملخّص عند التوفر
+    const limited = items.slice(0, Math.max(1, Math.min(+top_k || 5, 20)));
+    const results = [] as any[];
+    for (const it of limited) {
+      const excerpt = await maybeSummarizeWithGemini(it.title);
+      results.push({
+        title: it.title,
+        excerpt: excerpt || '',
+        source_url: it.url,
+        similarity_score: 0.5,
+        document_type: it.type,
+        jurisdiction: 'PS',
+        document_id: it.url,
+      });
+    }
+
+    res.json({ status: 'success', query, results, total_found: results.length });
   } catch (error) {
     console.error('RAG Search Error:', error);
     res.status(500).json({ 

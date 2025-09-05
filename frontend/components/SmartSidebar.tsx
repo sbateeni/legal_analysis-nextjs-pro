@@ -39,12 +39,52 @@ export default function SmartSidebar({ isOpen, onClose }: SmartSidebarProps) {
     },
     { 
       id: 'chat', 
-      label: 'المساعد الذكي', 
-      icon: '🤖', 
+      label: 'المحادثة', 
+      icon: '💬', 
       href: '/chat', 
       category: 'main',
       description: 'المساعد القانوني المدعوم بالذكاء الاصطناعي',
       badge: 'AI'
+    },
+    { 
+      id: 'rag', 
+      label: 'نظام RAG', 
+      icon: '🏛️', 
+      href: '/rag', 
+      category: 'main',
+      description: 'نظام البحث والاسترجاع المعزز للقوانين الفلسطينية'
+    },
+    { 
+      id: 'advanced-search', 
+      label: 'البحث المتقدم', 
+      icon: '🔍', 
+      href: '/advanced-search', 
+      category: 'main',
+      description: 'البحث القانوني المتقدم مع فلاتر دقيقة'
+    },
+    { 
+      id: 'intelligent-stages', 
+      label: 'مراحل التحليل الذكية', 
+      icon: '🧠', 
+      href: '/intelligent-stages', 
+      category: 'main',
+      description: 'نظام التحليل الذكي للقضايا القانونية'
+    },
+    { 
+      id: 'legal-updates', 
+      label: 'التحديثات القانونية', 
+      icon: '📰', 
+      href: '/legal-updates', 
+      category: 'main',
+      description: 'آخر التحديثات والتغييرات القانونية'
+    },
+    { 
+      id: 'inheritance', 
+      label: 'حاسبة المواريث', 
+      icon: '🧮', 
+      href: '/inheritance', 
+      category: 'main',
+      description: 'حاسبة توزيع الميراث حسب الشريعة الإسلامية'
     },
     { 
       id: 'analytics', 
@@ -54,14 +94,20 @@ export default function SmartSidebar({ isOpen, onClose }: SmartSidebarProps) {
       category: 'main',
       description: 'تحليلات شاملة للقضايا والأداء'
     },
-    
-    // إدارة القضايا
+    { 
+      id: 'documents', 
+      label: 'المستندات', 
+      icon: '📁', 
+      href: '/documents', 
+      category: 'main',
+      description: 'إدارة المستندات والملفات القانونية'
+    },
     { 
       id: 'cases', 
-      label: 'إدارة القضايا', 
+      label: 'القضايا', 
       icon: '📋', 
       href: '/cases', 
-      category: 'management',
+      category: 'main',
       description: 'إدارة شاملة لجميع القضايا القانونية'
     },
     { 
@@ -69,103 +115,104 @@ export default function SmartSidebar({ isOpen, onClose }: SmartSidebarProps) {
       label: 'التقويم', 
       icon: '📅', 
       href: '/calendar', 
-      category: 'management',
+      category: 'main',
       description: 'تقويم المواعيد والجلسات'
-    },
-    { 
-      id: 'documents', 
-      label: 'المستندات', 
-      icon: '📁', 
-      href: '/documents', 
-      category: 'management',
-      description: 'إدارة المستندات والملفات القانونية'
     },
     { 
       id: 'collaboration', 
       label: 'التعاون', 
       icon: '🤝', 
       href: '/collaboration', 
-      category: 'management',
-      description: 'نظام التعاون والمراجعة مع الفريق',
-      isNew: true
+      category: 'main',
+      description: 'نظام التعاون والمراجعة مع الفريق'
     },
-    
-    // الأدوات
     { 
       id: 'templates', 
       label: 'القوالب', 
       icon: '📝', 
       href: '/templates', 
-      category: 'tools',
+      category: 'main',
       description: 'قوالب المرافعات والمذكرات القانونية'
+    },
+    { 
+      id: 'exports', 
+      label: 'التصدير', 
+      icon: '⬇️', 
+      href: '/exports', 
+      category: 'main',
+      description: 'تصدير التقارير والمستندات'
+    },
+    { 
+      id: 'history', 
+      label: 'السجل', 
+      icon: '📑', 
+      href: '/history', 
+      category: 'main',
+      description: 'تاريخ القضايا والأنشطة'
+    },
+    { 
+      id: 'reference-checker', 
+      label: 'فحص المراجع', 
+      icon: '🔍', 
+      href: '/reference-checker', 
+      category: 'main',
+      description: 'فحص المراجع القانونية'
     },
     { 
       id: 'kb', 
       label: 'قاعدة المعرفة', 
       icon: '📚', 
       href: '/kb', 
-      category: 'tools',
+      category: 'main',
       description: 'قاعدة المعرفة القانونية الفلسطينية'
     },
     { 
-      id: 'rag', 
-      label: 'نظام RAG', 
-      icon: '🏛️', 
-      href: '/rag', 
-      category: 'tools',
-      description: 'نظام البحث والاسترجاع المعزز للقوانين الفلسطينية',
-      isNew: true
-    },
-    { 
-      id: 'reference-checker', 
-      label: 'المدقق المرجعي', 
-      icon: '🔍', 
-      href: '/reference-checker', 
-      category: 'tools',
-      description: 'فحص المراجع القانونية'
-    },
-    { 
-      id: 'exports', 
-      label: 'الصادرات', 
-      icon: '⬇️', 
-      href: '/exports', 
-      category: 'tools',
-      description: 'تصدير التقارير والمستندات'
-    },
-    
-    // الإعدادات
-    { 
-      id: 'history', 
-      label: 'التاريخ', 
-      icon: '📑', 
-      href: '/history', 
-      category: 'settings',
-      description: 'تاريخ القضايا والأنشطة'
-    },
-    { 
-      id: 'settings', 
-      label: 'الإعدادات', 
-      icon: '⚙️', 
-      href: '/settings', 
-      category: 'settings',
-      description: 'إعدادات المنصة والتخصيص'
+      id: 'resources', 
+      label: 'الموارد', 
+      icon: '📦', 
+      href: '/resources', 
+      category: 'main',
+      description: 'الموارد والأدوات القانونية'
     },
     { 
       id: 'about', 
-      label: 'تعليمات', 
+      label: 'تعليمات النظام', 
       icon: '❓', 
       href: '/about', 
-      category: 'settings',
+      category: 'main',
       description: 'دليل الاستخدام والمساعدة'
+    },
+    { 
+      id: 'privacy', 
+      label: 'الخصوصية', 
+      icon: '🔒', 
+      href: '/privacy', 
+      category: 'main',
+      description: 'سياسة الخصوصية وحماية البيانات'
+    },
+    { 
+      id: 'offline', 
+      label: 'وضع عدم الاتصال', 
+      icon: '📱', 
+      href: '/offline', 
+      category: 'main',
+      description: 'العمل بدون اتصال بالإنترنت'
     },
     { 
       id: 'navigation-demo', 
       label: 'تجربة التنقل', 
       icon: '🧭', 
       href: '/navigation-demo', 
-      category: 'tools',
-      description: 'تجربة أنظمة التنقل الجديدة',
-      isNew: true
+      category: 'main',
+      description: 'تجربة أنظمة التنقل الجديدة'
+    },
+    { 
+      id: 'settings', 
+      label: 'الإعدادات', 
+      icon: '⚙️', 
+      href: '/settings', 
+      category: 'main',
+      description: 'إعدادات المنصة والتخصيص'
     },
   ];
 

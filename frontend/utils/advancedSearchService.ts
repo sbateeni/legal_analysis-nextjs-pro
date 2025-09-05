@@ -213,6 +213,114 @@ export class AdvancedQueryProcessor {
  * خدمة البحث الدلالي المتقدم
  */
 export class AdvancedSearchService {
+  // أدوات مساعدة: تطبيع العربية، تقطيع، وحساب درجة شبه بسيطة
+  private static normalizeArabic(input: string): string {
+    return (input || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '') // إزالة التشكيل
+      .replace(/[آأإ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/[^\u0600-\u06FF0-9\s]/g, ' ') // إبقاء العربية والأرقام والمسافات
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private static tokenize(text: string): string[] {
+    const norm = this.normalizeArabic(text);
+    return norm.split(' ').filter(Boolean);
+  }
+
+  private static scoreTitle(title: string, query: string): number {
+    const tks = this.tokenize(title);
+    const qks = this.tokenize(query);
+    if (tks.length === 0 || qks.length === 0) return 0;
+    const tset = new Set(tks);
+    let overlap = 0;
+    for (const q of qks) if (tset.has(q)) overlap++;
+    const jaccard = overlap / new Set([...tks, ...qks]).size;
+    const coverage = overlap / qks.length; // تغطية الاستعلام
+    // مزيج بسيط يعطي وزناً للتغطية
+    const score = 0.6 * coverage + 0.4 * jaccard;
+    return Math.max(0, Math.min(1, score));
+  }
+  // جلب مباشر لعناصر عامة من صفحات Maqam دون تخزين دائم
+  private static async fetchMaqam(
+    kind: 'legislation' | 'judgments' | 'gap'
+  ): Promise<SearchResult[]> {
+    const cfg = {
+      legislation: { url: 'https://maqam.najah.edu/legislation/', name: 'مقام - التشريعات', type: 'legislation' as const },
+      judgments: { url: 'https://maqam.najah.edu/judgments/', name: 'مقام - الأحكام القضائية', type: 'judgment' as const },
+      gap: { url: 'https://maqam.najah.edu/gap/', name: 'مقام - قاعدة المعرفة', type: 'research' as const },
+    }[kind];
+
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 10000);
+    try {
+      const res = await fetch(cfg.url, { method: 'GET', signal: controller.signal, headers: { 'User-Agent': 'Legal-Analysis/1.0' } as any });
+      clearTimeout(id);
+      const html = await res.text();
+
+      const results: SearchResult[] = [];
+      const linkRegex = /<a\s+href=\"([^\"]+)\"[^>]*>([^<]{4,200})<\/a>/gmi;
+      const seen = new Set<string>();
+      let match: RegExpExecArray | null;
+      while ((match = linkRegex.exec(html)) && results.length < 30) {
+        const href = match[1];
+        const text = match[2].replace(/\s+/g, ' ').trim();
+        if (!href || !text) continue;
+        if (/^\s*[«←→»]$/.test(text)) continue;
+        if (/^(الرئيسية|أقسام الموقع|حول الموقع|تسجيل الدخول|الاشتراك|اتصل بنا)$/i.test(text)) continue;
+        const absUrl = href.startsWith('http') ? href : new URL(href, cfg.url).toString();
+        if (seen.has(absUrl)) continue;
+        seen.add(absUrl);
+        results.push({
+          id: `${kind}-${results.length + 1}`,
+          title: text,
+          content: '',
+          summary: '',
+          url: absUrl,
+          source: cfg.name,
+          type: cfg.type,
+          relevance_score: 0.5,
+          semantic_score: 0.5,
+          context_score: 0.5,
+          final_score: 0.5,
+          keywords: [],
+          legal_references: [],
+          date: new Date().toISOString(),
+          jurisdiction: 'PS',
+          confidence_level: 'medium'
+        });
+      }
+      return results;
+    } catch (e) {
+      clearTimeout(id);
+      console.warn('Maqam fetch failed:', kind, e);
+      return [];
+    }
+  }
+
+  private static async maybeSummarizeWithGemini(title: string): Promise<string> {
+    try {
+      const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      if (!apiKey) return '';
+      // dynamic import to avoid client bundling
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const prompt = `لخّص بإيجاز شديد (سطر واحد) الموضوع التالي بصياغة عربية قانونية رسمية: ${title}`;
+      const result = await model.generateContent(prompt);
+      const text = result?.response?.text?.();
+      return typeof text === 'string' ? text.slice(0, 200) : '';
+    } catch {
+      return '';
+    }
+  }
   /**
    * البحث الدلالي المتقدم
    */
@@ -300,31 +408,27 @@ export class AdvancedSearchService {
     processedQuery: any, 
     originalQuery: SearchQuery
   ): Promise<SearchResult[]> {
-    // محاكاة البحث في التشريعات مع تحسينات
-    const results: SearchResult[] = [];
-    
-    if (processedQuery.legalTerms.includes('عقوبات') || processedQuery.keywords.some((k: string) => k.includes('جريمة'))) {
-      results.push({
-        id: 'leg-001',
-        title: 'قانون العقوبات رقم (16) لسنة 1960م',
-        content: 'القانون الأساسي للعقوبات في فلسطين. يتضمن جميع الجرائم والعقوبات المقررة لها، وهو المرجع الأساسي في القانون الجنائي الفلسطيني.',
-        summary: 'قانون العقوبات الفلسطيني - الجرائم والعقوبات',
-        url: 'http://muqtafi.birzeit.edu/pg/',
-        source: 'المقتفي - منظومة القضاء والتشريع',
-        type: 'legislation',
-        relevance_score: 0.95,
-        semantic_score: 0.90,
-        context_score: 0.85,
-        final_score: 0.90,
-        keywords: ['عقوبات', 'جريمة', 'قانون', 'فلسطين'],
-        legal_references: ['قانون العقوبات رقم 16 لسنة 1960'],
-        date: '1960-01-01',
-        jurisdiction: 'PS',
-        confidence_level: 'high'
-      });
+    // نتائج حية من Maqam التشريعات
+    const live = await this.fetchMaqam('legislation');
+    const q = originalQuery.text || '';
+    const scored = live.map(item => {
+      const s = this.scoreTitle(item.title, q);
+      return {
+        ...item,
+        relevance_score: s,
+        semantic_score: s,
+        context_score: 0.5,
+        final_score: s,
+        content: item.title, // لتحسين المطابقة اللاحقة
+      } as SearchResult;
+    })
+    .sort((a, b) => b.relevance_score - a.relevance_score);
+    // حافظ على نتائج حتى لو كانت الدرجة منخفضة، لكن قص لأعلى 30
+    const top = scored.slice(0, 30);
+    for (let i = 0; i < Math.min(5, top.length); i++) {
+      if (!top[i].summary) top[i].summary = await this.maybeSummarizeWithGemini(top[i].title);
     }
-    
-    return results;
+    return top;
   }
 
   /**
@@ -334,30 +438,24 @@ export class AdvancedSearchService {
     processedQuery: any, 
     originalQuery: SearchQuery
   ): Promise<SearchResult[]> {
-    const results: SearchResult[] = [];
-    
-    if (processedQuery.contextIndicators.includes('قضية') || processedQuery.contextIndicators.includes('حكم')) {
-      results.push({
-        id: 'judg-001',
-        title: 'القضية رقم 139/2025 - محكمة النقض',
-        content: 'حكم صادر عن محكمة النقض الفلسطينية في طعون جزائية بتاريخ 2025-08-25. يتضمن مبادئ قانونية مهمة في القانون الجنائي.',
-        summary: 'حكم محكمة النقض - طعون جزائية',
-        url: 'https://maqam.najah.edu/judgments/',
-        source: 'مقام - الأحكام القضائية',
-        type: 'judgment',
-        relevance_score: 0.90,
-        semantic_score: 0.85,
-        context_score: 0.95,
-        final_score: 0.90,
-        keywords: ['حكم', 'محكمة', 'نقض', 'قضية'],
-        legal_references: ['محكمة النقض الفلسطينية', 'القضية رقم 139/2025'],
-        date: '2025-08-25',
-        jurisdiction: 'PS',
-        confidence_level: 'high'
-      });
+    const live = await this.fetchMaqam('judgments');
+    const q = originalQuery.text || '';
+    const scored = live.map(item => {
+      const s = this.scoreTitle(item.title, q);
+      return {
+        ...item,
+        relevance_score: s,
+        semantic_score: s,
+        context_score: 0.5,
+        final_score: s,
+        content: item.title,
+      } as SearchResult;
+    }).sort((a, b) => b.relevance_score - a.relevance_score);
+    const top = scored.slice(0, 30);
+    for (let i = 0; i < Math.min(5, top.length); i++) {
+      if (!top[i].summary) top[i].summary = await this.maybeSummarizeWithGemini(top[i].title);
     }
-    
-    return results;
+    return top;
   }
 
   /**
@@ -400,30 +498,24 @@ export class AdvancedSearchService {
     processedQuery: any, 
     originalQuery: SearchQuery
   ): Promise<SearchResult[]> {
-    const results: SearchResult[] = [];
-    
-    if (processedQuery.contextIndicators.includes('بحث') || processedQuery.contextIndicators.includes('دراسة')) {
-      results.push({
-        id: 'res-001',
-        title: 'القيم الثقافية في إعلانات شركات التأمين',
-        content: 'دراسة تحليلية مقارنة لإعلانات مواقع التواصل الاجتماعي. بحث أكاديمي في القانون التجاري والتأمين.',
-        summary: 'بحث أكاديمي - القانون التجاري والتأمين',
-        url: 'https://maqam.najah.edu/blog/articles/',
-        source: 'مقام - قاعدة المعرفة',
-        type: 'research',
-        relevance_score: 0.80,
-        semantic_score: 0.75,
-        context_score: 0.85,
-        final_score: 0.80,
-        keywords: ['بحث', 'دراسة', 'تأمين', 'تجاري'],
-        legal_references: ['قانون التأمين الفلسطيني'],
-        date: '2024-12-01',
-        jurisdiction: 'PS',
-        confidence_level: 'medium'
-      });
+    const live = await this.fetchMaqam('gap');
+    const q = originalQuery.text || '';
+    const scored = live.map(item => {
+      const s = this.scoreTitle(item.title, q);
+      return {
+        ...item,
+        relevance_score: s,
+        semantic_score: s,
+        context_score: 0.5,
+        final_score: s,
+        content: item.title,
+      } as SearchResult;
+    }).sort((a, b) => b.relevance_score - a.relevance_score);
+    const top = scored.slice(0, 30);
+    for (let i = 0; i < Math.min(5, top.length); i++) {
+      if (!top[i].summary) top[i].summary = await this.maybeSummarizeWithGemini(top[i].title);
     }
-    
-    return results;
+    return top;
   }
 
   /**

@@ -52,7 +52,7 @@ async function checkSiteHealth(site: typeof LEGAL_SITES[0]): Promise<SiteStatus>
     const timeoutId = setTimeout(() => controller.abort(), site.timeout);
     
     const response = await fetch(site.url, {
-      method: 'HEAD', // استخدام HEAD لتوفير الوقت
+      method: 'GET', // بعض المواقع القديمة لا تتعامل جيداً مع HEAD
       signal: controller.signal,
       headers: {
         'User-Agent': 'Legal-Analysis-System/1.0'
@@ -62,7 +62,7 @@ async function checkSiteHealth(site: typeof LEGAL_SITES[0]): Promise<SiteStatus>
     clearTimeout(timeoutId);
     const responseTime = Date.now() - startTime;
     
-    if (response.ok) {
+    if (response.status >= 200 && response.status < 400) {
       return {
         name: site.name,
         url: site.url,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../UI';
-import { LegalCase } from './types';
+import type { LegalCase } from '@utils/db';
 import { isMobile } from '@utils/crypto';
 
 interface ChatHeaderProps {

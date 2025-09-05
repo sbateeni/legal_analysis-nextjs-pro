@@ -300,6 +300,7 @@ export default function RAGPage() {
                            result.type === 'judgment' ? '⚖️ حكم قضائي' :
                            result.type === 'gazette' ? '📰 جريدة رسمية' : '🔬 بحث'}
                         </span>
+                        {' '}
                         <span className="text-sm bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-3 py-2 rounded-full font-medium border border-gray-300">
                           {result.source}
                       </span>

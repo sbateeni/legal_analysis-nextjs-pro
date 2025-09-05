@@ -1,4 +1,5 @@
-import { LegalCase, PredictiveAnalysis, AnalyticsData } from './types';
+import type { LegalCase } from '@utils/db';
+import { PredictiveAnalysis, AnalyticsData } from './types';
 
 // دالة تحديد نوع القضية (محسنة وذكية)
 export function determineCaseType(text: string): string {

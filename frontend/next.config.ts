@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import path from 'path'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -58,6 +59,9 @@ const nextConfig: NextConfig = {
 
   // Output configuration for better deployment
   output: 'standalone',
+
+  // Fix workspace root inference when multiple lockfiles are present
+  outputFileTracingRoot: path.join(__dirname, '..'),
 
   // HTTP response headers (production only) لتجنب كسر HMR في التطوير
   async headers() {
