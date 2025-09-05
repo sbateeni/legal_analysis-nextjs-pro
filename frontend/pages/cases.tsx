@@ -393,7 +393,7 @@ function CasesPageContent() {
                   margin: '0 0 8px 0',
                   fontSize: '14px'
                 }}>
-                  <strong>تاريخ الإنشاء:</strong> {new Date(caseItem.createdAt).toLocaleDateString('ar-SA')}
+                  <strong>تاريخ الإنشاء:</strong> {new Date(caseItem.createdAt).toLocaleDateString('ar-EG')}
                 </p>
                 {caseItem.courtName && (
                   <p style={{
@@ -410,7 +410,7 @@ function CasesPageContent() {
                     margin: '0 0 8px 0',
                     fontSize: '14px'
                   }}>
-                    <strong>الجلسة القادمة:</strong> {new Date(caseItem.nextHearing).toLocaleDateString('ar-SA')}
+                    <strong>الجلسة القادمة:</strong> {new Date(caseItem.nextHearing).toLocaleDateString('ar-EG')}
                   </p>
                 )}
               </div>

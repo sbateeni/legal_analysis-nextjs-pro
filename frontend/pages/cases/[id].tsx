@@ -490,7 +490,7 @@ function CaseDetailPageContent() {
                         <strong>نوع القضية:</strong> {currentCase?.caseType}
                       </p>
                       <p style={{ margin: '8px 0' }}>
-                        <strong>تاريخ الإنشاء:</strong> {new Date(currentCase?.createdAt || '').toLocaleDateString('ar-SA')}
+                        <strong>تاريخ الإنشاء:</strong> {new Date(currentCase?.createdAt || '').toLocaleDateString('ar-EG')}
                       </p>
                       <p style={{ margin: '8px 0' }}>
                         <strong>العميل:</strong> {currentCase?.clientName || 'غير محدد'}
@@ -500,7 +500,7 @@ function CaseDetailPageContent() {
                       </p>
                       {currentCase?.nextHearing && (
                         <p style={{ margin: '8px 0' }}>
-                          <strong>الجلسة القادمة:</strong> {new Date(currentCase.nextHearing).toLocaleDateString('ar-SA')}
+                          <strong>الجلسة القادمة:</strong> {new Date(currentCase.nextHearing).toLocaleDateString('ar-EG')}
                         </p>
                       )}
                     </div>
@@ -550,7 +550,7 @@ function CaseDetailPageContent() {
                       </p>
                       <p style={{ margin: '8px 0' }}>
                         <strong>آخر تحديث:</strong> {currentCase?.stages && currentCase.stages.length > 0 
-                          ? new Date(currentCase.stages[currentCase.stages.length - 1].date).toLocaleDateString('ar-SA')
+                          ? new Date(currentCase.stages[currentCase.stages.length - 1].date).toLocaleDateString('ar-EG')
                           : 'لا يوجد'}
                       </p>
                     </div>
@@ -654,7 +654,7 @@ function CaseDetailPageContent() {
                             fontSize: '14px',
                             opacity: 0.8
                           }}>
-                            <strong>التاريخ:</strong> {new Date(stage.date).toLocaleDateString('ar-SA')}
+                            <strong>التاريخ:</strong> {new Date(stage.date).toLocaleDateString('ar-EG')}
                           </p>
                         </div>
 
@@ -797,7 +797,7 @@ function CaseDetailPageContent() {
                           fontSize: '11px',
                           opacity: 0.6
                         }}>
-                          رفع: {new Date(document.uploadedAt).toLocaleDateString('ar-SA')}
+                          رفع: {new Date(document.uploadedAt).toLocaleDateString('ar-EG')}
                         </p>
 
                         <div style={{

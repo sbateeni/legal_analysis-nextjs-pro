@@ -426,6 +426,18 @@ function HomeContent() {
               >
                 💬 المحادثة
               </Link>
+              <Link
+                href="/intelligent-stages"
+                style={{
+                  background: 'transparent', color: theme.accent2, border: `1px solid ${theme.accent2}`, borderRadius: 8,
+                  padding: isSmallScreen ? '8px 16px' : '6px 14px', fontWeight: 700, fontSize: isSmallScreen ? 14 : 16,
+                  textDecoration: 'none', boxShadow: `0 1px 4px ${theme.shadow}`, letterSpacing: 1, transition: 'all 0.2s',
+                  width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6
+                }}
+                title="الانتقال إلى مراحل التحليل الذكية"
+              >
+                ⚖️ مراحل التحليل الذكية
+              </Link>
               <button
                 onClick={() => { try { localStorage.removeItem('hasVisited'); } catch {} window.location.href = '/'; }}
                 style={{

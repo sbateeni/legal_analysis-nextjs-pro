@@ -655,7 +655,7 @@ function AdvancedSearchPageContent() {
                       <div>
                         <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>التاريخ: </span>
                         <span style={{ fontSize: '0.8rem', fontWeight: '600', color: theme.text }}>
-                          {new Date(result.date).toLocaleDateString('ar-SA')}
+                          {new Date(result.date).toLocaleDateString('ar-EG')}
                         </span>
                       </div>
                       <div>

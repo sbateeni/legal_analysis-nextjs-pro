@@ -152,7 +152,7 @@ function CalendarPageContent() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('ar-SA', {
+    return date.toLocaleDateString('ar-EG', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -347,7 +347,7 @@ function CalendarPageContent() {
                       fontSize: '14px',
                       opacity: 0.8
                     }}>
-                      {new Date(event.date).toLocaleDateString('ar-SA')} - {getEventTypeLabel(event.type)}
+                      {new Date(event.date).toLocaleDateString('ar-EG')} - {getEventTypeLabel(event.type)}
                     </p>
                     {event.caseName && (
                       <p style={{

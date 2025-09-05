@@ -563,7 +563,7 @@ function CollaborationPageContent() {
                         fontSize: '12px',
                         opacity: 0.7
                       }}>
-                        آخر نشاط: {new Date(member.lastActive).toLocaleDateString('ar-SA')}
+                        آخر نشاط: {new Date(member.lastActive).toLocaleDateString('ar-EG')}
                       </span>
                     </div>
 
@@ -682,7 +682,7 @@ function CollaborationPageContent() {
                         fontSize: '12px',
                         opacity: 0.7
                       }}>
-                        انتهاء الصلاحية: {new Date(invite.expiresAt).toLocaleDateString('ar-SA')}
+                        انتهاء الصلاحية: {new Date(invite.expiresAt).toLocaleDateString('ar-EG')}
                       </span>
                       <div style={{
                         display: 'flex',
@@ -813,7 +813,7 @@ function CollaborationPageContent() {
                           fontSize: '12px',
                           opacity: 0.7
                         }}>
-                          {new Date(comment.createdAt).toLocaleString('ar-SA')}
+                          {new Date(comment.createdAt).toLocaleString('ar-EG')}
                         </span>
                       </div>
                     </div>
@@ -970,11 +970,11 @@ function CollaborationPageContent() {
                       opacity: 0.7
                     }}>
                       <span>
-                        بدء: {new Date(review.createdAt).toLocaleDateString('ar-SA')}
+                        بدء: {new Date(review.createdAt).toLocaleDateString('ar-EG')}
                       </span>
                       {review.completedAt && (
                         <span>
-                          انتهاء: {new Date(review.completedAt).toLocaleDateString('ar-SA')}
+                          انتهاء: {new Date(review.completedAt).toLocaleDateString('ar-EG')}
                         </span>
                       )}
                     </div>

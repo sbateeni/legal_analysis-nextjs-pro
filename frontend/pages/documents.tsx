@@ -496,7 +496,7 @@ function DocumentsPageContent() {
                     fontSize: '12px',
                     opacity: 0.6
                   }}>
-                    رفع: {new Date(document.uploadedAt).toLocaleDateString('ar-SA')}
+                    رفع: {new Date(document.uploadedAt).toLocaleDateString('ar-EG')}
                   </p>
                   <p style={{
                     color: theme.text,
@@ -504,7 +504,7 @@ function DocumentsPageContent() {
                     fontSize: '12px',
                     opacity: 0.6
                   }}>
-                    تعديل: {new Date(document.lastModified).toLocaleDateString('ar-SA')}
+                    تعديل: {new Date(document.lastModified).toLocaleDateString('ar-EG')}
                   </p>
                 </div>
 
