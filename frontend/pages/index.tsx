@@ -4,7 +4,7 @@ import { mapApiErrorToMessage, extractApiError } from '@utils/errors';
 import { saveApiKey, loadApiKey, addCase, getAllCases, updateCase, LegalCase } from '@utils/db';
 import { isMobile } from '@utils/crypto';
 import { useTheme } from '../contexts/ThemeContext';
-import LandingPage from '../components/LandingPage';
+import { LandingPage } from '../components/pages/landing';
 
 // تمت إزالة بطاقات المقالات
 import { exportResultsToPDF, exportResultsToDocx } from '@utils/export';

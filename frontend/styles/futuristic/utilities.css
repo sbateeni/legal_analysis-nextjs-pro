@@ -1,0 +1,294 @@
+/* Futuristic Utility Classes */
+
+/* Glass Morphism Effects */
+.glass-dark {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Neon Text Effects */
+.neon-blue {
+  color: #00f5ff;
+  text-shadow: 0 0 10px #00f5ff;
+}
+
+.neon-purple {
+  color: #bf00ff;
+  text-shadow: 0 0 10px #bf00ff;
+}
+
+.neon-green {
+  color: #39ff14;
+  text-shadow: 0 0 10px #39ff14;
+}
+
+.neon-red {
+  color: #ff073a;
+  text-shadow: 0 0 10px #ff073a;
+}
+
+/* Holographic Text */
+.hologram-text {
+  background: linear-gradient(45deg, #00f5ff, #bf00ff, #39ff14, #ff073a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 400% 400%;
+  animation: hologramShift 3s ease-in-out infinite;
+}
+
+/* Gradient Backgrounds */
+.bg-quantum-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-quantum-secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-quantum-neon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.bg-quantum-hero-dark {
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+.bg-quantum-hero-light {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
+}
+
+.bg-hologram {
+  background: linear-gradient(45deg, #00f5ff, #bf00ff, #39ff14, #ff073a);
+}
+
+/* Border Styles */
+.border-neon-blue {
+  border: 2px solid #00f5ff;
+  box-shadow: 0 0 10px #00f5ff;
+}
+
+.border-neon-purple {
+  border: 2px solid #bf00ff;
+  box-shadow: 0 0 10px #bf00ff;
+}
+
+.border-neon-green {
+  border: 2px solid #39ff14;
+  box-shadow: 0 0 10px #39ff14;
+}
+
+.border-hologram {
+  border: 2px solid transparent;
+  background: linear-gradient(45deg, #00f5ff, #bf00ff, #39ff14, #ff073a);
+  background-clip: border-box;
+}
+
+/* Shadow Effects */
+.shadow-quantum {
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.shadow-neon-blue {
+  box-shadow: 0 0 20px #00f5ff;
+}
+
+.shadow-neon-purple {
+  box-shadow: 0 0 20px #bf00ff;
+}
+
+.shadow-quantum-strong {
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+}
+
+/* Positioning and Layout */
+.absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-center {
+  display: grid;
+  place-items: center;
+}
+
+/* Size Utilities */
+.size-sm {
+  width: 200px;
+  height: 200px;
+}
+
+.size-md {
+  width: 300px;
+  height: 300px;
+}
+
+.size-lg {
+  width: 400px;
+  height: 400px;
+}
+
+.size-xl {
+  width: 500px;
+  height: 500px;
+}
+
+/* Spacing */
+.p-quantum-sm {
+  padding: 16px 20px;
+}
+
+.p-quantum-md {
+  padding: 24px 30px;
+}
+
+.p-quantum-lg {
+  padding: 40px 50px;
+}
+
+.m-quantum-sm {
+  margin: 8px;
+}
+
+.m-quantum-md {
+  margin: 16px;
+}
+
+.m-quantum-lg {
+  margin: 32px;
+}
+
+/* Border Radius */
+.rounded-quantum-sm {
+  border-radius: 8px;
+}
+
+.rounded-quantum-md {
+  border-radius: 12px;
+}
+
+.rounded-quantum-lg {
+  border-radius: 16px;
+}
+
+.rounded-quantum-xl {
+  border-radius: 20px;
+}
+
+.rounded-quantum-full {
+  border-radius: 50%;
+}
+
+/* Transitions */
+.transition-quantum {
+  transition: all 0.3s ease;
+}
+
+.transition-quantum-slow {
+  transition: all 0.5s ease;
+}
+
+.transition-quantum-fast {
+  transition: all 0.15s ease;
+}
+
+/* Hover Effects */
+.hover-lift:hover {
+  transform: translateY(-8px);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 30px currentColor;
+}
+
+/* Opacity Utilities */
+.opacity-quantum-low {
+  opacity: 0.3;
+}
+
+.opacity-quantum-medium {
+  opacity: 0.6;
+}
+
+.opacity-quantum-high {
+  opacity: 0.8;
+}
+
+/* Font Weights */
+.font-quantum-light {
+  font-weight: 300;
+}
+
+.font-quantum-normal {
+  font-weight: 400;
+}
+
+.font-quantum-medium {
+  font-weight: 500;
+}
+
+.font-quantum-semibold {
+  font-weight: 600;
+}
+
+.font-quantum-bold {
+  font-weight: 700;
+}
+
+.font-quantum-extrabold {
+  font-weight: 800;
+}
+
+.font-quantum-black {
+  font-weight: 900;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .mobile-hide {
+    display: none;
+  }
+  
+  .mobile-stack {
+    flex-direction: column;
+  }
+  
+  .mobile-full {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-hide {
+    display: none;
+  }
+}
