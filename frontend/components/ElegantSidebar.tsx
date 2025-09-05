@@ -440,7 +440,7 @@ const ElegantSidebar: React.FC = () => {
         </button>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .elegant-sidebar {
           position: relative;
           width: 300px;

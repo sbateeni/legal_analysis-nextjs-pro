@@ -376,7 +376,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
         </div>
       </section>
 
-      <style jsx>{`
+      <style>{`
         .landing-page {
           font-family: 'Tajawal', 'Inter', Arial, sans-serif;
           direction: rtl;

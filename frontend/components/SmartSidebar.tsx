@@ -603,7 +603,7 @@ export default function SmartSidebar({ isOpen, onClose }: SmartSidebarProps) {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideInLeft {
           from {
             transform: translateX(-100%);

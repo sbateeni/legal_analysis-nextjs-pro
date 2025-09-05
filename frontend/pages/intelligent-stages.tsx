@@ -256,7 +256,7 @@ const IntelligentStages: React.FC = () => {
       <Head>
         <title>مراحل التحليل الذكية المتقدمة - نظام التحليل القانوني</title>
         <meta name="description" content="نظام تحليل قانوني شامل ومتقدم يجمع الذكاء الاصطناعي مع التحليل القانوني المتخصص" />
-        <style jsx>{`
+        <style>{`
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }

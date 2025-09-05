@@ -104,7 +104,7 @@ export default function RAGPage() {
       <Head>
         <title>نظام البحث القانوني الذكي - نظام التحليل القانوني</title>
         <meta name="description" content="نظام البحث الذكي في القوانين والأحكام الفلسطينية من المصادر الرسمية" />
-        <style jsx>{`
+        <style>{`
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }

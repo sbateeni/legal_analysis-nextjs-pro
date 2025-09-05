@@ -341,7 +341,7 @@ export default function FloatingNavigation({ isVisible = true }: FloatingNavigat
         3
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideInUp {
           from {
             opacity: 0;
