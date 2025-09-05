@@ -442,7 +442,7 @@ const ElegantSidebar: React.FC = () => {
         </button>
       </div>
 
-      {mounted && <style>{`
+      <style>{`
         .elegant-sidebar {
           position: relative;
           width: 300px;
@@ -474,7 +474,7 @@ const ElegantSidebar: React.FC = () => {
           display: flex;
           align-items: center;
           gap: 12px;
-          color: ${theme.text};
+          color: ${darkMode ? '#fff' : '#111827'};
         }
 
         .sidebar-logo-collapsed {
@@ -521,7 +521,7 @@ const ElegantSidebar: React.FC = () => {
           align-items: center;
           gap: 18px;
           padding: 16px 20px;
-          color: ${theme.text};
+          color: ${darkMode ? '#fff' : '#111827'};
           opacity: 0.85;
           text-decoration: none;
           border-radius: 16px;
@@ -547,7 +547,7 @@ const ElegantSidebar: React.FC = () => {
         }
 
         .nav-link:hover {
-          color: ${theme.text};
+          color: ${darkMode ? '#fff' : '#111827'};
           background: rgba(255, 255, 255, 0.1);
           transform: translateX(-6px) scale(1.02);
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(99, 102, 241, 0.2);
@@ -558,10 +558,10 @@ const ElegantSidebar: React.FC = () => {
         }
 
         .nav-link.active {
-          color: ${theme.text};
+          color: ${darkMode ? '#fff' : '#111827'};
           background: ${elementColors.activeGradient};
           box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4), 0 4px 12px rgba(139, 92, 246, 0.3);
-          border-left: 5px solid ${theme.text};
+          border-left: 5px solid ${darkMode ? '#fff' : '#111827'};
           transform: translateX(-2px);
         }
 
@@ -594,7 +594,7 @@ const ElegantSidebar: React.FC = () => {
           background: rgba(255, 255, 255, 0.08);
           border: 1px solid ${theme.border};
           border-radius: 12px;
-          color: ${theme.text};
+          color: ${darkMode ? '#fff' : '#111827'};
           opacity: 0.9;
           cursor: pointer;
           transition: all 0.4s ease;
@@ -606,7 +606,7 @@ const ElegantSidebar: React.FC = () => {
 
         .theme-toggle-btn:hover {
           background: rgba(99, 102, 241, 0.15);
-          color: ${theme.text};
+          color: ${darkMode ? '#fff' : '#111827'};
           transform: translateY(-2px);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(99, 102, 241, 0.2);
           border-color: rgba(99, 102, 241, 0.4);
@@ -639,7 +639,7 @@ const ElegantSidebar: React.FC = () => {
           background: rgba(255, 255, 255, 0.08);
           border: 1px solid ${theme.border};
           border-radius: 12px;
-          color: ${theme.text};
+          color: ${darkMode ? '#fff' : '#111827'};
           opacity: 0.9;
           cursor: pointer;
           transition: all 0.4s ease;
@@ -650,7 +650,7 @@ const ElegantSidebar: React.FC = () => {
 
         .collapse-btn:hover {
           background: rgba(99, 102, 241, 0.15);
-          color: ${theme.text};
+          color: ${darkMode ? '#fff' : '#111827'};
           transform: translateY(-2px);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(99, 102, 241, 0.2);
           border-color: rgba(99, 102, 241, 0.4);
@@ -908,7 +908,7 @@ const ElegantSidebar: React.FC = () => {
             display: block;
           }
         }
-      `}</style>}
+      `}</style>
       </div>
     </>
   );
