@@ -83,3 +83,6 @@ export interface StrategyPayload {
   legal_basis?: Array<{ source: string; article?: string }>;
   tags?: string[];
 }
+
+// إعادة تصدير نوع القضية لاستخدام موحّد عبر مكونات الدردشة
+export { LegalCase } from '@utils/db';
