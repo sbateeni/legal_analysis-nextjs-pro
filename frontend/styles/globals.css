@@ -46,6 +46,102 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* تحسين وضوح الخطوط في الوضع الليلي */
+[data-theme="dark"] body,
+.dark-mode body {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+  text-rendering: optimizeSpeed;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* تحسين وضوح النصوص في الوضع الليلي */
+[data-theme="dark"] *,
+.dark-mode * {
+  text-shadow: 0 0 0.5px currentColor;
+}
+
+/* تحسين وضوح النصوص الثانوية */
+[data-theme="dark"] .text-muted,
+.dark-mode .text-muted {
+  text-shadow: 0 0 1px currentColor;
+  opacity: 0.9;
+}
+
+/* تحسين وضوح النصوص الصغيرة */
+[data-theme="dark"] small,
+[data-theme="dark"] .text-sm,
+.dark-mode small,
+.dark-mode .text-sm {
+  text-shadow: 0 0 0.8px currentColor;
+  font-weight: 600;
+}
+
+/* تحسين وضوح العناوين */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode h4,
+.dark-mode h5,
+.dark-mode h6 {
+  text-shadow: 0 0 1px currentColor;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* تحسين وضوح الروابط */
+[data-theme="dark"] a,
+.dark-mode a {
+  text-shadow: 0 0 0.5px currentColor;
+  font-weight: 600;
+}
+
+/* تحسين وضوح الأزرار */
+[data-theme="dark"] button,
+.dark-mode button {
+  text-shadow: 0 0 0.5px currentColor;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* تحسين وضوح النصوص في البطاقات */
+[data-theme="dark"] .card-ui,
+.dark-mode .card-ui {
+  text-shadow: 0 0 0.3px currentColor;
+}
+
+/* تحسين وضوح النصوص في حقول الإدخال */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+.dark-mode input,
+.dark-mode textarea,
+.dark-mode select {
+  text-shadow: 0 0 0.5px currentColor;
+  font-weight: 500;
+}
+
+/* تحسين وضوح النصوص في الجداول */
+[data-theme="dark"] table,
+.dark-mode table {
+  text-shadow: 0 0 0.4px currentColor;
+}
+
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+.dark-mode th,
+.dark-mode td {
+  text-shadow: 0 0 0.4px currentColor;
+  font-weight: 500;
+}
+
 /* أدوات الخطوط */
 .font-headline {
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;

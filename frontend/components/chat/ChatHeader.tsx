@@ -53,16 +53,29 @@ export default function ChatHeader({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: isMobile() ? 22 : 26 }}>🤖</span>
-          <h2 style={{ margin: 0, color: theme.accent, fontSize: isMobile() ? 18 : 20 }}>
+          <h2 style={{ 
+            margin: 0, 
+            color: theme.accent, 
+            fontSize: isMobile() ? 18 : 20,
+            textShadow: '0 0 1px currentColor',
+            fontWeight: 700
+          }}>
             المساعد القانوني الفلسطيني
           </h2>
         </div>
         
         {selectedCaseId && (
-          <div style={{ fontSize: isMobile() ? 12 : 13, color: theme.accent2 }}>
-            المحادثة حول: <b>{cases.find(c => c.id === selectedCaseId)?.name}</b>
+          <div style={{ 
+            fontSize: isMobile() ? 12 : 13, 
+            color: theme.accent2,
+            textShadow: '0 0 0.5px currentColor'
+          }}>
+            المحادثة حول: <b style={{ textShadow: '0 0 0.5px currentColor' }}>{cases.find(c => c.id === selectedCaseId)?.name}</b>
             <br />
-            <small style={{ color: '#6b7280' }}>
+            <small style={{ 
+              color: theme.textSecondary || '#6b7280',
+              textShadow: '0 0 0.8px currentColor'
+            }}>
               {cases.find(c => c.id === selectedCaseId)?.stages?.length || 0} مرحلة محللة
             </small>
           </div>

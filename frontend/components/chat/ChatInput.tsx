@@ -89,20 +89,22 @@ export default function ChatInput({
             requestAnimationFrame(autoResizeInput); 
           }}
           onKeyPress={onKeyPress}
-          placeholder="اكتب رسالتك هنا..."
-          disabled={isLoading}
-          aria-label="حقل إدخال رسالة المحادثة"
-          style={{
-            flex: 1,
-            padding: '0.75rem',
-            border: `1px solid ${theme.border}`,
-            borderRadius: '0.5rem',
-            fontSize: '1rem',
-            resize: 'none',
-            minHeight: '44px',
-            maxHeight: isMobile() ? '300px' : '240px',
-            fontFamily: 'inherit'
-          }}
+                          placeholder="اكتب رسالتك هنا..."
+                disabled={isLoading}
+                aria-label="حقل إدخال رسالة المحادثة"
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  border: `1px solid ${theme.border}`,
+                  borderRadius: '0.5rem',
+                  fontSize: '1rem',
+                  resize: 'none',
+                  minHeight: '44px',
+                  maxHeight: isMobile() ? '300px' : '240px',
+                  fontFamily: 'inherit',
+                  textShadow: '0 0 0.5px currentColor',
+                  fontWeight: 500
+                }}
         />
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'flex-end' }}>
           <Button 

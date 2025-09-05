@@ -10,6 +10,9 @@ export type Theme = {
   errorBg: string;
   errorText: string;
   shadow: string;
+  textSecondary?: string;
+  textMuted?: string;
+  textBright?: string;
 };
 
 export type ColorScheme = 'green' | 'blue' | 'purple' | 'orange' | 'pink' | 'teal';
@@ -117,6 +120,9 @@ export const greenDarkTheme: Theme = {
   errorBg: '#3a1a1a',
   errorText: '#ff6b6b',
   shadow: '#10b98133',
+  textSecondary: '#d1fae5',
+  textMuted: '#a7f3d0',
+  textBright: '#ffffff',
 };
 
 export const blueDarkTheme: Theme = {
@@ -131,6 +137,9 @@ export const blueDarkTheme: Theme = {
   errorBg: '#3a1a1a',
   errorText: '#ff6b6b',
   shadow: '#3b82f633',
+  textSecondary: '#e0e7ff',
+  textMuted: '#c7d2fe',
+  textBright: '#ffffff',
 };
 
 export const purpleDarkTheme: Theme = {
@@ -145,6 +154,9 @@ export const purpleDarkTheme: Theme = {
   errorBg: '#3a1a1a',
   errorText: '#ff6b6b',
   shadow: '#8b5cf633',
+  textSecondary: '#ede9fe',
+  textMuted: '#ddd6fe',
+  textBright: '#ffffff',
 };
 
 export const orangeDarkTheme: Theme = {
@@ -159,6 +171,9 @@ export const orangeDarkTheme: Theme = {
   errorBg: '#3a1a1a',
   errorText: '#ff6b6b',
   shadow: '#f9731633',
+  textSecondary: '#fed7aa',
+  textMuted: '#fdba74',
+  textBright: '#ffffff',
 };
 
 export const pinkDarkTheme: Theme = {
@@ -173,6 +188,9 @@ export const pinkDarkTheme: Theme = {
   errorBg: '#3a1a1a',
   errorText: '#ff6b6b',
   shadow: '#ec489933',
+  textSecondary: '#fce7f3',
+  textMuted: '#fbcfe8',
+  textBright: '#ffffff',
 };
 
 export const tealDarkTheme: Theme = {
@@ -187,6 +205,9 @@ export const tealDarkTheme: Theme = {
   errorBg: '#3a1a1a',
   errorText: '#ff6b6b',
   shadow: '#14b8a633',
+  textSecondary: '#ccfbf1',
+  textMuted: '#99f6e4',
+  textBright: '#ffffff',
 };
 
 // الحصول على السمة حسب اللون والوضع

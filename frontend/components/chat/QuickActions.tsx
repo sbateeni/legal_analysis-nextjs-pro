@@ -30,7 +30,9 @@ export default function QuickActions({
     padding: '6px 10px',
     fontWeight: 700,
     cursor: 'pointer',
-    width: isMobile() ? 'auto' : '100%'
+    width: isMobile() ? 'auto' : '100%',
+    textShadow: '0 0 0.5px currentColor',
+    letterSpacing: '0.01em'
   });
 
   return (

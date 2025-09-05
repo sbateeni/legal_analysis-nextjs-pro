@@ -17,7 +17,10 @@ export default function AnalyticsPanel({ analytics, theme }: AnalyticsPanelProps
     }}>
       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
         <span>📊</span>
-        <b style={{ color: theme.accent2 }}>التحليلات والإحصائيات</b>
+        <b style={{ 
+          color: theme.accent2,
+          textShadow: '0 0 0.5px currentColor'
+        }}>التحليلات والإحصائيات</b>
       </div>
       
       {/* ملخص سريع */}

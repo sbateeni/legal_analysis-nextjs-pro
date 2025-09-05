@@ -136,7 +136,7 @@ function ChatPageContent() {
     }}>
       {/* زر تحميل التطبيق - فقط على الهاتف */}
       {mounted && isMobile() && showInstallButton && (
-        <div style={{
+        <div         style={{
           position: 'fixed',
           top: 20,
           left: 20,
@@ -154,7 +154,9 @@ function ChatPageContent() {
           gap: 8,
           transition: 'all 0.3s ease',
           border: 'none',
-          outline: 'none'
+          outline: 'none',
+          textShadow: '0 0 1px currentColor',
+          letterSpacing: '0.01em'
         }}
         onClick={handleInstallClick}
         onTouchStart={(e) => {
@@ -190,14 +192,22 @@ function ChatPageContent() {
               padding: '10px 12px',
               marginBottom: 12,
               textAlign: 'center',
-              fontWeight: 700
+              fontWeight: 700,
+              textShadow: '0 0 0.5px currentColor',
+              letterSpacing: '0.01em'
             }}>
               لم يتم إعداد مفتاح API بعد. انتقل إلى صفحة الإعدادات لإعداده.
             </div>
           )}
           <div style={{display:'grid', gridTemplateColumns: isMobile()? '1fr' : '1fr 1fr', gap: 12}}>
             <div>
-              <label style={{display:'block', marginBottom:6, fontWeight:700, color: theme.accent2}}>اختر قضية (اختياري)</label>
+              <label style={{
+                display:'block', 
+                marginBottom:6, 
+                fontWeight:700, 
+                color: theme.accent2,
+                textShadow: '0 0 0.5px currentColor'
+              }}>اختر قضية (اختياري)</label>
               <select
                 value={selectedCaseId}
                 onChange={(e) => setSelectedCaseId(e.target.value)}
@@ -208,7 +218,9 @@ function ChatPageContent() {
                   borderRadius: 12,
                   fontSize: isMobile()? 15:16,
                   background: 'white',
-                  outline: 'none'
+                  outline: 'none',
+                  textShadow: '0 0 0.5px currentColor',
+                  fontWeight: 500
                 }}
               >
                 <option value="">بدون قضية محددة</option>
@@ -257,11 +269,18 @@ function ChatPageContent() {
                 <div style={{
                   textAlign: 'center',
                   padding: '2rem',
-                  color: '#6b7280'
+                  color: theme.textSecondary || '#6b7280',
+                  textShadow: '0 0 0.8px currentColor'
                 }}>
                   <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💬</div>
-                  <h3>ابدأ المحادثة</h3>
-                  <p>اسأل أي سؤال قانوني وسأجيبك بذكاء</p>
+                  <h3 style={{ 
+                    textShadow: '0 0 1px currentColor',
+                    fontWeight: 700
+                  }}>ابدأ المحادثة</h3>
+                  <p style={{ 
+                    textShadow: '0 0 0.8px currentColor',
+                    fontWeight: 500
+                  }}>اسأل أي سؤال قانوني وسأجيبك بذكاء</p>
                 </div>
               )}
 
@@ -298,7 +317,10 @@ function ChatPageContent() {
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite'
                       }} />
-                      <span>جاري الكتابة...</span>
+                      <span style={{
+                        textShadow: '0 0 0.5px currentColor',
+                        fontWeight: 500
+                      }}>جاري الكتابة...</span>
                     </div>
                   </div>
                 </div>
@@ -313,7 +335,9 @@ function ChatPageContent() {
                   background: '#fef2f2',
                   border: '1px solid #fecaca',
                   color: '#dc2626',
-                  borderRadius: '0.5rem'
+                  borderRadius: '0.5rem',
+                  textShadow: '0 0 0.5px currentColor',
+                  fontWeight: 500
                 }}>
                   ❌ {error}
                 </div>

@@ -33,7 +33,12 @@ export default function MessageBubble({
       }}>
         {message.role === 'assistant' ? (
           <>
-            <div style={{ fontWeight: 800, color: theme.accent, marginBottom: 6 }}>الإجابة:</div>
+                              <div style={{ 
+                    fontWeight: 800, 
+                    color: theme.accent, 
+                    marginBottom: 6,
+                    textShadow: '0 0 1px currentColor'
+                  }}>الإجابة:</div>
             {/* حاول إبراز JSON ككتلة منفصلة إن وجد */}
             {(() => {
               try {
@@ -85,9 +90,15 @@ export default function MessageBubble({
         {/* Suggestions */}
         {message.role === 'assistant' && message.suggestions && message.suggestions.length > 0 && (
           <div style={{ marginTop: '1rem' }}>
-            <div style={{ fontSize: '0.95rem', marginBottom: '0.25rem', fontWeight: 700, color: theme.accent2 }}>
-              اقتراحات:
-            </div>
+                                  <div style={{ 
+                        fontSize: '0.95rem', 
+                        marginBottom: '0.25rem', 
+                        fontWeight: 700, 
+                        color: theme.accent2,
+                        textShadow: '0 0 0.5px currentColor'
+                      }}>
+                        اقتراحات:
+                      </div>
             <ul style={{ margin: 0, paddingRight: 18 }}>
               {message.suggestions.map((suggestion, idx) => (
                 <li key={idx} style={{ marginBottom: 6 }}>{suggestion}</li>
@@ -99,9 +110,15 @@ export default function MessageBubble({
         {/* Next Steps */}
         {message.role === 'assistant' && message.nextSteps && message.nextSteps.length > 0 && (
           <div style={{ marginTop: '1rem' }}>
-            <div style={{ fontSize: '0.95rem', marginBottom: '0.25rem', fontWeight: 700, color: theme.accent2 }}>
-              الخطوات التالية:
-            </div>
+                                  <div style={{ 
+                        fontSize: '0.95rem', 
+                        marginBottom: '0.25rem', 
+                        fontWeight: 700, 
+                        color: theme.accent2,
+                        textShadow: '0 0 0.5px currentColor'
+                      }}>
+                        الخطوات التالية:
+                      </div>
             <ol style={{ margin: 0, paddingRight: 18 }}>
               {message.nextSteps.map((step, idx) => (
                 <li key={idx} style={{ marginBottom: 6 }}>{step}</li>
@@ -113,9 +130,15 @@ export default function MessageBubble({
         {/* Legal Sources */}
         {message.role === 'assistant' && message.legalSources && message.legalSources.length > 0 && (
           <div style={{ marginTop: '1rem' }}>
-            <div style={{ fontSize: '0.95rem', marginBottom: '0.5rem', fontWeight: 700, color: theme.accent2 }}>
-              📚 المصادر القانونية المستخدمة:
-            </div>
+                                  <div style={{ 
+                        fontSize: '0.95rem', 
+                        marginBottom: '0.5rem', 
+                        fontWeight: 700, 
+                        color: theme.accent2,
+                        textShadow: '0 0 0.5px currentColor'
+                      }}>
+                        📚 المصادر القانونية المستخدمة:
+                      </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {message.legalSources.map((source, idx) => (
                 <div key={idx} style={{

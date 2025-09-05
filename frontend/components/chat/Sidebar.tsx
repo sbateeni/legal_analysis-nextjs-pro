@@ -40,18 +40,35 @@ export default function Sidebar({
     }}>
       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
         <span>🗂️</span>
-        <b style={{ color: theme.accent2 }}>سياق القضية</b>
+        <b style={{ 
+          color: theme.accent2,
+          textShadow: '0 0 0.5px currentColor'
+        }}>سياق القضية</b>
       </div>
       
       {selectedCaseId ? (
         <>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>
+          <div style={{ 
+            fontWeight: 700, 
+            marginBottom: 6,
+            textShadow: '0 0 0.5px currentColor'
+          }}>
             {cases.find(c => c.id === selectedCaseId)?.name}
           </div>
-          <div style={{ fontSize: 13, color:'#6b7280', marginBottom: 10 }}>
+          <div style={{ 
+            fontSize: 13, 
+            color: theme.textSecondary || '#6b7280', 
+            marginBottom: 10,
+            textShadow: '0 0 0.8px currentColor'
+          }}>
             مراحل مكتملة: {cases.find(c => c.id === selectedCaseId)?.stages.length || 0}
           </div>
-          <div style={{ fontSize: 13, marginBottom: 8, color: theme.accent2 }}>آخر 3 مراحل:</div>
+          <div style={{ 
+            fontSize: 13, 
+            marginBottom: 8, 
+            color: theme.accent2,
+            textShadow: '0 0 0.5px currentColor'
+          }}>آخر 3 مراحل:</div>
           <ul style={{ margin: 0, paddingRight: 16 }}>
             {([...((cases.find(c => c.id === selectedCaseId)?.stages) || [])]
               .sort((a, b) => b.stageIndex - a.stageIndex)
