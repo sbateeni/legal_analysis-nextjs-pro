@@ -192,6 +192,14 @@ function ReferenceCheckerPageContent() {
 
         {/* لوحة تعريفية: ما هي هذه الصفحة؟ وما الفرق بينها وبين الصفحة الرئيسية؟ */}
         <div className="mb-8 rounded-lg" style={darkPanelStyle}>
+          <div className="mb-4" style={{ background:'rgba(35,41,70,0.25)', border:'1px solid rgb(57,62,92)', borderRadius:10, padding:12 }}>
+            <div className="font-semibold mb-1" style={{ color:'rgb(247,247,250)' }}>ℹ️ دليل سريع</div>
+            <ul className="list-disc pr-5 space-y-1" style={{ color:'rgba(247,247,250,0.85)' }}>
+              <li>ألصق نص المذكرة أو الاستشارة، ثم اختر وضع التحليل واضغط "تحليل النص".</li>
+              <li>استخدم البحث بالأعلى لإيجاد مراجع بديلة بحسب نوع القضية.</li>
+              <li>انقر على أي نتيجة لفحص الاستشهاد والحصول على تحذيرات أو بدائل.</li>
+            </ul>
+          </div>
           <h2 className="text-xl font-semibold mb-3" style={{ color: 'rgb(247, 247, 250)' }}>ما هي هذه الصفحة؟</h2>
           <p className="mb-4" style={{ color: 'rgba(247,247,250,0.9)' }}>
             هذه الصفحة مخصّصة لـ <span className="font-semibold">التدقيق المرجعي القانوني</span>: استخراج الاستشهادات، التحقق من صلاحيتها، تقدير مستوى الصلة والثقة، واقتراح بدائل. يمكنك أيضاً البحث في قاعدة المراجع، وتصفية النتائج وفق <span className="font-semibold">نوع القضية</span>.

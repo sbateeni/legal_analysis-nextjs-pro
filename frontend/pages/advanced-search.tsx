@@ -187,6 +187,25 @@ function AdvancedSearchPageContent() {
 
       {/* Main Content */}
       <main style={{ maxWidth: 1200, margin: '0 auto', padding: isMobile() ? '1rem' : '2rem' }}>
+        {/* Help banner */}
+        <div style={{
+          background: '#eef2ff',
+          border: '1px solid #c7d2fe',
+          color: '#1e293b',
+          borderRadius: 12,
+          padding: '12px 16px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ fontWeight: 800, marginBottom: 6 }}>ℹ️ ما هي هذه الصفحة؟</div>
+          <div style={{ fontSize: 14 }}>
+            هذه الصفحة للبحث القانوني المتقدم مع فلاتر دقيقة وتحليل للاستعلام. استخدمها عندما تعرف ما تبحث عنه وتريد نتائج قابلة للفرز والتضييق.
+          </div>
+          <ul style={{ margin: '8px 0 0', paddingInlineStart: 18, fontSize: 14 }}>
+            <li>اكتب استعلامك القانوني وحدد السياق لتحسين الدقة.</li>
+            <li>اختر نوع القضية والاختصاص ونوع البحث، ويمكنك تطبيق مرشحات زمنية وثقة.</li>
+            <li>اضغط "بحث متقدم" للحصول على نتائج قابلة للفرز مع مصادر وروابط.</li>
+          </ul>
+        </div>
         {/* Search Form */}
         <div style={{
           background: theme.card,
