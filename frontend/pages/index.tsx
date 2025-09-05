@@ -438,6 +438,42 @@ function HomeContent() {
               >
                 ⚖️ مراحل التحليل الذكية
               </Link>
+              <Link
+                href="/rag"
+                style={{
+                  background: 'transparent', color: theme.accent2, border: `1px solid ${theme.accent2}`, borderRadius: 8,
+                  padding: isSmallScreen ? '8px 16px' : '6px 14px', fontWeight: 700, fontSize: isSmallScreen ? 14 : 16,
+                  textDecoration: 'none', boxShadow: `0 1px 4px ${theme.shadow}`, letterSpacing: 1, transition: 'all 0.2s',
+                  width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6
+                }}
+                title="الانتقال إلى نظام RAG"
+              >
+                🏛️ نظام RAG
+              </Link>
+              <Link
+                href="/advanced-search"
+                style={{
+                  background: 'transparent', color: theme.accent2, border: `1px solid ${theme.accent2}`, borderRadius: 8,
+                  padding: isSmallScreen ? '8px 16px' : '6px 14px', fontWeight: 700, fontSize: isSmallScreen ? 14 : 16,
+                  textDecoration: 'none', boxShadow: `0 1px 4px ${theme.shadow}`, letterSpacing: 1, transition: 'all 0.2s',
+                  width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6
+                }}
+                title="الانتقال إلى البحث المتقدم"
+              >
+                🔍 البحث المتقدم
+              </Link>
+              <Link
+                href="/legal-updates"
+                style={{
+                  background: 'transparent', color: theme.accent2, border: `1px solid ${theme.accent2}`, borderRadius: 8,
+                  padding: isSmallScreen ? '8px 16px' : '6px 14px', fontWeight: 700, fontSize: isSmallScreen ? 14 : 16,
+                  textDecoration: 'none', boxShadow: `0 1px 4px ${theme.shadow}`, letterSpacing: 1, transition: 'all 0.2s',
+                  width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6
+                }}
+                title="الانتقال إلى التحديثات القانونية"
+              >
+                📰 التحديثات القانونية
+              </Link>
               <button
                 onClick={() => { try { localStorage.removeItem('hasVisited'); } catch {} window.location.href = '/'; }}
                 style={{

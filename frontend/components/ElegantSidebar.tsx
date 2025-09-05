@@ -127,6 +127,7 @@ const ElegantSidebar: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -150,6 +151,30 @@ const ElegantSidebar: React.FC = () => {
       label: 'الرئيسية',
       icon: 'dashboard',
       href: '/',
+    },
+    {
+      id: 'rag',
+      label: 'نظام RAG',
+      icon: 'rag',
+      href: '/rag',
+    },
+    {
+      id: 'advanced-search',
+      label: 'البحث المتقدم',
+      icon: 'rag',
+      href: '/advanced-search',
+    },
+    {
+      id: 'intelligent-stages',
+      label: 'مراحل التحليل الذكية',
+      icon: 'analytics',
+      href: '/intelligent-stages',
+    },
+    {
+      id: 'legal-updates',
+      label: 'التحديثات القانونية',
+      icon: 'rag',
+      href: '/legal-updates',
     },
     {
       id: 'analytics',
@@ -218,30 +243,6 @@ const ElegantSidebar: React.FC = () => {
       href: '/kb',
     },
     {
-      id: 'rag',
-      label: 'نظام RAG',
-      icon: 'rag',
-      href: '/rag',
-    },
-    {
-      id: 'advanced-search',
-      label: 'البحث المتقدم',
-      icon: 'rag',
-      href: '/advanced-search',
-    },
-    {
-      id: 'intelligent-stages',
-      label: 'مراحل التحليل الذكية',
-      icon: 'analytics',
-      href: '/intelligent-stages',
-    },
-    {
-      id: 'legal-updates',
-      label: 'التحديثات القانونية',
-      icon: 'rag',
-      href: '/legal-updates',
-    },
-    {
       id: 'resources',
       label: 'الموارد',
       icon: 'resources',
@@ -281,6 +282,7 @@ const ElegantSidebar: React.FC = () => {
 
   // Check if device is mobile
   useEffect(() => {
+    setMounted(true);
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -440,7 +442,7 @@ const ElegantSidebar: React.FC = () => {
         </button>
       </div>
 
-      <style>{`
+      {mounted && <style>{`
         .elegant-sidebar {
           position: relative;
           width: 300px;
@@ -906,7 +908,7 @@ const ElegantSidebar: React.FC = () => {
             display: block;
           }
         }
-      `}</style>
+      `}</style>}
       </div>
     </>
   );
