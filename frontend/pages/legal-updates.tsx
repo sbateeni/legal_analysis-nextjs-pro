@@ -449,7 +449,7 @@ export default function LegalUpdatesPage() {
                              color: theme.text,
                              opacity: 0.7
                            }}>
-                             {new Date(update.date).toLocaleDateString('ar-SA')}
+                             {new Date(update.date).toLocaleDateString('ar-EG')}
                            </div>
                         </div>
                         
@@ -575,7 +575,7 @@ export default function LegalUpdatesPage() {
                              color: theme.text,
                              opacity: 0.7
                            }}>
-                             {new Date(notification.date).toLocaleDateString('ar-SA')}
+                             {new Date(notification.date).toLocaleDateString('ar-EG')}
                            </div>
                         </div>
                         
