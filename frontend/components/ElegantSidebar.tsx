@@ -442,7 +442,7 @@ const ElegantSidebar: React.FC = () => {
         </button>
       </div>
 
-      <style>{`
+      <style suppressHydrationWarning>{`
         .elegant-sidebar {
           position: relative;
           width: 300px;
