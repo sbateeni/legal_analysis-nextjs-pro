@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { referenceChecker, type LegalReference } from '@utils/referenceChecker';
+import { useTheme } from '../contexts/ThemeContext';
 // تم حذف AuthGuard لجعل الموقع عاماً
 
 export default function ReferenceCheckerPage() {
@@ -7,6 +8,7 @@ export default function ReferenceCheckerPage() {
 }
 
 function ReferenceCheckerPageContent() {
+  const { theme, darkMode } = useTheme();
   const [text, setText] = useState('');
   const [selectedMode, setSelectedMode] = useState<'brief' | 'detailed'>('brief');
   const [analysis, setAnalysis] = useState<string>('');
@@ -33,18 +35,19 @@ function ReferenceCheckerPageContent() {
     'مدني'
   ];
 
-  // Shared styles
+  // Shared styles (مبنية على الثيم)
   const darkPanelStyle: React.CSSProperties = {
-    background: 'rgb(24, 26, 42)',
-    border: '1.5px solid rgb(57, 62, 92)',
+    background: theme.card,
+    border: `1.5px solid ${theme.border}`,
     borderRadius: 12,
-    boxShadow: 'rgba(35, 41, 70, 0.25) 0px 2px 8px',
-    padding: 24
+    boxShadow: `0px 2px 8px ${theme.shadow}`,
+    padding: 24,
+    color: theme.text
   };
   const buttonStyle: React.CSSProperties = {
     background: 'transparent',
-    color: 'rgb(247, 247, 250)',
-    border: '1.5px solid rgb(57, 62, 92)',
+    color: theme.text,
+    border: `1.5px solid ${theme.border}`,
     borderRadius: 10,
     padding: '6px 10px',
     cursor: 'pointer',
@@ -58,19 +61,19 @@ function ReferenceCheckerPageContent() {
   };
   const selectedChipStyle: React.CSSProperties = {
     ...chipStyle,
-    background: 'rgb(57, 62, 92)'
+    background: theme.input
   };
   const inputStyle: React.CSSProperties = {
     width: '100%',
     borderRadius: 12,
-    border: '2px solid rgb(57, 62, 92)',
+    border: `2px solid ${theme.border}`,
     padding: 12,
     fontSize: 16,
     resize: 'vertical',
     outline: 'none',
-    boxShadow: 'rgba(35, 41, 70, 0.333) 0px 2px 8px',
-    background: 'rgb(24, 26, 42)',
-    color: 'rgb(247, 247, 250)',
+    boxShadow: `0px 2px 8px ${theme.shadow}`,
+    background: theme.input,
+    color: theme.text,
     transition: '0.3s',
     fontFamily: 'Tajawal, Arial, sans-serif',
     lineHeight: 1.6 as unknown as number
@@ -177,52 +180,52 @@ function ReferenceCheckerPageContent() {
   };
 
   return (
-    <div dir="rtl" className="container mx-auto px-4 py-8" style={{ background: 'rgb(24, 26, 42)' }}>
+    <div dir="rtl" className="container mx-auto px-4 py-8" style={{ background: theme.background, color: theme.text }}>
       <div className="max-w-6xl mx-auto">
         {/* العنوان */}
         <div className="text-center mb-8">
-          <div className="inline-block px-4 py-1 mb-3 rounded-full border text-sm" style={{ color: 'rgb(247, 247, 250)', borderColor: 'rgb(57, 62, 92)', background: 'rgba(57,62,92,0.15)' }}>🔍 المدقق المرجعي</div>
-          <h1 className="text-4xl font-bold mb-3" style={{ color: 'rgb(247, 247, 250)' }}>
+          <div className="inline-block px-4 py-1 mb-3 rounded-full border text-sm" style={{ color: theme.text, borderColor: theme.border, background: theme.input }}>🔍 المدقق المرجعي</div>
+          <h1 className="text-4xl font-bold mb-3" style={{ color: theme.text }}>
             المدقق المرجعي القانوني
           </h1>
-          <p className="text-lg" style={{ color: 'rgba(247,247,250,0.8)' }}>
+          <p className="text-lg" style={{ color: theme.text, opacity: 0.8 }}>
             فحص وتحليل المراجع القانونية مع وضعي التفسير المختصر والحجج الموسعة
           </p>
         </div>
 
         {/* لوحة تعريفية: ما هي هذه الصفحة؟ وما الفرق بينها وبين الصفحة الرئيسية؟ */}
         <div className="mb-8 rounded-lg" style={darkPanelStyle}>
-          <div className="mb-4" style={{ background:'rgba(35,41,70,0.25)', border:'1px solid rgb(57,62,92)', borderRadius:10, padding:12 }}>
-            <div className="font-semibold mb-1" style={{ color:'rgb(247,247,250)' }}>ℹ️ دليل سريع</div>
-            <ul className="list-disc pr-5 space-y-1" style={{ color:'rgba(247,247,250,0.85)' }}>
+          <div className="mb-4" style={{ background: theme.input, border: `1px solid ${theme.border}`, borderRadius: 10, padding: 12 }}>
+            <div className="font-semibold mb-1" style={{ color: theme.text }}>ℹ️ دليل سريع</div>
+            <ul className="list-disc pr-5 space-y-1" style={{ color: theme.text, opacity: 0.85 }}>
               <li>ألصق نص المذكرة أو الاستشارة، ثم اختر وضع التحليل واضغط "تحليل النص".</li>
               <li>استخدم البحث بالأعلى لإيجاد مراجع بديلة بحسب نوع القضية.</li>
               <li>انقر على أي نتيجة لفحص الاستشهاد والحصول على تحذيرات أو بدائل.</li>
             </ul>
           </div>
-          <h2 className="text-xl font-semibold mb-3" style={{ color: 'rgb(247, 247, 250)' }}>ما هي هذه الصفحة؟</h2>
-          <p className="mb-4" style={{ color: 'rgba(247,247,250,0.9)' }}>
+          <h2 className="text-xl font-semibold mb-3" style={{ color: theme.text }}>ما هي هذه الصفحة؟</h2>
+          <p className="mb-4" style={{ color: theme.text, opacity: 0.9 }}>
             هذه الصفحة مخصّصة لـ <span className="font-semibold">التدقيق المرجعي القانوني</span>: استخراج الاستشهادات، التحقق من صلاحيتها، تقدير مستوى الصلة والثقة، واقتراح بدائل. يمكنك أيضاً البحث في قاعدة المراجع، وتصفية النتائج وفق <span className="font-semibold">نوع القضية</span>.
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <h3 className="font-medium mb-2" style={{ color: 'rgb(247, 247, 250)' }}>متى أستخدم المدقق المرجعي؟</h3>
-              <ul className="list-disc pr-5 space-y-1" style={{ color: 'rgba(247,247,250,0.85)' }}>
+              <h3 className="font-medium mb-2" style={{ color: theme.text }}>متى أستخدم المدقق المرجعي؟</h3>
+              <ul className="list-disc pr-5 space-y-1" style={{ color: theme.text, opacity: 0.85 }}>
                 <li>قبل تقديم مذكرة للتأكد من سلامة الاستشهادات.</li>
                 <li>عند الحاجة للعثور على مراجع بديلة أو أحدث.</li>
                 <li>للتأكد من أن المرجع <span className="font-semibold">صالح/غير ملغي</span> أو غير منتهي الصلاحية.</li>
               </ul>
             </div>
             <div>
-              <h3 className="font-medium mb-2" style={{ color: 'rgb(247, 247, 250)' }}>ما الفرق عن الصفحة الرئيسية؟</h3>
-              <ul className="list-disc pr-5 space-y-1" style={{ color: 'rgba(247,247,250,0.85)' }}>
+              <h3 className="font-medium mb-2" style={{ color: theme.text }}>ما الفرق عن الصفحة الرئيسية؟</h3>
+              <ul className="list-disc pr-5 space-y-1" style={{ color: theme.text, opacity: 0.85 }}>
                 <li>الصفحة الرئيسية تُدير <span className="font-semibold">مراحل التحليل</span> بالترتيب والاعتماديات والمواعيد القانونية.</li>
                 <li>هذه الصفحة تُركّز على <span className="font-semibold">جودة الاستشهادات والمراجع</span> وليس سير المراحل.</li>
                 <li>المدقق هنا يعمل كأداة مساعدة مستقلة ويمكن استخدامه في أي وقت.</li>
               </ul>
             </div>
           </div>
-          <div className="mt-4" style={{ color: 'rgba(247,247,250,0.85)' }}>
+          <div className="mt-4" style={{ color: theme.text, opacity: 0.85 }}>
             نصيحة: اكتب نصك في الحقل أدناه، سيقوم النظام <span className="font-semibold">باقتراح وسوم نوع القضية تلقائياً</span> لتسريع الوصول للمراجع الأنسب.
           </div>
         </div>
@@ -232,10 +235,10 @@ function ReferenceCheckerPageContent() {
           <div className="space-y-6">
             {/* اختيار وضع التحليل */}
             <div className="rounded-lg shadow-md" style={darkPanelStyle}>
-              <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(247, 247, 250)' }}>وضع التحليل</h3>
+              <h3 className="text-lg font-semibold mb-4" style={{ color: theme.text }}>وضع التحليل</h3>
               <div className="grid grid-cols-1 gap-3">
                 {analysisModes.map((mode) => (
-                  <label key={mode.id} className="flex items-center gap-3 cursor-pointer" style={{ color: 'rgba(247,247,250,0.9)' }}>
+                  <label key={mode.id} className="flex items-center gap-3 cursor-pointer" style={{ color: theme.text, opacity: 0.9 }}>
                     <input
                       type="radio"
                       name="analysisMode"
@@ -244,8 +247,8 @@ function ReferenceCheckerPageContent() {
                       onChange={(e) => setSelectedMode(e.target.value as 'brief' | 'detailed')}
                     />
                     <div>
-                      <div className="font-medium">{mode.name}</div>
-                      <div className="text-sm" style={{ color: 'rgba(247,247,250,0.7)' }}>{mode.description}</div>
+                      <div className="font-medium" style={{ color: theme.text }}>{mode.name}</div>
+                      <div className="text-sm" style={{ color: theme.text, opacity: 0.7 }}>{mode.description}</div>
                     </div>
                   </label>
                 ))}
@@ -254,7 +257,7 @@ function ReferenceCheckerPageContent() {
 
             {/* إدخال النص */}
             <div className="rounded-lg shadow-md" style={darkPanelStyle}>
-              <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(247, 247, 250)' }}>النص المراد تحليله</h3>
+              <h3 className="text-lg font-semibold mb-4" style={{ color: theme.text }}>النص المراد تحليله</h3>
               <textarea
                 rows={6}
                 required
@@ -265,7 +268,7 @@ function ReferenceCheckerPageContent() {
               />
               {suggestedTags.length > 0 && (
                 <div className="mt-3">
-                  <div className="text-sm mb-2" style={{ color: 'rgba(247,247,250,0.8)' }}>
+                  <div className="text-sm mb-2" style={{ color: theme.text, opacity: 0.8 }}>
                     وسوم مقترحة حسب النص:
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -285,7 +288,7 @@ function ReferenceCheckerPageContent() {
               <button
                 onClick={handleAnalyze}
                 disabled={!text.trim() || isAnalyzing}
-                style={{ ...buttonStyle, width: '100%', marginTop: 12, opacity: !text.trim() || isAnalyzing ? 0.6 : 1 }}
+                style={{ ...buttonStyle, width: '100%', marginTop: 12, opacity: !text.trim() || isAnalyzing ? 0.6 : 1, background: !text.trim() || isAnalyzing ? undefined : theme.accent, color: !text.trim() || isAnalyzing ? theme.text : '#fff', borderColor: !text.trim() || isAnalyzing ? theme.border : theme.accent }}
               >
                 {isAnalyzing ? 'جاري التحليل...' : 'تحليل النص'}
               </button>
@@ -294,12 +297,12 @@ function ReferenceCheckerPageContent() {
             {/* البحث في المراجع + فلاتر النوع */}
             <div className="rounded-lg shadow-md" style={darkPanelStyle}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold" style={{ color: 'rgb(247, 247, 250)' }}>البحث في المراجع</h3>
+                <h3 className="text-lg font-semibold" style={{ color: theme.text }}>البحث في المراجع</h3>
               </div>
 
               {/* فلاتر نوع القضية (وسوم) */}
               <div className="mb-4">
-                <div className="text-sm mb-2" style={{ color: 'rgba(247,247,250,0.8)' }}>اختر نوع القضية لتحديد المراجع:</div>
+                <div className="text-sm mb-2" style={{ color: theme.text, opacity: 0.8 }}>اختر نوع القضية لتحديد المراجع:</div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSelectedCaseTag('')}
@@ -329,7 +332,7 @@ function ReferenceCheckerPageContent() {
                 />
                 <button
                   onClick={handleSearch}
-                  style={buttonStyle}
+                  style={{ ...buttonStyle, background: theme.accent, color: '#fff', borderColor: theme.accent }}
                 >
                   بحث
                 </button>
@@ -338,9 +341,9 @@ function ReferenceCheckerPageContent() {
               {searchResults.length > 0 && (
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium" style={{ color: 'rgb(247, 247, 250)' }}>نتائج البحث:</h4>
+                    <h4 className="font-medium" style={{ color: theme.text }}>نتائج البحث:</h4>
                     {selectedCaseTag && (
-                      <span className="text-xs px-2 py-1 rounded border" style={{ color: 'rgb(247,247,250)', borderColor: 'rgb(57,62,92)' }}>
+                      <span className="text-xs px-2 py-1 rounded border" style={{ color: theme.text, borderColor: theme.border }}>
                         نوع القضية: {selectedCaseTag}
                       </span>
                     )}
@@ -349,20 +352,20 @@ function ReferenceCheckerPageContent() {
                     <div
                       key={ref.id}
                       className="rounded-lg cursor-pointer"
-                      style={{ border: '1px solid rgb(57,62,92)', padding: 12, background: 'rgba(35, 41, 70, 0.12)' }}
+                      style={{ border: `1px solid ${theme.border}`, padding: 12, background: theme.input }}
                       onClick={() => setSelectedReference(ref)}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="font-medium" style={{ color: 'rgb(247,247,250)' }}>{ref.title}</div>
-                          <div className="text-sm" style={{ color: 'rgba(247,247,250,0.75)' }}>{ref.source}</div>
-                          <div className="text-xs" style={{ color: 'rgba(247,247,250,0.6)' }}>
+                          <div className="font-medium" style={{ color: theme.text }}>{ref.title}</div>
+                          <div className="text-sm" style={{ color: theme.text, opacity: 0.75 }}>{ref.source}</div>
+                          <div className="text-xs" style={{ color: theme.text, opacity: 0.6 }}>
                             {(ref.year || '') && `${ref.year} • `}{ref.type === 'law' ? 'قانون' : ref.type === 'court_decision' ? 'حكم قضائي' : 'مرجع آخر'}
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {(ref.tags || []).slice(0, 3).map(tag => (
-                            <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full border" style={{ color: 'rgba(247,247,250,0.9)', borderColor: 'rgb(57,62,92)' }}>
+                            <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full border" style={{ color: theme.text, borderColor: theme.border }}>
                               {tag}
                             </span>
                           ))}
@@ -374,7 +377,7 @@ function ReferenceCheckerPageContent() {
               )}
 
               {searchResults.length === 0 && (searchQuery || selectedCaseTag) && (
-                <div className="mt-4 text-sm" style={{ color: 'rgba(247,247,250,0.8)' }}>لا توجد نتائج مطابقة حالياً.</div>
+                <div className="mt-4 text-sm" style={{ color: theme.text, opacity: 0.8 }}>لا توجد نتائج مطابقة حالياً.</div>
               )}
             </div>
           </div>
@@ -384,9 +387,9 @@ function ReferenceCheckerPageContent() {
             {/* نتائج التحليل */}
             {analysis && (
               <div className="rounded-lg shadow-md" style={darkPanelStyle}>
-                <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(247, 247, 250)' }}>نتائج التحليل</h3>
-                <div className="rounded-lg" style={{ background: 'rgba(35,41,70,0.15)', padding: 16 }}>
-                  <pre className="whitespace-pre-wrap text-sm font-sans" style={{ color: 'rgba(247,247,250,0.92)' }}>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: theme.text }}>نتائج التحليل</h3>
+                <div className="rounded-lg" style={{ background: theme.input, padding: 16 }}>
+                  <pre className="whitespace-pre-wrap text-sm font-sans" style={{ color: theme.text, opacity: 0.92 }}>
                     {analysis}
                   </pre>
                 </div>
@@ -396,17 +399,17 @@ function ReferenceCheckerPageContent() {
             {/* المراجع المكتشفة */}
             {references.length > 0 && (
               <div className="rounded-lg shadow-md" style={darkPanelStyle}>
-                <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(247, 247, 250)' }}>المراجع المكتشفة</h3>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: theme.text }}>المراجع المكتشفة</h3>
                 <div className="space-y-3">
                   {references.map((ref) => (
-                    <div key={ref.id} className="rounded-lg" style={{ border: '1px solid rgb(57,62,92)', padding: 12, background: 'rgba(35, 41, 70, 0.12)' }}>
-                      <div className="font-medium" style={{ color: 'rgb(247,247,250)' }}>{ref.title}</div>
-                      <div className="text-sm" style={{ color: 'rgba(247,247,250,0.75)' }}>{ref.source}</div>
-                      <div className="text-xs" style={{ color: 'rgba(247,247,250,0.6)' }}>
+                    <div key={ref.id} className="rounded-lg" style={{ border: `1px solid ${theme.border}`, padding: 12, background: theme.input }}>
+                      <div className="font-medium" style={{ color: theme.text }}>{ref.title}</div>
+                      <div className="text-sm" style={{ color: theme.text, opacity: 0.75 }}>{ref.source}</div>
+                      <div className="text-xs" style={{ color: theme.text, opacity: 0.6 }}>
                         {ref.year} • {ref.validity === 'valid' ? 'صالح' : 'غير صالح'}
                       </div>
                       {ref.notes && (
-                        <div className="text-sm mt-2" style={{ color: 'rgba(247,247,250,0.9)' }}>{ref.notes}</div>
+                        <div className="text-sm mt-2" style={{ color: theme.text, opacity: 0.9 }}>{ref.notes}</div>
                       )}
                     </div>
                   ))}
@@ -421,7 +424,7 @@ function ReferenceCheckerPageContent() {
                 <div className="space-y-2">
                   {warnings.map((warning, index) => (
                     <div key={index} className="rounded-lg" style={{ padding: 12, background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.35)' }}>
-                      <div style={{ color: '#FBBF24' }}>⚠️ {warning}</div>
+                      <div style={{ color: '#B45309' }}>⚠️ {warning}</div>
                     </div>
                   ))}
                 </div>
@@ -431,8 +434,8 @@ function ReferenceCheckerPageContent() {
             {/* المرجع المحدد */}
             {selectedReference && (
               <div className="rounded-lg shadow-md" style={darkPanelStyle}>
-                <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(247, 247, 250)' }}>تفاصيل المرجع</h3>
-                <div className="space-y-3" style={{ color: 'rgba(247,247,250,0.9)' }}>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: theme.text }}>تفاصيل المرجع</h3>
+                <div className="space-y-3" style={{ color: theme.text, opacity: 0.9 }}>
                   <div>
                     <span className="font-medium">العنوان:</span> {selectedReference.title}
                   </div>
@@ -451,7 +454,7 @@ function ReferenceCheckerPageContent() {
                   )}
                   <div>
                     <span className="font-medium">الحالة:</span>
-                    <span className="ml-2 px-2 py-1 rounded text-xs" style={{ background: 'rgba(35,41,70,0.3)', color: 'rgb(247,247,250)', border: '1px solid rgb(57,62,92)' }}>
+                    <span className="ml-2 px-2 py-1 rounded text-xs" style={{ background: theme.input, color: theme.text, border: `1px solid ${theme.border}` }}>
                       {selectedReference.validity === 'valid' ? 'صالح' :
                        selectedReference.validity === 'amended' ? 'معدل' :
                        selectedReference.validity === 'expired' ? 'منتهي الصلاحية' :
@@ -470,7 +473,7 @@ function ReferenceCheckerPageContent() {
                 
                 <button
                   onClick={() => handleValidateCitation(selectedReference.title)}
-                  style={{ ...buttonStyle, marginTop: 12 }}
+                  style={{ ...buttonStyle, marginTop: 12, background: theme.accent, color: '#fff', borderColor: theme.accent }}
                 >
                   فحص الاستشهاد
                 </button>
@@ -481,8 +484,8 @@ function ReferenceCheckerPageContent() {
 
         {/* معلومات إضافية */}
         <div className="mt-12 rounded-lg" style={darkPanelStyle}>
-          <h3 className="text-lg font-semibold mb-4" style={{ color: 'rgb(247, 247, 250)' }}>معلومات عن المدقق المرجعي</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ color: 'rgba(247,247,250,0.9)' }}>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: theme.text }}>معلومات عن المدقق المرجعي</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ color: theme.text, opacity: 0.9 }}>
             <div>
               <h4 className="font-medium mb-2">وضع التفسير المختصر:</h4>
               <ul className="text-sm space-y-1">
