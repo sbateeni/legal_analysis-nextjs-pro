@@ -119,7 +119,7 @@ const HolographicDisplay: React.FC<HolographicDisplayProps> = ({
         />
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes framePulse {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 0.6; }
