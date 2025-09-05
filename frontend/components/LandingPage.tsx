@@ -405,42 +405,40 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
           padding: 16px 0;
         }
 
-        .logo {
+        .landing-header .logo {
           display: flex;
           align-items: center;
           gap: 12px;
           color: white;
         }
 
-        .logo-icon {
+        .landing-header .logo-icon {
           font-size: 2.25rem;
           filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
         }
 
-        .logo-text {
+        .landing-header .logo-text {
           font-size: 2.25rem; /* تكبير بمقدار 50% تقريباً */
           font-weight: 800;
           letter-spacing: 0.5px;
-          background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.85) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: ${theme.text};
+          -webkit-text-fill-color: currentColor;
         }
 
-        .header-nav {
+        .landing-header .header-nav {
           display: flex;
           align-items: center;
           gap: 32px;
         }
 
-        .nav-link {
+        .landing-header .nav-link {
           color: rgba(255, 255, 255, 0.9);
           text-decoration: none;
           font-weight: 700;
           transition: color 0.3s ease, transform 0.2s ease;
         }
 
-        .nav-link:hover {
+        .landing-header .nav-link:hover {
           color: #ffffff;
           transform: translateY(-1px);
         }

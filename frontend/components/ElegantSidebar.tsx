@@ -1,127 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from '../contexts/ThemeContext';
+import ElegantSidebarHeader from './sidebar/ElegantSidebarHeader';
+import ElegantSidebarNav, { SidebarItem, IconComponents } from './sidebar/ElegantSidebarNav';
+import ElegantSidebarFooter from './sidebar/ElegantSidebarFooter';
 
-// مكونات الأيقونات الجميلة
-const IconComponents = {
-  dashboard: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="3" width="7" height="7" rx="1"/>
-      <rect x="14" y="3" width="7" height="7" rx="1"/>
-      <rect x="14" y="14" width="7" height="7" rx="1"/>
-      <rect x="3" y="14" width="7" height="7" rx="1"/>
-    </svg>
-  ),
-  analytics: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M3 3v18h18"/>
-      <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
-    </svg>
-  ),
-  documents: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14,2 14,8 20,8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
-      <polyline points="10,9 9,9 8,9"/>
-    </svg>
-  ),
-  cases: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-    </svg>
-  ),
-  chat: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
-  ),
-  calendar: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-      <line x1="16" y1="2" x2="16" y2="6"/>
-      <line x1="8" y1="2" x2="8" y2="6"/>
-      <line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  ),
-  collaboration: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  ),
-  templates: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14,2 14,8 20,8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
-      <polyline points="10,9 9,9 8,9"/>
-    </svg>
-  ),
-  exports: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="7,10 12,15 17,10"/>
-      <line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>
-  ),
-  history: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10"/>
-      <polyline points="12,6 12,12 16,14"/>
-    </svg>
-  ),
-  'reference-checker': () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="11" cy="11" r="8"/>
-      <path d="M21 21l-4.35-4.35"/>
-    </svg>
-  ),
-  kb: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-    </svg>
-  ),
-  settings: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg>
-  ),
-  rag: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-      <path d="M9 12l2 2 4-4"/>
-    </svg>
-  ),
-  resources: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14,2 14,8 20,8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
-      <polyline points="10,9 9,9 8,9"/>
-    </svg>
-  )
-};
-
-interface SidebarItem {
-  id: string;
-  label: string;
-  icon: keyof typeof IconComponents;
-  href: string;
-  isActive?: boolean;
-}
+// NOTE: SidebarItem and IconComponents are imported from the Nav subcomponent
 
 const ElegantSidebar: React.FC = () => {
   const router = useRouter();
-  const { darkMode, setDarkMode, theme, colorScheme } = useTheme();
+  const { darkMode, setDarkMode, theme, colorScheme, mounted: themeMounted } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -132,26 +20,16 @@ const ElegantSidebar: React.FC = () => {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // الحصول على الألوان المخصصة للعناصر
-  const getElementColors = () => {
-    return {
+  const elementColors = useMemo(() => ({
       sidebarGradient: `linear-gradient(180deg, ${theme.card} 0%, ${theme.border} 30%, ${theme.input} 70%, ${theme.background} 100%)`,
       logoGradient: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 50%, ${theme.accent} 100%)`,
       activeGradient: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 50%, ${theme.accent} 100%)`,
       buttonGradient: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent2} 100%)`
-    };
-  };
-
-  const elementColors = getElementColors();
+  }), [theme.card, theme.border, theme.input, theme.background, theme.accent, theme.accent2]);
 
 
 
-  const sidebarItems: SidebarItem[] = [
-    {
-      id: 'dashboard',
-      label: 'الرئيسية',
-      icon: 'dashboard',
-      href: '/',
-    },
+  const sidebarItems: SidebarItem[] = useMemo(() => ([
     {
       id: 'rag',
       label: 'نظام RAG',
@@ -278,7 +156,15 @@ const ElegantSidebar: React.FC = () => {
       icon: 'settings',
       href: '/settings',
     },
-  ];
+  ]), []);
+
+  // Rebuild Home item to ensure identical structure as others
+  const homeItem: SidebarItem = useMemo(() => ({
+    id: 'dashboard',
+    label: 'الرئيسية',
+    icon: 'dashboard',
+    href: '/',
+  }), []);
 
   // Check if device is mobile
   useEffect(() => {
@@ -384,65 +270,24 @@ const ElegantSidebar: React.FC = () => {
         onTouchEnd={handleTouchEnd}
       >
       {/* Header */}
-      <div className="sidebar-header">
-        {!isCollapsed && (
-          <div className="sidebar-logo">
-            <span className="logo-icon">⚖️</span>
-            <span className="logo-text">التحليل القانوني</span>
-          </div>
-        )}
-        {isCollapsed && (
-          <div className="sidebar-logo-collapsed">
-            <span className="logo-icon">⚖️</span>
-          </div>
-        )}
-      </div>
+      <ElegantSidebarHeader isCollapsed={isCollapsed} textColor={theme.text} />
 
       {/* Navigation Items */}
-      <nav className="sidebar-nav">
-        <ul className="nav-list">
-          {/* Theme Toggle Button - Above Home */}
-          <li className="nav-item theme-toggle-item">
-            <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className="theme-toggle-btn"
-              title={darkMode ? 'التبديل للوضع النهاري' : 'التبديل للوضع الليلي'}
-            >
-              <span className="nav-icon">{darkMode ? '☀️' : '🌙'}</span>
-              {!isCollapsed && <span className="nav-label">التبديل</span>}
-            </button>
-          </li>
-          
-          {sidebarItems.map((item) => (
-            <li key={item.id} className="nav-item">
-              <Link 
-                href={item.href}
-                className={`nav-link ${isActiveItem(item.href) ? 'active' : ''}`}
-                title={isCollapsed ? item.label : undefined}
-              >
-                <span className="nav-icon">{IconComponents[item.icon]()}</span>
-                {!isCollapsed && <span className="nav-label">{item.label}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <ElegantSidebarNav 
+        items={sidebarItems}
+        isCollapsed={isCollapsed}
+        isActiveItem={isActiveItem}
+        darkMode={darkMode}
+        showThemeToggle
+        onToggleTheme={() => setDarkMode(!darkMode)}
+        prependItem={homeItem}
+      />
 
       {/* Footer */}
-      <div className="sidebar-footer">
-        <button
-          className="collapse-btn"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          title={isCollapsed ? 'إظهار القائمة' : 'طي القائمة'}
-        >
-          <span className="collapse-icon">
-            {isCollapsed ? '→' : '←'}
-          </span>
-          {!isCollapsed && <span className="collapse-text">طي القائمة</span>}
-        </button>
-      </div>
+      <ElegantSidebarFooter isCollapsed={isCollapsed} toggleCollapse={() => setIsCollapsed(!isCollapsed)} darkMode={darkMode} />
 
-      <style suppressHydrationWarning>{`
+      {/* Avoid rendering styles until theme is mounted to prevent flicker */}
+      {themeMounted && <style suppressHydrationWarning>{`
         .elegant-sidebar {
           position: relative;
           width: 300px;
@@ -464,10 +309,9 @@ const ElegantSidebar: React.FC = () => {
         }
 
         .sidebar-header {
-          padding: 28px 24px;
-          border-bottom: 1px solid rgba(99, 102, 241, 0.2);
-          background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-          backdrop-filter: blur(10px);
+          padding: 20px 20px;
+          border-bottom: 1px solid ${theme.border};
+          background: ${theme.card};
         }
 
         .sidebar-logo {
@@ -493,11 +337,9 @@ const ElegantSidebar: React.FC = () => {
           font-size: 20px;
           font-weight: 800;
           letter-spacing: 0.8px;
-          background: ${elementColors.logoGradient};
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          color: ${theme.text};
+          opacity: 1;
+          -webkit-text-fill-color: currentColor;
         }
 
         .sidebar-nav {
@@ -521,16 +363,21 @@ const ElegantSidebar: React.FC = () => {
           align-items: center;
           gap: 18px;
           padding: 16px 20px;
-          color: ${darkMode ? '#fff' : '#111827'};
+          color: ${theme.text};
           opacity: 0.85;
           text-decoration: none;
           border-radius: 16px;
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           overflow: hidden;
+          background: transparent;
+          isolation: isolate;
+          z-index: 0;
+          will-change: transform;
           font-weight: 600;
           font-size: 16px;
           letter-spacing: 0.3px;
+          border: 0;
         }
 
         .nav-link::before {
@@ -547,9 +394,9 @@ const ElegantSidebar: React.FC = () => {
         }
 
         .nav-link:hover {
-          color: ${darkMode ? '#fff' : '#111827'};
+          color: ${theme.text};
           background: rgba(255, 255, 255, 0.1);
-          transform: translateX(-6px) scale(1.02);
+          transform: scale(1.02);
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(99, 102, 241, 0.2);
         }
 
@@ -558,11 +405,11 @@ const ElegantSidebar: React.FC = () => {
         }
 
         .nav-link.active {
-          color: ${darkMode ? '#fff' : '#111827'};
+          color: ${theme.text};
           background: ${elementColors.activeGradient};
-          box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4), 0 4px 12px rgba(139, 92, 246, 0.3);
-          border-left: 5px solid ${darkMode ? '#fff' : '#111827'};
-          transform: translateX(-2px);
+          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.28), 0 3px 8px rgba(139, 92, 246, 0.22);
+          border-inline-start: 5px solid ${theme.text};
+          z-index: 1;
         }
 
         .nav-link.active::before {
@@ -594,7 +441,7 @@ const ElegantSidebar: React.FC = () => {
           background: rgba(255, 255, 255, 0.08);
           border: 1px solid ${theme.border};
           border-radius: 12px;
-          color: ${darkMode ? '#fff' : '#111827'};
+          color: ${theme.text};
           opacity: 0.9;
           cursor: pointer;
           transition: all 0.4s ease;
@@ -908,7 +755,7 @@ const ElegantSidebar: React.FC = () => {
             display: block;
           }
         }
-      `}</style>
+      `}</style>}
       </div>
     </>
   );
