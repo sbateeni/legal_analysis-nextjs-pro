@@ -98,6 +98,12 @@ function HomeContent() {
   const collabRef = useRef<HTMLDivElement | null>(null);
   // تم حذف حالة المستخدم الحالي
 
+  // متغيرات التحليل التلقائي
+  const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
+  const [currentAnalyzingStage, setCurrentAnalyzingStage] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisError, setAnalysisError] = useState('');
+
   useEffect(() => {
     setMounted(true);
     
@@ -333,6 +339,172 @@ function HomeContent() {
     } finally {
       setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
     }
+  };
+
+  // دالة تحديد نوع القضية الذكية
+  const determineSmartCaseType = (text: string): string => {
+    if (!text || typeof text !== 'string') return 'عام';
+    
+    const lowerText = text.toLowerCase();
+    
+    // قضايا جنائية (أولوية عالية)
+    const criminalKeywords = [
+      'جريمة', 'عقوبة', 'سجن', 'غرامة', 'جنحة', 'جناية', 'جنائي',
+      'سرقة', 'قتل', 'ضرب', 'احتيال', 'تزوير', 'رشوة', 'اختلاس',
+      'إرهاب', 'تهريب', 'مخدرات', 'سلاح', 'اعتداء', 'تحرش', 'اغتصاب'
+    ];
+    
+    if (criminalKeywords.some(keyword => lowerText.includes(keyword))) {
+      return 'جنائية';
+    }
+    
+    // قضايا أحوال شخصية (أولوية عالية)
+    const personalStatusKeywords = [
+      'زواج', 'طلاق', 'نفقة', 'حضانة', 'ميراث', 'وصية', 'أحوال شخصية',
+      'عائلة', 'أطفال', 'زوجة', 'زوج', 'أب', 'أم', 'ابن', 'ابنة'
+    ];
+    
+    if (personalStatusKeywords.some(keyword => lowerText.includes(keyword))) {
+      return 'أحوال شخصية';
+    }
+    
+    // قضايا تجارية
+    const commercialKeywords = [
+      'شركة', 'تجارة', 'سوق', 'استثمار', 'بنك', 'مال', 'أسهم', 'سندات',
+      'تأمين', 'بورصة', 'سند تجاري', 'كمبيالة', 'شيك'
+    ];
+    
+    if (commercialKeywords.some(keyword => lowerText.includes(keyword))) {
+      return 'تجارية';
+    }
+    
+    // قضايا عمالية
+    const laborKeywords = [
+      'عامل', 'عمل', 'راتب', 'إجازة', 'ساعات عمل', 'أجر', 'فصل', 'استقالة',
+      'عقد عمل', 'مكافأة', 'بدل', 'نقابة', 'إضراب'
+    ];
+    
+    if (laborKeywords.some(keyword => lowerText.includes(keyword))) {
+      return 'عمالية';
+    }
+    
+    // قضايا إدارية
+    const administrativeKeywords = [
+      'موظف', 'راتب', 'تقاعد', 'إدارة', 'قرار إداري', 'ترقية', 'فصل', 'تعيين',
+      'خدمة مدنية', 'وزارة', 'دائرة', 'بلدية', 'حكومة'
+    ];
+    
+    if (administrativeKeywords.some(keyword => lowerText.includes(keyword))) {
+      return 'إدارية';
+    }
+    
+    // قضايا مدنية
+    const civilKeywords = [
+      'عقد', 'تعويض', 'ضرر', 'مسؤولية', 'تعاقد', 'التزام', 'بيع', 'شراء',
+      'إيجار', 'ملكية', 'عقار', 'أرض', 'بناء', 'مقاولة'
+    ];
+    
+    if (civilKeywords.some(keyword => lowerText.includes(keyword))) {
+      return 'مدنية';
+    }
+    
+    return 'عام';
+  };
+
+  // دالة التحليل التلقائي لجميع المراحل
+  const startAutoAnalysis = async () => {
+    if (!mainText.trim()) {
+      setAnalysisError('يرجى إدخال تفاصيل القضية أولاً');
+      return;
+    }
+
+    if (!apiKey) {
+      setAnalysisError('يرجى إعداد مفتاح Gemini API من صفحة الإعدادات أولاً');
+      return;
+    }
+
+    // تحديد نوع القضية الذكي
+    const smartCaseType = determineSmartCaseType(mainText);
+    console.log('نوع القضية المكتشف:', smartCaseType);
+
+    setIsAutoAnalyzing(true);
+    setAnalysisError('');
+    setCurrentAnalyzingStage(0);
+    setAnalysisProgress(0);
+
+    try {
+      const totalStages = ALL_STAGES.length;
+      const results: (string | null)[] = [...stageResults];
+
+      for (let i = 0; i < totalStages; i++) {
+        setCurrentAnalyzingStage(i);
+        setAnalysisProgress(Math.round(((i + 1) / totalStages) * 100));
+
+        try {
+          // تحديث حالة التحميل للمرحلة الحالية
+          setStageLoading(arr => arr.map((v, idx) => idx === i ? true : v));
+          setStageErrors(arr => arr.map((v, idx) => idx === i ? null : v));
+
+          // جمع ملخصات المراحل السابقة
+          let previousSummaries = results.slice(0, i).filter(r => !!r);
+          const MAX_CHARS = 24000;
+          let totalLength = previousSummaries.reduce((acc, cur) => acc + (cur?.length || 0), 0);
+          while (totalLength > MAX_CHARS && previousSummaries.length > 1) {
+            previousSummaries = previousSummaries.slice(1);
+            totalLength = previousSummaries.reduce((acc, cur) => acc + (cur?.length || 0), 0);
+          }
+
+          // استدعاء API للتحليل
+          const modelToUse = /pro|1\.5-pro|2\.0|ultra/i.test(preferredModel) ? 'gemini-1.5-flash' : preferredModel;
+          const res = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-model': modelToUse },
+            body: JSON.stringify({ 
+              text: mainText, 
+              stageIndex: i, 
+              apiKey, 
+              previousSummaries,
+              partyRole: partyRole || undefined 
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            results[i] = data.analysis;
+            setStageResults([...results]);
+            setStageShowResult(arr => arr.map((v, idx) => idx === i ? true : v));
+          } else {
+            const data = await res.json();
+            const { code, message } = extractApiError(res, data);
+            const mapped = mapApiErrorToMessage(code, message || data.error);
+            setStageErrors(arr => arr.map((v, idx) => idx === i ? (mapped || 'حدث خطأ أثناء التحليل') : v));
+          }
+
+        } catch (stageError) {
+          console.error(`خطأ في المرحلة ${i + 1}:`, stageError);
+          setStageErrors(arr => arr.map((v, idx) => idx === i ? 'خطأ في الاتصال بالخادم' : v));
+        } finally {
+          setStageLoading(arr => arr.map((v, idx) => idx === i ? false : v));
+        }
+
+        // انتظار قصير بين المراحل لتجنب تجاوز حدود التوكينز
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+    } catch (error) {
+      console.error('خطأ في التحليل التلقائي:', error);
+      setAnalysisError(error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
+    } finally {
+      setIsAutoAnalyzing(false);
+      setCurrentAnalyzingStage(0);
+      setAnalysisProgress(0);
+    }
+  };
+
+  const stopAutoAnalysis = () => {
+    setIsAutoAnalyzing(false);
+    setCurrentAnalyzingStage(0);
+    setAnalysisProgress(0);
   };
 
   if (!mounted) {
@@ -712,6 +884,204 @@ function HomeContent() {
               {/* محتوى التبويب الثاني: مراحل التحليل */}
               {activeTab === 'stages' && (
                 <>
+                  {/* زر التحليل التلقائي */}
+                  <div style={{
+                    background: theme.card,
+                    borderRadius: 16,
+                    boxShadow: `0 4px 20px ${theme.shadow}`,
+                    padding: isMobile() ? 16 : 24,
+                    marginBottom: 24,
+                    border: `1.5px solid ${theme.border}`,
+                    textAlign: 'center'
+                  }}>
+                    <h2 style={{
+                      color: theme.text,
+                      margin: '0 0 16px 0',
+                      fontSize: isMobile() ? 18 : 22,
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8
+                    }}>
+                      <span style={{fontSize: isMobile() ? 24 : 28}}>🚀</span>
+                      تحليل تلقائي لجميع المراحل
+                    </h2>
+                    
+                    <p style={{
+                      color: theme.text,
+                      margin: '0 0 20px 0',
+                      fontSize: 14,
+                      opacity: 0.8
+                    }}>
+                      اضغط على الزر أدناه لتحليل جميع المراحل الـ 16 تلقائياً مع مراعاة حدود التوكينز
+                    </p>
+
+                    {/* عرض نوع القضية المكتشف */}
+                    {mainText.trim() && (
+                      <div style={{
+                        background: theme.resultBg,
+                        padding: 12,
+                        borderRadius: 8,
+                        border: `1px solid ${theme.border}`,
+                        marginBottom: 16,
+                        textAlign: 'center'
+                      }}>
+                        <div style={{
+                          fontSize: 12,
+                          color: theme.text,
+                          opacity: 0.7,
+                          marginBottom: 4
+                        }}>
+                          نوع القضية المكتشف:
+                        </div>
+                        <div style={{
+                          fontSize: 16,
+                          fontWeight: 'bold',
+                          color: theme.accent
+                        }}>
+                          {determineSmartCaseType(mainText)}
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                      {!isAutoAnalyzing ? (
+                        <button
+                          onClick={startAutoAnalysis}
+                          disabled={!mainText.trim() || !apiKey}
+                          style={{
+                            padding: '16px 32px',
+                            borderRadius: 12,
+                            border: 'none',
+                            background: (!mainText.trim() || !apiKey) ? '#9ca3af' : 'linear-gradient(135deg, #10b981, #34d399)',
+                            color: '#fff',
+                            fontSize: 16,
+                            cursor: (!mainText.trim() || !apiKey) ? 'not-allowed' : 'pointer',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          🚀 بدء التحليل التلقائي
+                        </button>
+                      ) : (
+                        <button
+                          onClick={stopAutoAnalysis}
+                          style={{
+                            padding: '16px 32px',
+                            borderRadius: 12,
+                            border: 'none',
+                            background: 'linear-gradient(135deg, #ef4444, #f87171)',
+                            color: '#fff',
+                            fontSize: 16,
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            boxShadow: '0 4px 16px rgba(239, 68, 68, 0.3)',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          ⏹️ إيقاف التحليل
+                        </button>
+                      )}
+                    </div>
+
+                    {/* مؤشر التقدم */}
+                    {isAutoAnalyzing && (
+                      <div style={{
+                        background: theme.resultBg,
+                        padding: 20,
+                        borderRadius: 12,
+                        border: `2px solid ${theme.accent}`,
+                        marginTop: 20,
+                        textAlign: 'center'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 12,
+                          marginBottom: 16
+                        }}>
+                          <div style={{
+                            width: 24,
+                            height: 24,
+                            border: '3px solid #e5e7eb',
+                            borderTop: '3px solid #10b981',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }} />
+                          <h3 style={{
+                            color: theme.text,
+                            margin: 0,
+                            fontSize: 18,
+                            fontWeight: 'bold'
+                          }}>
+                            جاري التحليل التلقائي...
+                          </h3>
+                        </div>
+                        
+                        <div style={{
+                          background: '#e5e7eb',
+                          height: 12,
+                          borderRadius: 6,
+                          overflow: 'hidden',
+                          marginBottom: 12
+                        }}>
+                          <div style={{
+                            width: `${analysisProgress}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #10b981, #34d399)',
+                            transition: 'width 0.5s ease',
+                            borderRadius: 6
+                          }} />
+                        </div>
+                        
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          fontSize: 14,
+                          color: theme.text
+                        }}>
+                          <span>المرحلة {currentAnalyzingStage + 1} من {ALL_STAGES.length}</span>
+                          <span>{analysisProgress}%</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* رسالة الخطأ */}
+                    {analysisError && (
+                      <div style={{
+                        background: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        color: '#dc2626',
+                        padding: 16,
+                        borderRadius: 8,
+                        marginTop: 16
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          justifyContent: 'center'
+                        }}>
+                          <span>❌</span>
+                          <strong>خطأ في التحليل التلقائي:</strong>
+                        </div>
+                        <p style={{ margin: '8px 0 0 0', fontSize: 14 }}>
+                          {analysisError}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   {/* عرض جميع المراحل */}
                   {ALL_STAGES
                     .filter((stageName) => {

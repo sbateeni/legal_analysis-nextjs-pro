@@ -63,6 +63,13 @@ function CaseDetailPageContent() {
   const [editedCase, setEditedCase] = useState<LegalCase | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'stages' | 'documents' | 'notes'>('overview');
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
+  
+  // Auto analysis state
+  const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
+  const [currentAnalyzingStage, setCurrentAnalyzingStage] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisResults, setAnalysisResults] = useState<AnalysisStage[]>([]);
+  const [analysisError, setAnalysisError] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -200,6 +207,119 @@ function CaseDetailPageContent() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // دالة التحليل التلقائي لجميع المراحل
+  const startAutoAnalysis = async () => {
+    if (!caseItem || isAutoAnalyzing) return;
+
+    setIsAutoAnalyzing(true);
+    setAnalysisError('');
+    setAnalysisResults([]);
+    setCurrentAnalyzingStage(0);
+    setAnalysisProgress(0);
+
+    try {
+      // قائمة المراحل الـ 12
+      const stages = [
+        'تحليل الوقائع الأساسية',
+        'تحديد الأطراف القانونية',
+        'تحليل النزاع القانوني',
+        'البحث عن القوانين المنطبقة',
+        'تحليل السوابق القضائية',
+        'تحديد الأدلة القانونية',
+        'تحليل القوة القانونية',
+        'تحديد نقاط الضعف',
+        'صياغة الاستراتيجية القانونية',
+        'تحليل المخاطر القانونية',
+        'إعداد خطة المرافعة',
+        'تقييم احتمالية النجاح'
+      ];
+
+      const totalStages = stages.length;
+      const results: AnalysisStage[] = [];
+
+      for (let i = 0; i < totalStages; i++) {
+        setCurrentAnalyzingStage(i);
+        setAnalysisProgress(Math.round(((i + 1) / totalStages) * 100));
+
+        try {
+          // استدعاء API للتحليل
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              stage: stages[i],
+              input: caseItem.stages?.[0]?.input || caseItem.name || 'تحليل القضية',
+              caseId: caseItem.id,
+              stageIndex: i
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`خطأ في تحليل المرحلة ${i + 1}`);
+          }
+
+          const data = await response.json();
+          
+          const newStage: AnalysisStage = {
+            id: `auto-${Date.now()}-${i}`,
+            stageIndex: i,
+            stage: stages[i],
+            input: caseItem.stages?.[0]?.input || caseItem.name || 'تحليل القضية',
+            output: data.output || data.message || 'تم تحليل هذه المرحلة بنجاح',
+            date: new Date().toISOString()
+          };
+
+          results.push(newStage);
+          setAnalysisResults([...results]);
+
+          // انتظار قصير بين المراحل لتجنب تجاوز حدود التوكينز
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+        } catch (stageError) {
+          console.error(`خطأ في المرحلة ${i + 1}:`, stageError);
+          // استمر في المرحلة التالية حتى لو فشلت واحدة
+          const errorStage: AnalysisStage = {
+            id: `auto-error-${Date.now()}-${i}`,
+            stageIndex: i,
+            stage: stages[i],
+            input: caseItem.stages?.[0]?.input || caseItem.name || 'تحليل القضية',
+            output: `خطأ في تحليل هذه المرحلة: ${stageError instanceof Error ? stageError.message : 'خطأ غير معروف'}`,
+            date: new Date().toISOString()
+          };
+          results.push(errorStage);
+          setAnalysisResults([...results]);
+        }
+      }
+
+      // حفظ النتائج في القضية
+      if (results.length > 0) {
+        const updatedCase = {
+          ...caseItem,
+          stages: [...(caseItem.stages || []), ...results]
+        };
+        
+        await updateCase(updatedCase);
+        setCaseItem(updatedCase);
+      }
+
+    } catch (error) {
+      console.error('خطأ في التحليل التلقائي:', error);
+      setAnalysisError(error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
+    } finally {
+      setIsAutoAnalyzing(false);
+      setCurrentAnalyzingStage(0);
+      setAnalysisProgress(0);
+    }
+  };
+
+  const stopAutoAnalysis = () => {
+    setIsAutoAnalyzing(false);
+    setCurrentAnalyzingStage(0);
+    setAnalysisProgress(0);
+  };
+
   if (loading) {
     return (
       <div style={{
@@ -251,11 +371,18 @@ function CaseDetailPageContent() {
   const currentCase = editing ? editedCase : caseItem;
 
   return (
-    <div style={{
-      background: theme.background,
-      minHeight: '100vh',
-      padding: '20px'
-    }}>
+    <>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+      <div style={{
+        background: theme.background,
+        minHeight: '100vh',
+        padding: '20px'
+      }}>
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto'
@@ -598,14 +725,191 @@ function CaseDetailPageContent() {
 
             {activeTab === 'stages' && (
               <div>
-                <h2 style={{
-                  color: theme.text,
-                  margin: '0 0 20px 0',
-                  fontSize: '20px',
-                  fontWeight: 'bold'
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '20px',
+                  flexWrap: 'wrap',
+                  gap: '12px'
                 }}>
-                  مراحل التحليل
-                </h2>
+                  <h2 style={{
+                    color: theme.text,
+                    margin: '0',
+                    fontSize: '20px',
+                    fontWeight: 'bold'
+                  }}>
+                    مراحل التحليل
+                  </h2>
+                  
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {!isAutoAnalyzing ? (
+                      <button
+                        onClick={startAutoAnalysis}
+                        disabled={!caseItem}
+                        style={{
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: caseItem ? '#10b981' : '#9ca3af',
+                          color: '#fff',
+                          fontSize: '14px',
+                          cursor: caseItem ? 'pointer' : 'not-allowed',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        🚀 تحليل تلقائي لجميع المراحل
+                      </button>
+                    ) : (
+                      <button
+                        onClick={stopAutoAnalysis}
+                        style={{
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: '#ef4444',
+                          color: '#fff',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        ⏹️ إيقاف التحليل
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* مؤشر التقدم */}
+                {isAutoAnalyzing && (
+                  <div style={{
+                    background: theme.resultBg,
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: `2px solid ${theme.accent}`,
+                    marginBottom: '20px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '12px',
+                      marginBottom: '16px'
+                    }}>
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        border: '3px solid #e5e7eb',
+                        borderTop: '3px solid #10b981',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      <h3 style={{
+                        color: theme.text,
+                        margin: '0',
+                        fontSize: '18px',
+                        fontWeight: 'bold'
+                      }}>
+                        جاري التحليل التلقائي...
+                      </h3>
+                    </div>
+                    
+                    <div style={{
+                      background: '#e5e7eb',
+                      height: '12px',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      marginBottom: '12px'
+                    }}>
+                      <div style={{
+                        width: `${analysisProgress}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, #10b981, #34d399)',
+                        transition: 'width 0.5s ease',
+                        borderRadius: '6px'
+                      }} />
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontSize: '14px',
+                      color: theme.text
+                    }}>
+                      <span>المرحلة {currentAnalyzingStage + 1} من 12</span>
+                      <span>{analysisProgress}%</span>
+                    </div>
+                    
+                    {analysisResults.length > 0 && (
+                      <div style={{
+                        marginTop: '16px',
+                        padding: '12px',
+                        background: theme.card,
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.border}`
+                      }}>
+                        <p style={{
+                          margin: '0 0 8px 0',
+                          fontSize: '14px',
+                          color: theme.text,
+                          fontWeight: 'bold'
+                        }}>
+                          المراحل المكتملة:
+                        </p>
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '6px'
+                        }}>
+                          {analysisResults.map((result, index) => (
+                            <span key={index} style={{
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              background: '#10b981',
+                              color: '#fff',
+                              fontWeight: 'bold'
+                            }}>
+                              ✓ {result.stage}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* رسالة الخطأ */}
+                {analysisError && (
+                  <div style={{
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#dc2626',
+                    padding: '16px',
+                    borderRadius: '8px',
+                    marginBottom: '20px'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span>❌</span>
+                      <strong>خطأ في التحليل التلقائي:</strong>
+                    </div>
+                    <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                      {analysisError}
+                    </p>
+                  </div>
+                )}
                 
                 {currentCase?.stages && currentCase.stages.length > 0 ? (
                   <div style={{
@@ -950,5 +1254,6 @@ function CaseDetailPageContent() {
         </div>
       </div>
     </div>
+    </>
   );
 }
