@@ -456,7 +456,7 @@ function ReferenceCheckerPageContent() {
                     </div>
                   )}
                   <div>
-                    <span className="font-medium">آخر فحص:</span> {new Date(selectedReference.lastChecked).toLocaleDateString('ar-SA')}
+                    <span className="font-medium">آخر فحص:</span> {new Date(selectedReference.lastChecked).toLocaleDateString('ar-EG')}
                   </div>
                 </div>
                 
