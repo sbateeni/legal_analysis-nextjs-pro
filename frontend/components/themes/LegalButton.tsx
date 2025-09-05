@@ -189,7 +189,7 @@ const LegalButton: React.FC<LegalButtonProps> = ({
         className="ripple-effect"
       />
 
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }

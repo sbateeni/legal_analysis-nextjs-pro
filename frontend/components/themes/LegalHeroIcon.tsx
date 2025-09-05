@@ -69,7 +69,7 @@ const LegalHeroIcon: React.FC<LegalHeroIconProps> = ({
         zIndex: -1
       }} />
 
-      <style jsx>{`
+      <style>{`
         @keyframes legalIconFloat {
           0%, 100% { 
             transform: translateY(0px) rotateZ(0deg); 

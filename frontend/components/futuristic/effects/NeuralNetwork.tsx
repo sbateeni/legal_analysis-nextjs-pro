@@ -55,7 +55,7 @@ const NeuralNetwork: React.FC<NeuralNetworkProps> = ({
         }}
       />
 
-      <style jsx>{`
+      <style>{`
         @keyframes gridPulse {
           0%, 100% { opacity: ${opacity}; }
           50% { opacity: ${opacity * 3}; }

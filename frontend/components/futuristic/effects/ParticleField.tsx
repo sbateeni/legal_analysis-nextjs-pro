@@ -132,7 +132,7 @@ const ParticleField: React.FC<ParticleFieldProps> = ({
         />
       ))}
 
-      <style jsx>{`
+      <style>{`
         @keyframes particleFloat {
           0%, 100% { 
             transform: translateY(0px) translateX(0px) scale(var(--scale, 1)); 
