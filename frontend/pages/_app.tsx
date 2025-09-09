@@ -123,9 +123,104 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+        <meta name="theme-color" content="#6366f1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="التحليل القانوني" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.png" />
+        <link rel="manifest" href="/manifest.json" />
       </Head>
-      <a href="#main-content" className="skip-link">تخطي إلى المحتوى</a>
+      <style jsx global>{`
+        /* دعم المناطق الآمنة للهواتف الذكية */
+        * {
+          box-sizing: border-box;
+        }
+        
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+          overflow-x: hidden;
+          /* دعم المناطق الآمنة في الهواتف الحديثة */
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+        
+        /* تحسين التمرير على الأجهزة المحمولة */
+        body {
+          -webkit-overflow-scrolling: touch;
+          touch-action: manipulation;
+        }
+        
+        /* منع التكبير عند النقر على الإدخالات */
+        input, textarea, select {
+          font-size: 16px !important;
+          -webkit-appearance: none;
+          border-radius: 0;
+        }
+        
+        /* تحسين أداء التطبيق */
+        * {
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        
+        /* السماح بالتحديد للنصوص والإدخالات */
+        input, textarea, [contenteditable] {
+          -webkit-user-select: text;
+          -moz-user-select: text;
+          -ms-user-select: text;
+          user-select: text;
+        }
+        
+        /* أنيميشن زر التثبيت */
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 8px 40px rgba(0,0,0,0.15), 0 0 0 0px rgba(99, 102, 241, 0.7);
+          }
+          70% {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 8px 40px rgba(0,0,0,0.15), 0 0 0 8px rgba(99, 102, 241, 0);
+          }
+          100% {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 8px 40px rgba(0,0,0,0.15), 0 0 0 0px rgba(99, 102, 241, 0);
+          }
+        }
+        
+        /* دعم متقدم للهواتف القابلة للطي */
+        @supports (padding: max(0px)) {
+          body {
+            padding-top: max(env(safe-area-inset-top), 0px);
+            padding-bottom: max(env(safe-area-inset-bottom), 0px);
+            padding-left: max(env(safe-area-inset-left), 0px);
+            padding-right: max(env(safe-area-inset-right), 0px);
+          }
+        }
+      `}</style>
+      <a href="#main-content" className="skip-link" style={{
+        position: 'absolute',
+        top: '-40px',
+        left: '6px',
+        background: '#000',
+        color: '#fff',
+        padding: '8px',
+        textDecoration: 'none',
+        borderRadius: '4px',
+        zIndex: 10000,
+        fontSize: '14px',
+        fontWeight: 'bold'
+      }} onFocus={(e) => e.currentTarget.style.top = '6px'} onBlur={(e) => e.currentTarget.style.top = '-40px'}>تخطي إلى المحتوى</a>
       <ThemeProvider>
         <Layout>
           <main id="main-content">

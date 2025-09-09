@@ -27,44 +27,83 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!mounted || !isMobile()) return; // فقط على الهاتف
+    if (!mounted || !isMobile()) return;
 
-    // استماع لحدث beforeinstallprompt
-    const handler = (e: Event) => {
+    // تحسين كشف تثبيت PWA - دعم أفضل للأجهزة المختلفة
+    const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('PWA install prompt detected');
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowInstallButton(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
+    // إضافة مستمعين متعددين لضمان التوافق
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+      setShowInstallButton(false);
+      setDeferredPrompt(null);
+    });
 
-    // التحقق من أن التطبيق مثبت بالفعل
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    // التحقق من حالة التثبيت بطرق متعددة
+    const isStandalone = () => {
+      return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone ||
+        document.referrer.includes('android-app://')
+      );
+    };
+
+    if (isStandalone()) {
       setShowInstallButton(false);
     }
 
+    // تحقق دوري من إمكانية التثبيت (لبعض المتصفحات)
+    const checkInstallability = () => {
+      if ('getInstalledRelatedApps' in navigator) {
+        (navigator as any).getInstalledRelatedApps().then((apps: any[]) => {
+          if (apps.length > 0) {
+            setShowInstallButton(false);
+          }
+        }).catch(() => {});
+      }
+    };
+
+    const timer = setTimeout(checkInstallability, 3000);
+
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      clearTimeout(timer);
     };
   }, [mounted]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
 
-    // عرض نافذة التثبيت
-    deferredPrompt.prompt();
+    console.log('Attempting PWA installation...');
+    
+    try {
+      // عرض نافذة التثبيت
+      const result = await deferredPrompt.prompt();
+      console.log('Install prompt result:', result);
 
-    // انتظار اختيار المستخدم
-    const { outcome } = await deferredPrompt.userChoice;
+      // انتظار اختيار المستخدم
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('User choice:', outcome);
 
-    if (outcome === 'accepted') {
-      console.log('تم قبول تثبيت التطبيق');
-      setShowInstallButton(false);
-    } else {
-      console.log('تم رفض تثبيت التطبيق');
+      if (outcome === 'accepted') {
+        console.log('تم قبول تثبيت التطبيق');
+        setShowInstallButton(false);
+      } else {
+        console.log('تم رفض تثبيت التطبيق');
+      }
+
+      setDeferredPrompt(null);
+    } catch (error) {
+      console.error('Error during PWA installation:', error);
+      // في حالة الفشل، نعرض تعليمات يدوية
+      alert('لتثبيت التطبيق، اضغط على "إضافة إلى الشاشة الرئيسية" في قائمة المتصفح');
     }
-
-    setDeferredPrompt(null);
   };
 
   return (
@@ -121,18 +160,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* زر تحميل التطبيق - فقط على الهاتف */}
+      {/* زر تحميل التطبيق - محسّن للهواتف */}
       {mounted && isMobile() && showInstallButton && (
         <div style={{
           position: 'fixed',
-          top: 20,
-          left: 20,
+          top: 'max(20px, env(safe-area-inset-top))',
+          left: 'max(20px, env(safe-area-inset-left))',
           zIndex: 1000,
-          background: theme.accent,
+          background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
           color: 'white',
           padding: '12px 20px',
           borderRadius: '25px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3), 0 8px 40px rgba(0,0,0,0.15)',
           cursor: 'pointer',
           fontWeight: 700,
           fontSize: 14,
@@ -141,14 +180,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           gap: 8,
           transition: 'all 0.3s ease',
           border: 'none',
-          outline: 'none'
+          outline: 'none',
+          animation: 'pulse 2s infinite',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)'
         }}
         onClick={handleInstallClick}
         onTouchStart={(e) => {
           e.currentTarget.style.transform = 'scale(0.95)';
+          e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
         }}
         onTouchEnd={(e) => {
           e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3), 0 8px 40px rgba(0,0,0,0.15)';
         }}
         >
           📱 تثبيت التطبيق
