@@ -135,7 +135,8 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.png" />
         <link rel="manifest" href="/manifest.json" />
       </Head>
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{
+        __html: `
         /* دعم المناطق الآمنة للهواتف الذكية */
         * {
           box-sizing: border-box;
@@ -207,7 +208,8 @@ export default function App({ Component, pageProps }: AppProps) {
             padding-right: max(env(safe-area-inset-right), 0px);
           }
         }
-      `}</style>
+        `
+      }} />
       <a href="#main-content" className="skip-link" style={{
         position: 'absolute',
         top: '-40px',
