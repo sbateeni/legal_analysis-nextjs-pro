@@ -158,10 +158,10 @@ const ElegantSidebar: React.FC = () => {
     },
   ]), []);
 
-  // Rebuild Home item to ensure identical structure as others
+  // Rebuild Home item to ensure identical structure as others and always visible
   const homeItem: SidebarItem = useMemo(() => ({
     id: 'dashboard',
-    label: 'الرئيسية',
+    label: '🏠 الرئيسية',
     icon: 'dashboard',
     href: '/',
   }), []);
@@ -269,10 +269,10 @@ const ElegantSidebar: React.FC = () => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-      {/* Header */}
+      {/* Header - محسن لعرض الرئيسية */}
       <ElegantSidebarHeader isCollapsed={isCollapsed} textColor={theme.text} />
 
-      {/* Navigation Items */}
+      {/* Navigation Items - بدء بالرئيسية */}
       <ElegantSidebarNav 
         items={sidebarItems}
         isCollapsed={isCollapsed}

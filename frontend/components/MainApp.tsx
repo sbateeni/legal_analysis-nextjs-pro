@@ -68,20 +68,17 @@ export default function Home() {
   const [showLandingPage, setShowLandingPage] = useState(true);
   
   useEffect(() => {
-    try {
-      const hasVisited = localStorage.getItem('hasVisited');
-      if (hasVisited) {
-        setShowLandingPage(false);
-      }
-    } catch (error) {
-      console.warn('Failed to access localStorage:', error);
-    }
+    // إظهار صفحة الترحيب دائماً عند الدخول للموقع
+    // تم تعديل المنطق ليعرض صفحة الترحيب في كل مرة
+    setShowLandingPage(true);
   }, []);
 
   const handleSkipLanding = () => {
     setShowLandingPage(false);
     try {
       localStorage.setItem('hasVisited', 'true');
+      localStorage.setItem('skipLandingPage', 'true');
+      localStorage.setItem('lastVisitDate', new Date().toISOString());
       localStorage.setItem('start_on_stages', '1');
     } catch (error) {
       console.warn('Failed to save to localStorage:', error);
@@ -175,14 +172,18 @@ function HomeContent() {
     }
   };
 
-  // تحميل القضايا الموجودة
+  // تحميل القضايا الموجودة - محسن لعرض جميع القضايا
   const loadExistingCases = async () => {
     try {
       const cases = await getAllCases();
-      // فلترة لعرض القضايا التي لديها مراحل ناقصة (أقل من 12 مرحلة)
+      console.log('📝 تم تحميل', cases.length, 'قضية من قاعدة البيانات');
+      
+      // عرض جميع القضايا التي لديها مراحل (مع زيادة الحد إلى 15)
       const incompleteCases = cases.filter((caseItem: LegalCase) => 
-        caseItem.stages && caseItem.stages.length > 0 && caseItem.stages.length < 12
+        caseItem.stages && caseItem.stages.length > 0 && caseItem.stages.length < 15
       );
+      
+      console.log('🔄 قضايا غير مكتملة:', incompleteCases.length);
       setExistingCases(incompleteCases);
     } catch (error) {
       console.error('خطأ في تحميل القضايا:', error);
@@ -514,9 +515,42 @@ function HomeContent() {
             <div style={{fontSize: '18px', marginBottom: '8px'}}>
               🎉 مرحباً بك في منصة التحليل القانوني الذكية!
             </div>
-            <div style={{fontSize: '14px', opacity: 0.9}}>
+            <div style={{fontSize: '14px', opacity: 0.9, marginBottom: '12px'}}>
               منصة مجانية للتحليل القانوني المدعوم بالذكاء الاصطناعي
             </div>
+            {/* أيقونة الوصول لصفحة الترحيب */}
+            <button
+              onClick={() => setShowLandingPage(true)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                color: '#fff',
+                fontSize: 14,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                margin: '0 auto',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+              title="العودة إلى صفحة الترحيب"
+            >
+              <span>🏠</span>
+              <span>صفحة الترحيب</span>
+            </button>
           </div>
         )}
 
@@ -604,184 +638,202 @@ function HomeContent() {
 
             {activeTab === 'stages' && (
               <div>
-                {/* قسم التحليل اليدوي المبرز */}
-                {apiKey && mainText.trim() && (
+                {/* قسم التحليل اليدوي المبرز - دائماً مرئي */}
+                <div style={{
+                  background: `linear-gradient(135deg, ${theme.accent}15 0%, ${theme.accent}08 100%)`,
+                  borderRadius: 16,
+                  padding: isMobile() ? 16 : 20,
+                  marginBottom: 20,
+                  border: `2px solid ${theme.accent}30`,
+                  boxShadow: `0 4px 20px ${theme.accent}10`
+                }}>
                   <div style={{
-                    background: `linear-gradient(135deg, ${theme.accent}15 0%, ${theme.accent}08 100%)`,
-                    borderRadius: 16,
-                    padding: isMobile() ? 16 : 20,
-                    marginBottom: 20,
-                    border: `2px solid ${theme.accent}30`,
-                    boxShadow: `0 4px 20px ${theme.accent}10`
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 16
                   }}>
-                    <div style={{
+                    <h3 style={{
+                      color: theme.accent,
+                      fontSize: isMobile() ? 18 : 20,
+                      fontWeight: 'bold',
+                      margin: 0,
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 16
+                      gap: 8
                     }}>
-                      <h3 style={{
-                        color: theme.accent,
-                        fontSize: isMobile() ? 18 : 20,
-                        fontWeight: 'bold',
-                        margin: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8
-                      }}>
-                        🔍 التحليل اليدوي للمراحل
-                      </h3>
-                    </div>
-                    
-                    {/* عرض حالة الاستكمال */}
-                    {(() => {
-                      const completedCount = stageResults.filter(r => r !== null && r !== '').length;
-                      return completedCount > 0 ? (
-                        <div style={{
-                          background: `${theme.accent}20`,
-                          borderRadius: 8,
-                          padding: 12,
-                          marginBottom: 12,
-                          border: `1px solid ${theme.accent}50`
-                        }}>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            fontSize: 14,
-                            fontWeight: 'bold',
-                            color: theme.accent
-                          }}>
-                            🔄 وضع الاستكمال الذكي
-                          </div>
-                          <div style={{
-                            fontSize: 12,
-                            color: theme.text,
-                            marginTop: 4,
-                            opacity: 0.8
-                          }}>
-                            تم العثور على {completedCount} مراحل مكتملة. التحليل الذكي سيبدأ من المرحلة {completedCount + 1} مع الاحتفاظ بالنتائج السابقة.
-                          </div>
-                        </div>
-                      ) : null;
-                    })()}
-                    
+                      🔍 التحليل اليدوي للمراحل
+                    </h3>
+                  </div>
+                  
+                  {/* تحذير عند عدم توفر المتطلبات */}
+                  {(!apiKey || !mainText.trim()) && (
                     <div style={{
-                      fontSize: 14,
-                      color: theme.text,
-                      opacity: 0.8,
-                      marginBottom: 12,
-                      lineHeight: 1.5
-                    }}>
-                      💡 يمكنك الآن تحليل أي مرحلة بشكل فردي بالضغط على زر "تحليل يدوي" بجانب كل مرحلة. هذا يعطيك مرونة أكبر في التحليل ويسمح لك بإجراء تحليل مخصص لمراحل معينة.
-                    </div>
-                    
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: isMobile() ? '1fr' : '1fr 1fr',
-                      gap: 12,
-                      fontSize: 12,
-                      background: theme.background,
+                      background: '#fef3c7',
+                      border: '1px solid #f59e0b',
                       borderRadius: 8,
                       padding: 12,
-                      border: `1px solid ${theme.input}`
+                      marginBottom: 12,
+                      fontSize: 13,
+                      color: '#92400e',
+                      fontWeight: 'bold'
                     }}>
-                      <div>
-                        <span style={{ fontWeight: 'bold', color: theme.accent }}>⚙️ ميزات التحليل اليدوي:</span>
-                        <ul style={{ margin: '4px 0', paddingRight: 16, lineHeight: 1.4 }}>
-                          <li>تحكم كامل في ترتيب المراحل</li>
-                          <li>إمكانية إعادة تحليل مرحلة معينة</li>
-                          <li>توفير في استهلاك API</li>
-                        </ul>
-                      </div>
-                      <div>
-                        <span style={{ fontWeight: 'bold', color: theme.accent }}>🎯 نصائح للاستخدام الأمثل:</span>
-                        <ul style={{ margin: '4px 0', paddingRight: 16, lineHeight: 1.4 }}>
-                          <li>ابدأ بالمراحل الأولى</li>
-                          <li>راجع نتائج كل مرحلة</li>
-                          <li>اعتمد على المراحل السابقة</li>
-                        </ul>
-                      </div>
+                      ⚠️ للبدء في التحليل اليدوي، تحتاج إلى:
+                      <ul style={{ margin: '4px 0', paddingRight: 16 }}>
+                        {!apiKey && <li>إعداد مفتاح Gemini API من الإعدادات</li>}
+                        {!mainText.trim() && <li>إدخال تفاصيل القضية في التبويب الأول</li>}
+                      </ul>
                     </div>
-                  </div>
-                )}
-
-                {/* لوحة الوصول السريع للمراحل */}
-                {apiKey && mainText.trim() && (
-                  <div style={{
-                    background: theme.card,
-                    borderRadius: 12,
-                    padding: isMobile() ? 16 : 20,
-                    marginBottom: 20,
-                    border: `1px solid ${theme.border}`
-                  }}>
-                    <h4 style={{
-                      color: theme.text,
-                      fontSize: 16,
-                      fontWeight: 'bold',
-                      margin: '0 0 16px 0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8
-                    }}>
-                      ⚡ وصول سريع للمراحل
-                    </h4>
-                    
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: isMobile() ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-                      gap: 8
-                    }}>
-                      {ALL_STAGES.slice(0, 8).map((stageName, index) => {
-                        const isCompleted = stageResults[index] && stageShowResult[index];
-                        const isLoading = stageLoading[index];
-                        const hasError = stageErrors[index];
-                        
-                        return (
-                          <button
-                            key={index}
-                            onClick={() => handleAnalyzeStage(index)}
-                            disabled={isLoading}
-                            style={{
-                              padding: '8px 12px',
-                              borderRadius: 8,
-                              border: `1px solid ${isCompleted ? theme.accent : hasError ? '#ef4444' : theme.input}`,
-                              background: isCompleted ? `${theme.accent}20` : hasError ? '#ef444415' : theme.background,
-                              color: isCompleted ? theme.accent : hasError ? '#ef4444' : theme.text,
-                              fontSize: 12,
-                              fontWeight: 'bold',
-                              cursor: isLoading ? 'not-allowed' : 'pointer',
-                              textAlign: 'right',
-                              transition: 'all 0.2s ease',
-                              opacity: isLoading ? 0.7 : 1
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                              <span style={{ fontSize: 10 }}>
-                                {isLoading ? '⟳' : isCompleted ? '✓' : hasError ? '✗' : index + 1}
-                              </span>
-                              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {stageName.replace('المرحلة ', '').replace(': ', ': ').substring(0, isMobile() ? 20 : 30)}...
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    
-                    {ALL_STAGES.length > 8 && (
+                  )}
+                  
+                  {/* عرض حالة الاستكمال */}
+                  {apiKey && mainText.trim() && (() => {
+                    const completedCount = stageResults.filter(r => r !== null && r !== '').length;
+                    return completedCount > 0 ? (
                       <div style={{
-                        marginTop: 12,
-                        fontSize: 12,
-                        color: theme.text,
-                        opacity: 0.7,
-                        textAlign: 'center'
+                        background: `${theme.accent}20`,
+                        borderRadius: 8,
+                        padding: 12,
+                        marginBottom: 12,
+                        border: `1px solid ${theme.accent}50`
                       }}>
-                        👇 انتقل إلى قسم "عرض جميع المراحل" أدناه لرؤية باقي المراحل
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          fontSize: 14,
+                          fontWeight: 'bold',
+                          color: theme.accent
+                        }}>
+                          🔄 وضع الاستكمال الذكي
+                        </div>
+                        <div style={{
+                          fontSize: 12,
+                          color: theme.text,
+                          marginTop: 4,
+                          opacity: 0.8
+                        }}>
+                          تم العثور على {completedCount} مراحل مكتملة. التحليل الذكي سيبدأ من المرحلة {completedCount + 1} مع الاحتفاظ بالنتائج السابقة.
+                        </div>
                       </div>
-                    )}
+                    ) : null;
+                  })()}
+                  
+                  <div style={{
+                    fontSize: 14,
+                    color: theme.text,
+                    opacity: 0.8,
+                    marginBottom: 12,
+                    lineHeight: 1.5
+                  }}>
+                    💡 يمكنك الآن تحليل أي مرحلة بشكل فردي بالضغط على زر "تحليل يدوي" بجانب كل مرحلة. هذا يعطيك مرونة أكبر في التحليل ويسمح لك بإجراء تحليل مخصص لمراحل معينة.
                   </div>
-                )}
+                  
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile() ? '1fr' : '1fr 1fr',
+                    gap: 12,
+                    fontSize: 12,
+                    background: theme.background,
+                    borderRadius: 8,
+                    padding: 12,
+                    border: `1px solid ${theme.input}`
+                  }}>
+                    <div>
+                      <span style={{ fontWeight: 'bold', color: theme.accent }}>⚙️ ميزات التحليل اليدوي:</span>
+                      <ul style={{ margin: '4px 0', paddingRight: 16, lineHeight: 1.4 }}>
+                        <li>تحكم كامل في ترتيب المراحل</li>
+                        <li>إمكانية إعادة تحليل مرحلة معينة</li>
+                        <li>توفير في استهلاك API</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: 'bold', color: theme.accent }}>🎯 نصائح للاستخدام الأمثل:</span>
+                      <ul style={{ margin: '4px 0', paddingRight: 16, lineHeight: 1.4 }}>
+                        <li>ابدأ بالمراحل الأولى</li>
+                        <li>راجع نتائج كل مرحلة</li>
+                        <li>اعتمد على المراحل السابقة</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* لوحة الوصول السريع للمراحل - دائماً مرئية */}
+                <div style={{
+                  background: theme.card,
+                  borderRadius: 12,
+                  padding: isMobile() ? 16 : 20,
+                  marginBottom: 20,
+                  border: `1px solid ${theme.border}`
+                }}>
+                  <h4 style={{
+                    color: theme.text,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    margin: '0 0 16px 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}>
+                    ⚡ وصول سريع للمراحل
+                  </h4>
+                  
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile() ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 8
+                  }}>
+                    {ALL_STAGES.slice(0, 8).map((stageName, index) => {
+                      const isCompleted = stageResults[index] && stageShowResult[index];
+                      const isLoading = stageLoading[index];
+                      const hasError = stageErrors[index];
+                      const canAnalyze = apiKey && mainText.trim();
+                      
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => canAnalyze ? handleAnalyzeStage(index) : null}
+                          disabled={isLoading || !canAnalyze}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            border: `1px solid ${isCompleted ? theme.accent : hasError ? '#ef4444' : theme.input}`,
+                            background: isCompleted ? `${theme.accent}20` : hasError ? '#ef444415' : !canAnalyze ? '#f3f4f6' : theme.background,
+                            color: isCompleted ? theme.accent : hasError ? '#ef4444' : !canAnalyze ? '#6b7280' : theme.text,
+                            fontSize: 12,
+                            fontWeight: 'bold',
+                            cursor: isLoading ? 'not-allowed' : canAnalyze ? 'pointer' : 'not-allowed',
+                            textAlign: 'right',
+                            transition: 'all 0.2s ease',
+                            opacity: (isLoading || !canAnalyze) ? 0.6 : 1
+                          }}
+                          title={!canAnalyze ? 'يرجى إعداد API Key وإدخال تفاصيل القضية أولاً' : 'تحليل هذه المرحلة'}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+                            <span style={{ fontSize: 10 }}>
+                              {isLoading ? '⟳' : isCompleted ? '✓' : hasError ? '✗' : !canAnalyze ? '⚠️' : index + 1}
+                            </span>
+                            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {stageName.replace('المرحلة ', '').replace(': ', ': ').substring(0, isMobile() ? 20 : 30)}...
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {ALL_STAGES.length > 8 && (
+                    <div style={{
+                      marginTop: 12,
+                      fontSize: 12,
+                      color: theme.text,
+                      opacity: 0.7,
+                      textAlign: 'center'
+                    }}>
+                      👇 انتقل إلى قسم "عرض جميع المراحل" أدناه لرؤية باقي المراحل
+                    </div>
+                  )}
+                </div>
 
                 {/* إعدادات النظام الذكي المحسن */}
                 {showSmartSettings && (

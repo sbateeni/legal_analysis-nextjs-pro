@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Header from './Header';
 import ModernNavigation from './ModernNavigation';
 import ElegantSidebar from './ElegantSidebar';

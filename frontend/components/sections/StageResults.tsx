@@ -53,29 +53,27 @@ export const StageResults: React.FC<StageResultsProps> = ({
   const completedStages = stageResults.filter(result => result !== null).length;
   const canAnalyzeIndividually = onAnalyzeStage && apiKey && mainText;
   
-  // عرض قائمة المراحل حتى لو لم تكن مكتملة
+  // إجبار عرض جميع المراحل مع أزرار التحليل
   const shouldShowAllStages = true;
   
-  // عرض جميع المراحل حتى لو لم تعط نتائج بعد
-  if (completedStages === 0 && !shouldShowAllStages) {
-    return (
-      <div style={{
-        background: theme.card,
-        borderRadius: 12,
-        padding: 20,
-        textAlign: 'center',
-        border: `1px solid ${theme.border}`
-      }}>
-        <div style={{ fontSize: 18, marginBottom: 8, opacity: 0.7 }}>📋</div>
-        <div style={{ color: theme.text, fontSize: 16 }}>
-          لا توجد نتائج مراحل بعد
-        </div>
-        <div style={{ color: theme.text, fontSize: 14, opacity: 0.7, marginTop: 4 }}>
-          ابدأ التحليل لمشاهدة النتائج هنا
-        </div>
-      </div>
-    );
-  }
+  // أزرار التحليل تظهر دائماً إذا توفرت الشروط الأساسية
+  const showAnalysisButtons = onAnalyzeStage && apiKey;
+  
+  // Debug info
+  console.log('🔍 StageResults Debug:', {
+    hasOnAnalyzeStage: !!onAnalyzeStage,
+    hasApiKey: !!apiKey,
+    hasMainText: !!mainText,
+    showAnalysisButtons,
+    canAnalyzeIndividually,
+    completedStages,
+    totalStages: allStages.length
+  });
+  
+  // لا نخفي المراحل أبداً - نعرضها دائماً
+  // if (completedStages === 0 && !shouldShowAllStages) {
+  //   return null; // تم تعطيل إخفاء المراحل
+  // }
 
   return (
     <div style={{
@@ -188,8 +186,8 @@ export const StageResults: React.FC<StageResultsProps> = ({
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {/* زر التحليل الفردي - محسن وأكثر وضوحاً */}
-                  {canAnalyzeIndividually && !isCompleted && (
+                  {/* زر التحليل الفردي - دائماً مرئي عند توفر الشروط */}
+                  {showAnalysisButtons && !isCompleted && (
                     <button
                       onClick={() => onAnalyzeStage!(index)}
                       disabled={stageLoading[index] || (!mainText?.trim())}
@@ -198,7 +196,7 @@ export const StageResults: React.FC<StageResultsProps> = ({
                         borderRadius: 8,
                         border: 'none',
                         background: stageLoading[index] ? '#9ca3af' : 
-                                  !mainText?.trim() ? '#6b7280' :
+                                  !mainText?.trim() ? '#fbbf24' : // أصفر للتنبيه بدلاً من رمادي
                                   `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
                         color: '#fff',
                         fontSize: 12,
@@ -207,25 +205,33 @@ export const StageResults: React.FC<StageResultsProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         gap: 6,
-                        boxShadow: !stageLoading[index] && mainText?.trim() ? `0 2px 8px ${theme.accent}40` : 'none',
+                        boxShadow: !stageLoading[index] ? `0 2px 8px ${!mainText?.trim() ? '#fbbf2440' : theme.accent + '40'}` : 'none',
                         transition: 'all 0.2s ease',
                         transform: 'translateY(0)',
                       }}
                       onMouseEnter={(e) => {
-                        if (!stageLoading[index] && mainText?.trim()) {
+                        if (!stageLoading[index]) {
                           e.currentTarget.style.transform = 'translateY(-1px)';
-                          e.currentTarget.style.boxShadow = `0 4px 12px ${theme.accent}60`;
+                          const shadowColor = !mainText?.trim() ? '#fbbf2460' : theme.accent + '60';
+                          e.currentTarget.style.boxShadow = `0 4px 12px ${shadowColor}`;
                         }
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = mainText?.trim() ? `0 2px 8px ${theme.accent}40` : 'none';
+                        const shadowColor = !mainText?.trim() ? '#fbbf2440' : theme.accent + '40';
+                        e.currentTarget.style.boxShadow = `0 2px 8px ${shadowColor}`;
                       }}
+                      title={!mainText?.trim() ? 'يرجى إدخال تفاصيل القضية أولاً' : 'تحليل هذه المرحلة يدوياً'}
                     >
                       {stageLoading[index] ? (
                         <>
                           <span className="spinner-icon">⟳</span>
                           <span>جاري التحليل...</span>
+                        </>
+                      ) : !mainText?.trim() ? (
+                        <>
+                          <span>⚠️</span>
+                          <span>يتطلب نص</span>
                         </>
                       ) : (
                         <>
@@ -234,6 +240,21 @@ export const StageResults: React.FC<StageResultsProps> = ({
                         </>
                       )}
                     </button>
+                  )}
+                  
+                  {/* رسالة توضيحية إذا لم تظهر أزرار التحليل */}
+                  {!showAnalysisButtons && !isCompleted && (
+                    <div style={{
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      fontSize: 11,
+                      color: '#ef4444',
+                      background: '#ef444415',
+                      border: '1px solid #ef444430',
+                      fontWeight: 'bold'
+                    }}>
+                      {!apiKey ? '⚠️ يتطلب API Key' : !onAnalyzeStage ? '⚠️ التحليل اليدوي غير متاح' : 'غير متاح'}
+                    </div>
                   )}
                   
                   {/* شارة الحالة */}

@@ -497,6 +497,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSkip }) => {
               © 2024 نظام التحليل القانوني الكمي • مدعوم بأحدث تقنيات الذكاء الاصطناعي
             </div>
           </div>
+
+          {/* زر العودة لصفحة الترحيب */}
+          {onSkip && (
+            <div style={{ marginTop: '40px', textAlign: 'center' }}>
+              <LegalButton
+                variant="primary"
+                size="lg"
+                onClick={onSkip}
+                darkMode={darkMode}
+                icon="🏠"
+              >
+                مرحبا بك في منصة التحليل القانوني
+              </LegalButton>
+            </div>
+          )}
         </div>
       </footer>
 

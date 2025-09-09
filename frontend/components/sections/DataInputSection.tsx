@@ -57,54 +57,87 @@ export const DataInputSection: React.FC<DataInputSectionProps> = ({
         ✍️ إدخال بيانات القضية
       </h2>
 
-      {/* اختيار قضية سابقة للاستكمال */}
-      {existingCases && existingCases.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <label style={{
-            display: 'block',
-            fontSize: 14,
-            fontWeight: 'bold',
-            marginBottom: 8,
-            color: theme.text,
-          }}>
-            💼 استكمال قضية سابقة:
-          </label>
-          <select
-            onChange={(e) => {
-              if (e.target.value && onSelectExistingCase) {
-                onSelectExistingCase(e.target.value);
-              }
-            }}
-            style={{
-              width: '100%',
-              borderRadius: 8,
-              border: `2px solid ${theme.input}`,
-              padding: 12,
-              fontSize: 14,
-              outline: 'none',
-              background: darkMode ? '#1a1d29' : '#fff',
-              color: theme.text,
-              fontFamily: 'Tajawal, Arial, sans-serif',
-            }}
-            defaultValue=""
-          >
-            <option value="">اختر قضية لاستكمال التحليل...</option>
-            {existingCases.map((caseItem) => (
-              <option key={caseItem.id} value={caseItem.id}>
-                {caseItem.name} ({caseItem.stages?.length || 0} مراحل مكتملة)
-              </option>
-            ))}
-          </select>
+      {/* اختيار قضية سابقة للاستكمال - دائماً مرئي ومحسن */}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          fontSize: 14,
+          fontWeight: 'bold',
+          marginBottom: 8,
+          color: theme.text,
+        }}>
+          💼 استكمال قضية سابقة:
+        </label>
+        
+        {existingCases && existingCases.length > 0 ? (
+          <>
+            <select
+              onChange={(e) => {
+                if (e.target.value && onSelectExistingCase) {
+                  onSelectExistingCase(e.target.value);
+                }
+              }}
+              style={{
+                width: '100%',
+                borderRadius: 8,
+                border: `2px solid ${theme.accent}`,
+                padding: 12,
+                fontSize: 14,
+                outline: 'none',
+                background: darkMode ? '#1a1d29' : '#fff',
+                color: theme.text,
+                fontFamily: 'Tajawal, Arial, sans-serif',
+                boxShadow: `0 2px 8px ${theme.accent}30`,
+                fontWeight: 'bold'
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>اختر قضية لاستكمال التحليل...</option>
+              {existingCases.map((caseItem) => (
+                <option key={caseItem.id} value={caseItem.id}>
+                  📂 {caseItem.name} ({caseItem.stages?.length || 0} مراحل مكتملة)
+                </option>
+              ))}
+            </select>
+            <div style={{
+              marginTop: 8,
+              padding: 8,
+              fontSize: 12,
+              color: theme.accent,
+              fontWeight: 'bold',
+              background: `${theme.accent}15`,
+              borderRadius: 6,
+              border: `1px solid ${theme.accent}30`
+            }}>
+              💡 يمكنك استكمال تحليل قضية سابقة لم تكتمل بعد - سيتم الاستكمال من آخر مرحلة
+            </div>
+          </>
+        ) : (
           <div style={{
-            marginTop: 6,
-            fontSize: 12,
-            color: theme.text,
-            opacity: 0.7
+            padding: 12,
+            background: `${theme.accent}10`,
+            borderRadius: 8,
+            border: `1px solid ${theme.accent}30`,
+            textAlign: 'center'
           }}>
-            💡 يمكنك استكمال تحليل قضية سابقة لم تكتمل بعد
+            <div style={{
+              fontSize: 13,
+              color: theme.text,
+              fontWeight: 'bold',
+              marginBottom: 4
+            }}>
+              📝 لا توجد قضايا سابقة للاستكمال
+            </div>
+            <div style={{
+              fontSize: 11,
+              color: theme.text,
+              opacity: 0.7
+            }}>
+              سيتم حفظ القضية الجديدة تلقائياً عند بدء التحليل
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* حقل اسم القضية */}
       <div style={{ marginBottom: 16 }}>
