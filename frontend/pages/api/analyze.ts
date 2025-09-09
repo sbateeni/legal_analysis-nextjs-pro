@@ -18,6 +18,7 @@ import stages from '../../stages';
 
 // تعريف مراحل التحليل القانوني (12 مرحلة)
 const STAGES = Object.keys(stages);
+const DEFAULT_MAX_REQUESTS_PER_WINDOW = 8; // الحد الافتراضي للطلبات
 
 // دالة استدعاء Gemini API مع مهلة وإعادة المحاولة وفallback
 async function callGeminiAPI(prompt: string, apiKey: string, modelName?: string): Promise<string> {
@@ -141,11 +142,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ ...validationError, error: validationError.message });
     }
 
-    // التحقق من Rate Limiting
+    // التحقق من Rate Limiting باستخدام النظام المحسن
     // Rate limit: استخدم apiKey، وإن لم يوجد فاستعمل IP كبديل
     const ip = (req.headers['x-real-ip'] as string) || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
     const rateKey = request.apiKey || `ip:${ip}`;
-    const rateLimit = checkRateLimitForKey(rateKey);
+    
+    // فحص خاص للتحليل المتسلسل
+    const isSequential = req.headers['x-sequential-analysis'] === 'true';
+    const effectiveLimit = isSequential ? 5 : DEFAULT_MAX_REQUESTS_PER_WINDOW; // حد أقل للتحليل المتسلسل
+    const rateLimit = checkRateLimitForKey(rateKey, effectiveLimit, isSequential);
+    
     if (!rateLimit.allowed) {
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -155,10 +161,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         error: `تم تجاوز الحد المسموح من الطلبات. يرجى المحاولة بعد ${Math.ceil((rateLimit.resetTime - Date.now()) / 1000)} ثانية`,
         details: {
           remaining: rateLimit.remaining,
-          resetTime: rateLimit.resetTime
+          resetTime: rateLimit.resetTime,
+          suggestedDelay: rateLimit.suggestedDelay,
+          riskLevel: rateLimit.riskLevel
         }
       });
-  }
+    }
 
   // معالجة طلب العريضة النهائية
     if (request.finalPetition && request.stageIndex === -1) {

@@ -1,9 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getAllCases, updateCase, getDocumentsByCase } from '@utils/db';
 import { exportResultsToPDF } from '@utils/export';
 import Link from 'next/link';
+import { 
+  SequentialAnalysisManager, 
+  createSequentialAnalysisManager, 
+  DEFAULT_LEGAL_STAGES,
+  AnalysisProgress,
+  AnalysisStage as SequentialAnalysisStage
+} from '../../utils/sequentialAnalysisManager';
 
 // تعريف أنواع البيانات
 interface AnalysisStage {
@@ -70,6 +77,14 @@ function CaseDetailPageContent() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisResults, setAnalysisResults] = useState<AnalysisStage[]>([]);
   const [analysisError, setAnalysisError] = useState('');
+
+  // متغيرات النظام الجديد للتحليل المتسلسل
+  const [sequentialAnalysisManager, setSequentialAnalysisManager] = useState<SequentialAnalysisManager | null>(null);
+  const [sequentialProgress, setSequentialProgress] = useState<AnalysisProgress | null>(null);
+  const [showSequentialProgress, setShowSequentialProgress] = useState(false);
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<string>('');
+  const [sequentialAnalysisResults, setSequentialAnalysisResults] = useState<SequentialAnalysisStage[]>([]);
+  const [canPauseResume, setCanPauseResume] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -207,15 +222,28 @@ function CaseDetailPageContent() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // دالة التحليل التلقائي لجميع المراحل
+  // دالة التحليل التلقائي المحسن لجميع المراحل
   const startAutoAnalysis = async () => {
     if (!caseItem || isAutoAnalyzing) return;
 
-    setIsAutoAnalyzing(true);
+    // التحقق من وجود API key في Local Storage
+    let apiKey = '';
+    try {
+      const savedApiKey = localStorage.getItem('gemini_api_key');
+      if (!savedApiKey) {
+        setAnalysisError('يرجى إعداد مفتاح Gemini API من الإعدادات أولاً');
+        return;
+      }
+      apiKey = savedApiKey;
+    } catch (error) {
+      setAnalysisError('خطأ في الوصول لمفتاح API');
+      return;
+    }
+
     setAnalysisError('');
-    setAnalysisResults([]);
-    setCurrentAnalyzingStage(0);
-    setAnalysisProgress(0);
+    setShowSequentialProgress(true);
+    setSequentialAnalysisResults([]);
+    setCanPauseResume(true);
 
     try {
       // قائمة المراحل الـ 12
@@ -234,90 +262,122 @@ function CaseDetailPageContent() {
         'تقييم احتمالية النجاح'
       ];
 
-      const totalStages = stages.length;
-      const results: AnalysisStage[] = [];
-
-      for (let i = 0; i < totalStages; i++) {
-        setCurrentAnalyzingStage(i);
-        setAnalysisProgress(Math.round(((i + 1) / totalStages) * 100));
-
-        try {
-          // استدعاء API للتحليل
-          const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              stage: stages[i],
-              input: caseItem.stages?.[0]?.input || caseItem.name || 'تحليل القضية',
-              caseId: caseItem.id,
-              stageIndex: i
-            })
-          });
-
-          if (!response.ok) {
-            throw new Error(`خطأ في تحليل المرحلة ${i + 1}`);
+      // إنشاء مدير التحليل المتسلسل
+      const manager = createSequentialAnalysisManager(
+        stages,
+        {
+          baseDelay: 5000, // 5 ثواني كحد أدنى
+          maxDelay: 15000, // 15 ثانية كحد أقصى
+          maxRetries: 3,
+          timeoutPerStage: 60000, // دقيقة لكل مرحلة
+          enableProgressSave: true
+        },
+        // Progress callback
+        (progress: AnalysisProgress) => {
+          setSequentialProgress(progress);
+          setCurrentAnalyzingStage(progress.currentStage);
+          setAnalysisProgress(progress.progress);
+          
+          // تنسيق الوقت المتبقي
+          if (progress.estimatedTimeRemaining) {
+            const minutes = Math.floor(progress.estimatedTimeRemaining / 60000);
+            const seconds = Math.floor((progress.estimatedTimeRemaining % 60000) / 1000);
+            setEstimatedTimeRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
           }
 
-          const data = await response.json();
+          setIsAutoAnalyzing(progress.isRunning);
           
-          const newStage: AnalysisStage = {
-            id: `auto-${Date.now()}-${i}`,
-            stageIndex: i,
-            stage: stages[i],
-            input: caseItem.stages?.[0]?.input || caseItem.name || 'تحليل القضية',
-            output: data.output || data.message || 'تم تحليل هذه المرحلة بنجاح',
-            date: new Date().toISOString()
+          if (progress.lastError) {
+            setAnalysisError(progress.lastError);
+          }
+        },
+        // Stage complete callback
+        (stage: SequentialAnalysisStage) => {
+          setSequentialAnalysisResults(prev => [...prev, stage]);
+          
+          // تحويل للنظام القديم للتوافق
+          const convertedStage: AnalysisStage = {
+            id: stage.id,
+            stageIndex: stage.stageIndex,
+            stage: stage.stage,
+            input: stage.input,
+            output: stage.output,
+            date: stage.date
           };
-
-          results.push(newStage);
-          setAnalysisResults([...results]);
-
-          // انتظار قصير بين المراحل لتجنب تجاوز حدود التوكينز
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-        } catch (stageError) {
-          console.error(`خطأ في المرحلة ${i + 1}:`, stageError);
-          // استمر في المرحلة التالية حتى لو فشلت واحدة
-          const errorStage: AnalysisStage = {
-            id: `auto-error-${Date.now()}-${i}`,
-            stageIndex: i,
-            stage: stages[i],
-            input: caseItem.stages?.[0]?.input || caseItem.name || 'تحليل القضية',
-            output: `خطأ في تحليل هذه المرحلة: ${stageError instanceof Error ? stageError.message : 'خطأ غير معروف'}`,
-            date: new Date().toISOString()
-          };
-          results.push(errorStage);
-          setAnalysisResults([...results]);
+          
+          setAnalysisResults(prev => [...prev, convertedStage]);
         }
-      }
+      );
+
+      setSequentialAnalysisManager(manager);
+
+      // بدء التحليل
+      const analysisInput = caseItem.stages?.[0]?.input || caseItem.name || 'تحليل القضية';
+      const result = await manager.startAnalysis(
+        analysisInput,
+        apiKey,
+        {
+          caseId: caseItem.id
+        }
+      );
+
+      console.log('نتيجة التحليل المتسلسل:', result);
 
       // حفظ النتائج في القضية
-      if (results.length > 0) {
+      if (result.results.length > 0) {
+        const convertedResults = result.results.map((seqStage: SequentialAnalysisStage): AnalysisStage => ({
+          id: seqStage.id,
+          stageIndex: seqStage.stageIndex,
+          stage: seqStage.stage,
+          input: seqStage.input,
+          output: seqStage.output,
+          date: seqStage.date
+        }));
+
         const updatedCase = {
           ...caseItem,
-          stages: [...(caseItem.stages || []), ...results]
+          stages: [...(caseItem.stages || []), ...convertedResults]
         };
         
         await updateCase(updatedCase);
         setCaseItem(updatedCase);
       }
 
+      if (!result.success && result.errors.length > 0) {
+        setAnalysisError(`فشل في ${result.errors.length} مرحلة من أصل ${stages.length}`);
+      }
+
     } catch (error) {
-      console.error('خطأ في التحليل التلقائي:', error);
+      console.error('خطأ في التحليل التلقائي المحسن:', error);
       setAnalysisError(error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
     } finally {
       setIsAutoAnalyzing(false);
-      setCurrentAnalyzingStage(0);
-      setAnalysisProgress(0);
+      setCanPauseResume(false);
+      setShowSequentialProgress(false);
     }
   };
 
+  // دالة إيقاف التحليل المحسن
   const stopAutoAnalysis = () => {
+    if (sequentialAnalysisManager) {
+      sequentialAnalysisManager.stop();
+    }
     setIsAutoAnalyzing(false);
     setCurrentAnalyzingStage(0);
     setAnalysisProgress(0);
+    setCanPauseResume(false);
+    setShowSequentialProgress(false);
+  };
+
+  // دالة إيقاف/استئناف مؤقت
+  const togglePauseResume = () => {
+    if (sequentialAnalysisManager) {
+      if (sequentialProgress?.isPaused) {
+        sequentialAnalysisManager.resume();
+      } else {
+        sequentialAnalysisManager.pause();
+      }
+    }
   };
 
   if (loading) {
