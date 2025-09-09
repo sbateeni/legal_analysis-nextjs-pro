@@ -3,7 +3,26 @@
  * Stages Results Display Component
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
+
+// إضافة الـ CSS للأنيميشن
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    @keyframes spinner-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .spinner-icon {
+      animation: spinner-rotate 1s linear infinite;
+      display: inline-block;
+    }
+  `;
+  if (!document.querySelector('#stage-results-styles')) {
+    styleElement.id = 'stage-results-styles';
+    document.head.appendChild(styleElement);
+  }
+}
 
 interface StageResultsProps {
   stageResults: (string | null)[];
@@ -12,6 +31,11 @@ interface StageResultsProps {
   allStages: string[];
   theme: any;
   isMobile: boolean;
+  // إضافة الدعم للتحليل الفردي
+  stageLoading?: boolean[];
+  onAnalyzeStage?: (index: number) => void;
+  apiKey?: string;
+  mainText?: string;
 }
 
 export const StageResults: React.FC<StageResultsProps> = ({
@@ -20,11 +44,20 @@ export const StageResults: React.FC<StageResultsProps> = ({
   stageErrors,
   allStages,
   theme,
-  isMobile
+  isMobile,
+  stageLoading = [],
+  onAnalyzeStage,
+  apiKey,
+  mainText
 }) => {
   const completedStages = stageResults.filter(result => result !== null).length;
+  const canAnalyzeIndividually = onAnalyzeStage && apiKey && mainText;
   
-  if (completedStages === 0) {
+  // عرض قائمة المراحل حتى لو لم تكن مكتملة
+  const shouldShowAllStages = true;
+  
+  // عرض جميع المراحل حتى لو لم تعط نتائج بعد
+  if (completedStages === 0 && !shouldShowAllStages) {
     return (
       <div style={{
         background: theme.card,
@@ -128,7 +161,8 @@ export const StageResults: React.FC<StageResultsProps> = ({
                   gap: 8,
                   fontSize: 14,
                   fontWeight: 'bold',
-                  color: theme.text
+                  color: theme.text,
+                  flex: 1
                 }}>
                   <span style={{
                     width: 20,
@@ -152,19 +186,73 @@ export const StageResults: React.FC<StageResultsProps> = ({
                     المرحلة {index + 1}: {stageName}
                   </span>
                 </div>
-                <div style={{
-                  padding: '2px 8px',
-                  borderRadius: 12,
-                  fontSize: 10,
-                  fontWeight: 'bold',
-                  background: isCompleted ? 
-                    '#10b981' : 
-                    isFailed ? 
-                      '#ef4444' : 
-                      '#6b7280',
-                  color: '#fff'
-                }}>
-                  {isCompleted ? 'مكتملة' : isFailed ? 'فاشلة' : 'معلقة'}
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {/* زر التحليل الفردي - محسن وأكثر وضوحاً */}
+                  {canAnalyzeIndividually && !isCompleted && (
+                    <button
+                      onClick={() => onAnalyzeStage!(index)}
+                      disabled={stageLoading[index] || (!mainText?.trim())}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: stageLoading[index] ? '#9ca3af' : 
+                                  !mainText?.trim() ? '#6b7280' :
+                                  `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
+                        color: '#fff',
+                        fontSize: 12,
+                        cursor: (stageLoading[index] || !mainText?.trim()) ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        boxShadow: !stageLoading[index] && mainText?.trim() ? `0 2px 8px ${theme.accent}40` : 'none',
+                        transition: 'all 0.2s ease',
+                        transform: 'translateY(0)',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!stageLoading[index] && mainText?.trim()) {
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                          e.currentTarget.style.boxShadow = `0 4px 12px ${theme.accent}60`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = mainText?.trim() ? `0 2px 8px ${theme.accent}40` : 'none';
+                      }}
+                    >
+                      {stageLoading[index] ? (
+                        <>
+                          <span className="spinner-icon">⟳</span>
+                          <span>جاري التحليل...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🔍</span>
+                          <span>تحليل يدوي</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  
+                  {/* شارة الحالة */}
+                  <div style={{
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                    fontSize: 10,
+                    fontWeight: 'bold',
+                    background: isCompleted ? 
+                      '#10b981' : 
+                      isFailed ? 
+                        '#ef4444' : 
+                        stageLoading[index] ? 
+                          '#f59e0b' :
+                          '#6b7280',
+                    color: '#fff'
+                  }}>
+                    {stageLoading[index] ? 'جاري' : isCompleted ? 'مكتملة' : isFailed ? 'فاشلة' : 'معلقة'}
+                  </div>
                 </div>
               </div>
 

@@ -308,7 +308,121 @@ function HomeContent() {
     }
   };
 
-  // حفظ القضية في قاعدة البيانات
+  // دالة تحليل مرحلة واحدة
+  const handleAnalyzeStage = async (idx: number) => {
+    // إذا كانت المرحلة الأخيرة (العريضة النهائية)
+    if (idx === ALL_STAGES.length - 1) {
+      setStageLoading(arr => arr.map((v, i) => i === idx ? true : v));
+      setStageErrors(arr => arr.map((v, i) => i === idx ? null : v));
+      setStageResults(arr => arr.map((v, i) => i === idx ? null : v));
+      setStageShowResult(arr => arr.map((v, i) => i === idx ? false : v));
+      if (!apiKey) {
+        setStageErrors(arr => arr.map((v, i) => i === idx ? 'يرجى إعداد مفتاح Gemini API من صفحة الإعدادات أولاً.' : v));
+        setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
+        return;
+      }
+      const summaries = stageResults.slice(0, idx).filter(r => !!r);
+      if (summaries.length === 0) {
+        setStageErrors(arr => arr.map((v, i) => i === idx ? 'يرجى تحليل المراحل أولاً قبل توليد العريضة النهائية.' : v));
+        setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
+        return;
+      }
+      try {
+        const modelToUse = /pro|1\.5-pro|2\.0|ultra/i.test(preferredModel) ? 'gemini-1.5-flash' : preferredModel;
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-model': modelToUse },
+          body: JSON.stringify({ text: mainText, stageIndex: -1, apiKey, previousSummaries: summaries, finalPetition: true, partyRole: partyRole || undefined }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setStageResults(arr => arr.map((v, i) => i === idx ? data.analysis : v));
+          setTimeout(() => setStageShowResult(arr => arr.map((v, i) => i === idx ? true : v)), 100);
+        } else {
+          const { code, message } = extractApiError(res, data);
+          const mapped = mapApiErrorToMessage(code, message || data.error);
+          setStageErrors(arr => arr.map((v, i) => i === idx ? (mapped || 'حدث خطأ أثناء توليد العريضة النهائية') : v));
+        }
+      } catch {
+        setStageErrors(arr => arr.map((v, i) => i === idx ? 'تعذر الاتصال بالخادم' : v));
+      } finally {
+        setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
+      }
+      return;
+    }
+    setStageLoading(arr => arr.map((v, i) => i === idx ? true : v));
+    setStageErrors(arr => arr.map((v, i) => i === idx ? null : v));
+    setStageResults(arr => arr.map((v, i) => i === idx ? null : v));
+    setStageShowResult(arr => arr.map((v, i) => i === idx ? false : v));
+    if (!apiKey) {
+      setStageErrors(arr => arr.map((v, i) => i === idx ? 'يرجى إعداد مفتاح Gemini API من صفحة الإعدادات أولاً.' : v));
+      setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
+      return;
+    }
+    const text = mainText;
+    if (!text.trim()) {
+      setStageErrors(arr => arr.map((v, i) => i === idx ? 'يرجى إدخال تفاصيل القضية.' : v));
+      setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
+      return;
+    }
+    // جمع ملخصات المراحل السابقة (النتائج غير الفارغة فقط)
+    let previousSummaries = stageResults.slice(0, idx).filter(r => !!r);
+    // حدود الطول (تقريبي: 8000 tokens ≈ 24,000 حرف)
+    const MAX_CHARS = 24000;
+    let totalLength = previousSummaries.reduce((acc, cur) => acc + (cur?.length || 0), 0);
+    // إذا تجاوز الطول، احذف أقدم النتائج حتى لا يتجاوز الحد
+    while (totalLength > MAX_CHARS && previousSummaries.length > 1) {
+      previousSummaries = previousSummaries.slice(1);
+      totalLength = previousSummaries.reduce((acc, cur) => acc + (cur?.length || 0), 0);
+    }
+    try {
+      const modelToUse = /pro|1\.5-pro|2\.0|ultra/i.test(preferredModel) ? 'gemini-1.5-flash' : preferredModel;
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-model': modelToUse },
+        body: JSON.stringify({ text, stageIndex: idx, apiKey, previousSummaries, partyRole: partyRole || undefined }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStageResults(arr => arr.map((v, i) => i === idx ? data.analysis : v));
+        setTimeout(() => setStageShowResult(arr => arr.map((v, i) => i === idx ? true : v)), 100);
+        // حفظ التحليل ضمن نفس القضية إن وُجدت، وإلا إنشاؤها
+        const caseName = caseNameInput.trim() ? caseNameInput.trim() : `قضية بدون اسم - ${Date.now()}`;
+        const newStage = {
+          id: `${idx}-${btoa(unescape(encodeURIComponent(text))).slice(0,8)}-${Date.now()}`,
+          stageIndex: idx,
+          stage: ALL_STAGES[idx],
+          input: text,
+          output: data.analysis,
+          date: new Date().toISOString(),
+        };
+        const allCases: LegalCase[] = await getAllCases();
+        const existing = allCases.find((c: LegalCase) => c.name === caseName);
+        if (existing) {
+          existing.stages.push(newStage);
+          await updateCase(existing);
+        } else {
+        const newCaseId = `${caseName}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+        await addCase({
+          id: newCaseId,
+          name: caseName,
+          createdAt: newStage.date,
+          stages: [newStage],
+        });
+        }
+      } else {
+        const { code, message } = extractApiError(res, data);
+        const mapped = code === 'RATE_LIMIT_EXCEEDED'
+          ? 'لقد تجاوزت الحد المسموح به لعدد الطلبات على خدمة Gemini API. يرجى الانتظار دقيقة ثم إعادة المحاولة.'
+          : mapApiErrorToMessage(code, message || data.error);
+        setStageErrors(arr => arr.map((v, i) => i === idx ? (mapped || 'حدث خطأ أثناء التحليل') : v));
+      }
+    } catch {
+      setStageErrors(arr => arr.map((v, i) => i === idx ? 'تعذر الاتصال بالخادم' : v));
+    } finally {
+      setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
+    }
+  };
   const saveCaseToDatabase = async (stages: any[]) => {
     try {
       const caseName = caseNameInput.trim() || 
@@ -462,6 +576,152 @@ function HomeContent() {
 
             {activeTab === 'stages' && (
               <div>
+                {/* قسم التحليل اليدوي المبرز */}
+                {apiKey && mainText.trim() && (
+                  <div style={{
+                    background: `linear-gradient(135deg, ${theme.accent}15 0%, ${theme.accent}08 100%)`,
+                    borderRadius: 16,
+                    padding: isMobile() ? 16 : 20,
+                    marginBottom: 20,
+                    border: `2px solid ${theme.accent}30`,
+                    boxShadow: `0 4px 20px ${theme.accent}10`
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 16
+                    }}>
+                      <h3 style={{
+                        color: theme.accent,
+                        fontSize: isMobile() ? 18 : 20,
+                        fontWeight: 'bold',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8
+                      }}>
+                        🔍 التحليل اليدوي للمراحل
+                      </h3>
+                    </div>
+                    
+                    <div style={{
+                      fontSize: 14,
+                      color: theme.text,
+                      opacity: 0.8,
+                      marginBottom: 12,
+                      lineHeight: 1.5
+                    }}>
+                      💡 يمكنك الآن تحليل أي مرحلة بشكل فردي بالضغط على زر "تحليل يدوي" بجانب كل مرحلة. هذا يعطيك مرونة أكبر في التحليل ويسمح لك بإجراء تحليل مخصص لمراحل معينة.
+                    </div>
+                    
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile() ? '1fr' : '1fr 1fr',
+                      gap: 12,
+                      fontSize: 12,
+                      background: theme.background,
+                      borderRadius: 8,
+                      padding: 12,
+                      border: `1px solid ${theme.input}`
+                    }}>
+                      <div>
+                        <span style={{ fontWeight: 'bold', color: theme.accent }}>⚙️ ميزات التحليل اليدوي:</span>
+                        <ul style={{ margin: '4px 0', paddingRight: 16, lineHeight: 1.4 }}>
+                          <li>تحكم كامل في ترتيب المراحل</li>
+                          <li>إمكانية إعادة تحليل مرحلة معينة</li>
+                          <li>توفير في استهلاك API</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: 'bold', color: theme.accent }}>🎯 نصائح للاستخدام الأمثل:</span>
+                        <ul style={{ margin: '4px 0', paddingRight: 16, lineHeight: 1.4 }}>
+                          <li>ابدأ بالمراحل الأولى</li>
+                          <li>راجع نتائج كل مرحلة</li>
+                          <li>اعتمد على المراحل السابقة</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* لوحة الوصول السريع للمراحل */}
+                {apiKey && mainText.trim() && (
+                  <div style={{
+                    background: theme.card,
+                    borderRadius: 12,
+                    padding: isMobile() ? 16 : 20,
+                    marginBottom: 20,
+                    border: `1px solid ${theme.border}`
+                  }}>
+                    <h4 style={{
+                      color: theme.text,
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      margin: '0 0 16px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
+                    }}>
+                      ⚡ وصول سريع للمراحل
+                    </h4>
+                    
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile() ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: 8
+                    }}>
+                      {ALL_STAGES.slice(0, 8).map((stageName, index) => {
+                        const isCompleted = stageResults[index] && stageShowResult[index];
+                        const isLoading = stageLoading[index];
+                        const hasError = stageErrors[index];
+                        
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => handleAnalyzeStage(index)}
+                            disabled={isLoading}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 8,
+                              border: `1px solid ${isCompleted ? theme.accent : hasError ? '#ef4444' : theme.input}`,
+                              background: isCompleted ? `${theme.accent}20` : hasError ? '#ef444415' : theme.background,
+                              color: isCompleted ? theme.accent : hasError ? '#ef4444' : theme.text,
+                              fontSize: 12,
+                              fontWeight: 'bold',
+                              cursor: isLoading ? 'not-allowed' : 'pointer',
+                              textAlign: 'right',
+                              transition: 'all 0.2s ease',
+                              opacity: isLoading ? 0.7 : 1
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+                              <span style={{ fontSize: 10 }}>
+                                {isLoading ? '⟳' : isCompleted ? '✓' : hasError ? '✗' : index + 1}
+                              </span>
+                              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {stageName.replace('المرحلة ', '').replace(': ', ': ').substring(0, isMobile() ? 20 : 30)}...
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    {ALL_STAGES.length > 8 && (
+                      <div style={{
+                        marginTop: 12,
+                        fontSize: 12,
+                        color: theme.text,
+                        opacity: 0.7,
+                        textAlign: 'center'
+                      }}>
+                        👇 انتقل إلى قسم "عرض جميع المراحل" أدناه لرؤية باقي المراحل
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* إعدادات النظام الذكي المحسن */}
                 {showSmartSettings && (
                   <div style={{ marginBottom: 20 }}>
@@ -505,6 +765,20 @@ function HomeContent() {
                   onTogglePauseResume={togglePauseResume}
                   onStopAnalysis={stopAutoAnalysis}
                   smartAnalysisConfig={smartAnalysisConfig}
+                  theme={theme}
+                  isMobile={isMobile()}
+                />
+
+                {/* عرض جميع المراحل مع الحالة */}
+                <StageResults
+                  stageResults={stageResults}
+                  stageShowResult={stageShowResult}
+                  stageErrors={stageErrors}
+                  stageLoading={stageLoading}
+                  allStages={ALL_STAGES}
+                  onAnalyzeStage={handleAnalyzeStage}
+                  apiKey={apiKey}
+                  mainText={mainText}
                   theme={theme}
                   isMobile={isMobile()}
                 />
