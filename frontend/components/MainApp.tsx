@@ -89,10 +89,10 @@ export default function Home() {
     return <LandingPage onSkip={handleSkipLanding} />;
   }
 
-  return <HomeContent />;
+  return <HomeContent onShowLandingPage={() => setShowLandingPage(true)} />;
 }
 
-function HomeContent() {
+function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   const { theme, darkMode } = useTheme();
   
   // الحالة الأساسية
@@ -520,7 +520,7 @@ function HomeContent() {
             </div>
             {/* أيقونة الوصول لصفحة الترحيب */}
             <button
-              onClick={() => setShowLandingPage(true)}
+              onClick={onShowLandingPage}
               style={{
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
