@@ -15,6 +15,9 @@ interface DataInputSectionProps {
   theme: any;
   isMobile: boolean;
   darkMode: boolean;
+  // إضافة دعم القضايا السابقة
+  existingCases?: any[];
+  onSelectExistingCase?: (caseId: string) => void;
 }
 
 export const DataInputSection: React.FC<DataInputSectionProps> = ({
@@ -26,7 +29,9 @@ export const DataInputSection: React.FC<DataInputSectionProps> = ({
   setPartyRole,
   theme,
   isMobile,
-  darkMode
+  darkMode,
+  existingCases = [],
+  onSelectExistingCase
 }) => {
   return (
     <div style={{
@@ -51,6 +56,55 @@ export const DataInputSection: React.FC<DataInputSectionProps> = ({
       }}>
         ✍️ إدخال بيانات القضية
       </h2>
+
+      {/* اختيار قضية سابقة للاستكمال */}
+      {existingCases && existingCases.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <label style={{
+            display: 'block',
+            fontSize: 14,
+            fontWeight: 'bold',
+            marginBottom: 8,
+            color: theme.text,
+          }}>
+            💼 استكمال قضية سابقة:
+          </label>
+          <select
+            onChange={(e) => {
+              if (e.target.value && onSelectExistingCase) {
+                onSelectExistingCase(e.target.value);
+              }
+            }}
+            style={{
+              width: '100%',
+              borderRadius: 8,
+              border: `2px solid ${theme.input}`,
+              padding: 12,
+              fontSize: 14,
+              outline: 'none',
+              background: darkMode ? '#1a1d29' : '#fff',
+              color: theme.text,
+              fontFamily: 'Tajawal, Arial, sans-serif',
+            }}
+            defaultValue=""
+          >
+            <option value="">اختر قضية لاستكمال التحليل...</option>
+            {existingCases.map((caseItem) => (
+              <option key={caseItem.id} value={caseItem.id}>
+                {caseItem.name} ({caseItem.stages?.length || 0} مراحل مكتملة)
+              </option>
+            ))}
+          </select>
+          <div style={{
+            marginTop: 6,
+            fontSize: 12,
+            color: theme.text,
+            opacity: 0.7
+          }}>
+            💡 يمكنك استكمال تحليل قضية سابقة لم تكتمل بعد
+          </div>
+        </div>
+      )}
 
       {/* حقل اسم القضية */}
       <div style={{ marginBottom: 16 }}>
@@ -115,6 +169,24 @@ export const DataInputSection: React.FC<DataInputSectionProps> = ({
           <option value="المشتكي">المشتكي</option>
           <option value="المشتكى عليه">المشتكى عليه</option>
         </select>
+        
+        {/* إرشادات صفة الطرف */}
+        <div style={{
+          marginTop: 8,
+          padding: 10,
+          background: `${theme.accent}10`,
+          borderRadius: 6,
+          fontSize: 12,
+          color: theme.text,
+          lineHeight: 1.4
+        }}>
+          📝 <strong>ملاحظة مهمة:</strong>
+          <ul style={{ margin: '4px 0 0 0', paddingRight: 16 }}>
+            <li><strong>المدعي/المشتكي:</strong> الطرف الذي يرفع الدعوى ويطالب بحقوقه</li>
+            <li><strong>المدعى عليه/المشتكى عليه:</strong> الطرف الذي ترفع ضده الدعوى</li>
+            <li>هذا يؤثر على استراتيجية الدفاع والتحليل القانوني</li>
+          </ul>
+        </div>
       </div>
 
       {/* حقل تفاصيل القضية */}

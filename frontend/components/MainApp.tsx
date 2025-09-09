@@ -179,9 +179,35 @@ function HomeContent() {
   const loadExistingCases = async () => {
     try {
       const cases = await getAllCases();
-      setExistingCases(cases);
+      // فلترة لعرض القضايا التي لديها مراحل ناقصة (أقل من 12 مرحلة)
+      const incompleteCases = cases.filter((caseItem: LegalCase) => 
+        caseItem.stages && caseItem.stages.length > 0 && caseItem.stages.length < 12
+      );
+      setExistingCases(incompleteCases);
     } catch (error) {
-      console.error('Error loading cases:', error);
+      console.error('خطأ في تحميل القضايا:', error);
+    }
+  };
+
+  // اختيار قضية لاستكمال التحليل
+  const handleSelectExistingCase = (caseId: string) => {
+    const selectedCase = existingCases.find(c => c.id === caseId);
+    if (selectedCase) {
+      setMainText(selectedCase.stages[0]?.input || selectedCase.name || '');
+      setCaseNameInput(selectedCase.name);
+      
+      // تحديث النتائج السابقة
+      const existingResults = selectedCase.stages.map(stage => stage.output);
+      const filledResults = [...existingResults];
+      while (filledResults.length < ALL_STAGES.length) {
+        filledResults.push('');
+      }
+      setStageResults(filledResults);
+      
+      // عرض النتائج الموجودة
+      setStageShowResult(filledResults.map((_, i) => i < existingResults.length));
+      
+      console.log(`تم تحميل قضية: ${selectedCase.name} (${existingResults.length} مراحل مكتملة)`);
     }
   };
 
@@ -417,6 +443,8 @@ function HomeContent() {
                   theme={theme}
                   isMobile={isMobile()}
                   darkMode={darkMode}
+                  existingCases={existingCases}
+                  onSelectExistingCase={handleSelectExistingCase}
                 />
 
                 {/* نظام اختيار نوع القضية */}
@@ -428,17 +456,6 @@ function HomeContent() {
                   theme={theme}
                   isMobile={isMobile()}
                   oldSystemDetection={mainText.length > 20 ? oldSystemDetection : undefined}
-                />
-
-                {/* الإعدادات المبسطة */}
-                <AdvancedSettings
-                  apiKey={apiKey}
-                  setApiKey={handleApiKeyChange}
-                  preferredModel={preferredModel}
-                  setPreferredModel={setPreferredModel}
-                  theme={theme}
-                  isMobile={isMobile()}
-                  darkMode={darkMode}
                 />
               </div>
             )}

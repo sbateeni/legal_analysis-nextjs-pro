@@ -38,6 +38,25 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
 }) => {
   return (
     <div style={{ marginBottom: 20 }}>
+      {/* تنبيه مفتاح API */}
+      {!apiKey && (
+        <div style={{
+          background: '#fef3c7',
+          border: '1px solid #f59e0b',
+          borderRadius: 8,
+          padding: 12,
+          marginBottom: 16,
+          fontSize: 14,
+          color: '#92400e',
+          textAlign: 'center'
+        }}>
+          ⚠️ <strong>مطلوب:</strong> يجب إدخال مفتاح Gemini API في{' '}
+          <a href="/settings" style={{ color: theme.accent, fontWeight: 'bold' }}>
+            صفحة الإعدادات
+          </a>{' '}
+          قبل بدء التحليل
+        </div>
+      )}
       {/* خيارات نوع التحليل */}
       <div style={{
         background: theme.card,
