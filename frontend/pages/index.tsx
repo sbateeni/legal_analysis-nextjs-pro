@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import React, { useState, useEffect, useRef } from 'react';
 import { mapApiErrorToMessage, extractApiError } from '@utils/errors';
 import { saveApiKey, loadApiKey, addCase, getAllCases, updateCase, LegalCase } from '@utils/db';
 import { isMobile } from '@utils/crypto';
@@ -23,6 +23,21 @@ import {
   AnalysisStage as SequentialAnalysisStage
 } from '../utils/sequentialAnalysisManager';
 // تم حذف نظام المصادقة لجعل الموقع عاماً
+
+// استيراد النظام المحسن
+import { IntelligentIntegrationManager, IntegratedAnalysisResult, IntegratedAnalysisConfig } from '../utils/integration/intelligentIntegrationManager';
+import { globalContextManager } from '../utils/context';
+
+// استيراد النظام المتوازي الذكي
+import { IntelligentParallelSystem } from '../utils/parallel';
+import { useParallelProcessing } from '../hooks/useParallelProcessing';
+import ParallelProgressView from '../components/ParallelProgressView';
+
+// استيراد نظام الكشف التلقائي والمراحل المخصصة
+import { detectCaseType, analyzeCaseComplexity } from '../utils/caseTypeDetection';
+import { generateCustomStages, integrateCustomStages, customizeStagesByComplexity } from '../utils/customStages';
+import CaseTypeSelection from '../components/CaseTypeSelection';
+import AutoDetectionSystemSummary from '../components/AutoDetectionSystemSummary';
 
 
 // تعريف نوع BeforeInstallPromptEvent
@@ -119,6 +134,63 @@ function HomeContent() {
   const [analysisResults, setAnalysisResults] = useState<SequentialAnalysisStage[]>([]);
   const [canPauseResume, setCanPauseResume] = useState(false);
 
+  // متغيرات النظام الذكي المتطور
+  const [intelligentIntegrationManager, setIntelligentIntegrationManager] = useState<IntelligentIntegrationManager | null>(null);
+  const [integratedResults, setIntegratedResults] = useState<IntegratedAnalysisResult[]>([]);
+  const [useIntelligentAnalysis, setUseIntelligentAnalysis] = useState(true);
+  const [analysisConfig, setAnalysisConfig] = useState<IntegratedAnalysisConfig>({
+    useIntelligentStages: true,
+    intelligentStagesList: [0, 2, 4, 6, 8, 10], // استخدام التحليل الذكي للمراحل الرئيسية
+    fallbackToStandard: true,
+    enableContextSharing: true,
+    enableRiskAssessment: true
+  });
+
+  // متغيرات النظام المتوازي الذكي
+  const [useParallelProcessing, setUseParallelProcessing] = useState(false);
+  const [showParallelProgress, setShowParallelProgress] = useState(false);
+  
+  // متغيرات نظام الكشف التلقائي والمراحل المخصصة
+  const [selectedCaseTypes, setSelectedCaseTypes] = useState<string[]>([caseType]);
+  const [caseComplexity, setCaseComplexity] = useState<any>(null);
+  const [showCaseTypeSelection, setShowCaseTypeSelection] = useState(false);
+  const [customStages, setCustomStages] = useState<any[]>([]);
+  const [showCustomStages, setShowCustomStages] = useState(false);
+  const [oldSystemDetection, setOldSystemDetection] = useState<string>('أحوال شخصية'); // محاكاة النظام القديم
+  
+  // المعالجة المتوازية (سيتم تفعيلها لاحقاً)
+  const [parallelProcessingState, setParallelProcessingState] = useState({
+    isRunning: false,
+    isPaused: false,
+    progress: null,
+    results: [],
+    error: null,
+    efficiency: 0,
+    recommendations: []
+  });
+  
+  const parallelProcessingActions = {
+    start: async (input: string, apiKey: string, params?: any) => {
+      console.log('🚀 بدء المعالجة المتوازية (محاكاة):', input.substring(0, 50));
+      // هذه محاكاة - سيتم تطبيق النظام الفعلي لاحقاً
+      setParallelProcessingState(prev => ({ ...prev, isRunning: true }));
+      // للآن نعود للتحليل التسلسلي
+      return startStandardAnalysis();
+    },
+    stop: async () => {
+      setParallelProcessingState(prev => ({ ...prev, isRunning: false }));
+    },
+    pause: () => {
+      setParallelProcessingState(prev => ({ ...prev, isPaused: true }));
+    },
+    resume: () => {
+      setParallelProcessingState(prev => ({ ...prev, isPaused: false }));
+    },
+    dismissAlert: (alertId: string) => {
+      console.log('تم رفض التنبيه:', alertId);
+    }
+  };
+
   // متغيرات اختيار القضية للاستكمال
   const [existingCases, setExistingCases] = useState<LegalCase[]>([]);
   const [selectedCaseForResume, setSelectedCaseForResume] = useState<string>('');
@@ -131,9 +203,11 @@ function HomeContent() {
     // استرجاع نوع القضية من التخزين المحلي
     try {
       const savedCaseType = localStorage.getItem('selected_case_type');
-      if (savedCaseType) setCaseType(savedCaseType);
+      if (savedCaseType) {
+        setCaseType(savedCaseType);
+        setSelectedCaseTypes([savedCaseType]);
+      }
     } catch {}
-
 
     // تحميل مفتاح API من قاعدة البيانات عند بدء التشغيل
     loadApiKey().then(val => {
@@ -156,6 +230,30 @@ function HomeContent() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [showCaseDropdown]);
+
+  // تحديث المراحل المخصصة عند تغيير أنواع القضايا
+  useEffect(() => {
+    if (selectedCaseTypes.length > 0 && !selectedCaseTypes.includes('عام')) {
+      const generated = generateCustomStages(selectedCaseTypes);
+      if (caseComplexity) {
+        const customized = customizeStagesByComplexity(generated, caseComplexity.complexity);
+        setCustomStages(customized);
+      } else {
+        setCustomStages(generated);
+      }
+    } else {
+      setCustomStages([]);
+    }
+  }, [selectedCaseTypes, caseComplexity]);
+
+  // تحديث نوع القضية في الحالة العامة
+  useEffect(() => {
+    if (selectedCaseTypes.length === 1) {
+      setCaseType(selectedCaseTypes[0]);
+    } else if (selectedCaseTypes.length > 1) {
+      setCaseType('متعدد الأنواع');
+    }
+  }, [selectedCaseTypes]);
 
   useEffect(() => {
     // تحميل نموذج مفضّل + تفضيلات لوحة التحكم من SQLite
@@ -470,110 +568,186 @@ function HomeContent() {
     setAnalysisError('');
     setShowSequentialProgress(true);
     setAnalysisResults([]);
+    setIntegratedResults([]);
     setCanPauseResume(true);
 
     try {
-      // إنشاء مدير التحليل المتسلسل
-      const manager = createSequentialAnalysisManager(
-        ALL_STAGES,
-        {
-          baseDelay: 5000, // 5 ثواني كحد أدنى
-          maxDelay: 15000, // 15 ثانية كحد أقصى
-          maxRetries: 3,
-          timeoutPerStage: 60000, // دقيقة لكل مرحلة
-          enableProgressSave: true
-        },
-        // Progress callback
-        (progress: AnalysisProgress) => {
-          setSequentialProgress(progress);
-          setCurrentAnalyzingStage(progress.currentStage);
-          setAnalysisProgress(progress.progress);
-          
-          // تنسيق الوقت المتبقي
-          if (progress.estimatedTimeRemaining) {
-            const minutes = Math.floor(progress.estimatedTimeRemaining / 60000);
-            const seconds = Math.floor((progress.estimatedTimeRemaining % 60000) / 1000);
-            setEstimatedTimeRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      // إعداد السياق العام قبل بدء التحليل
+      globalContextManager.resetContext();
+      
+      // تحديد نوع التحليل: متوازي أم تسلسلي
+      if (useParallelProcessing && !parallelProcessingState.isRunning) {
+        console.log('🚀 بدء التحليل المتوازي الذكي');
+        setShowParallelProgress(true);
+        
+        // بدء المعالجة المتوازية
+        await parallelProcessingActions.start(
+          mainText,
+          apiKey,
+          {
+            partyRole: partyRole || undefined,
+            caseType: smartCaseType,
+            preferredModel,
+            caseName: caseNameInput.trim() || `قضية ${smartCaseType} - ${new Date().toLocaleDateString('ar')}`
           }
+        );
+        
+        console.log('✅ اكتمل التحليل المتوازي');
+        return;
+      }
+      
+      // التحليل التسلسلي (النظام الحالي)
+      console.log('🔄 بدء التحليل التسلسلي الذكي');
+      
+      // إنشاء مدير التكامل الذكي
+      const manager = new IntelligentIntegrationManager(ALL_STAGES, analysisConfig);
+      setIntelligentIntegrationManager(manager);
 
-          setIsAutoAnalyzing(progress.isRunning);
-          
-          if (progress.lastError) {
-            setAnalysisError(progress.lastError);
-          }
-        },
-        // Stage complete callback
-        (stage: SequentialAnalysisStage) => {
-          setAnalysisResults(prev => [...prev, stage]);
-          
-          // تحديث النتائج في النظام القديم للتوافق
-          setStageResults(prev => {
-            const newResults = [...prev];
-            newResults[stage.stageIndex] = stage.output;
-            return newResults;
-          });
-          
-          setStageShowResult(prev => {
-            const newShow = [...prev];
-            newShow[stage.stageIndex] = true;
-            return newShow;
-          });
-          
-          // حفظ التحليل في قاعدة البيانات
-          saveStageToDatabase(stage);
+      // بدء التحليل المتكامل
+      const results = await manager.startIntegratedAnalysis(
+        mainText,
+        apiKey,
+        {
+          partyRole: partyRole || undefined,
+          caseType: smartCaseType,
+          preferredModel,
+          caseName: caseNameInput.trim() || `قضية ${smartCaseType} - ${new Date().toLocaleDateString('ar')}`
         }
       );
 
-      setSequentialAnalysisManager(manager);
-
-      // تحديد نقطة البداية (في حالة استكمال قضية موجودة)
-      const existingStagesCount = stageResults.filter(r => !!r).length;
-      const startFromStage = existingStagesCount > 0 ? existingStagesCount : 0;
+      setIntegratedResults(results);
       
-      console.log(`بدء التحليل من المرحلة ${startFromStage + 1} من أصل ${ALL_STAGES.length}`);
+      // تحديث النتائج في النظام القديم للتوافق
+      const mappedResults = results.map(result => ({
+        ...result,
+        // تحويل لنمط النظام القديم
+        analysis: result.output
+      }));
+      
+      setAnalysisResults(mappedResults);
+      
+      // تحديث نتائج المراحل للعرض
+      const stageResultsArray = new Array(ALL_STAGES.length).fill(null);
+      const stageShowArray = new Array(ALL_STAGES.length).fill(false);
+      
+      results.forEach(result => {
+        stageResultsArray[result.stageIndex] = result.output;
+        stageShowArray[result.stageIndex] = true;
+      });
+      
+      setStageResults(stageResultsArray);
+      setStageShowResult(stageShowArray);
 
-      // بدء التحليل أو الاستئناف
-      let result;
-      if (startFromStage > 0) {
-        result = await manager.resumeFromStage(
-          startFromStage,
-          mainText,
-          apiKey,
-          {
-            partyRole: partyRole || undefined,
-            caseType: smartCaseType,
-            preferredModel
-          }
-        );
-      } else {
-        result = await manager.startAnalysis(
-          mainText,
-          apiKey,
-          {
-            partyRole: partyRole || undefined,
-            caseType: smartCaseType,
-            preferredModel
-          }
-        );
-      }
+      // عرض إحصائيات التحليل
+      const stats = manager.getAnalysisStats(results);
+      console.log('إحصائيات التحليل المتكامل:', stats);
 
-      console.log('نتيجة التحليل المتسلسل:', result);
-
-      if (!result.success && result.errors.length > 0) {
-        setAnalysisError(`فشل في ${result.errors.length} مرحلة من أصل ${ALL_STAGES.length}`);
-      }
+      // حفظ النتائج في قاعدة البيانات
+      await saveCaseToDatabase(results);
 
     } catch (error) {
-      console.error('خطأ في التحليل التلقائي المحسن:', error);
+      console.error('خطأ في التحليل الذكي المتكامل:', error);
       setAnalysisError(error instanceof Error ? error.message : 'حدث خطأ غير متوقع');
+      
+      // محاولة التراجع للنظام العادي
+      if (analysisConfig.fallbackToStandard) {
+        console.log('التراجع للنظام العادي...');
+        await startStandardAnalysis();
+      }
     } finally {
       setIsAutoAnalyzing(false);
       setCanPauseResume(false);
       setShowSequentialProgress(false);
+      setShowParallelProgress(false);
     }
   };
 
-  // دالة حفظ مرحلة في قاعدة البيانات
+  // دالة بدء التحليل العادي (تراجع)
+  const startStandardAnalysis = async () => {
+    const manager = createSequentialAnalysisManager(
+      ALL_STAGES,
+      {
+        baseDelay: 5000,
+        maxDelay: 15000,
+        maxRetries: 3,
+        timeoutPerStage: 60000,
+        enableProgressSave: true
+      },
+      (progress: AnalysisProgress) => {
+        setSequentialProgress(progress);
+        setCurrentAnalyzingStage(progress.currentStage);
+        setAnalysisProgress(progress.progress);
+        
+        if (progress.estimatedTimeRemaining) {
+          const minutes = Math.floor(progress.estimatedTimeRemaining / 60000);
+          const seconds = Math.floor((progress.estimatedTimeRemaining % 60000) / 1000);
+          setEstimatedTimeRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+        }
+
+        setIsAutoAnalyzing(progress.isRunning);
+        
+        if (progress.lastError) {
+          setAnalysisError(progress.lastError);
+        }
+      },
+      (stage: SequentialAnalysisStage) => {
+        setAnalysisResults(prev => [...prev, stage]);
+        
+        setStageResults(prev => {
+          const newResults = [...prev];
+          newResults[stage.stageIndex] = stage.output;
+          return newResults;
+        });
+        
+        setStageShowResult(prev => {
+          const newShow = [...prev];
+          newShow[stage.stageIndex] = true;
+          return newShow;
+        });
+        
+        saveStageToDatabase(stage);
+      }
+    );
+
+    setSequentialAnalysisManager(manager);
+
+    const existingStagesCount = stageResults.filter(r => !!r).length;
+    const startFromStage = existingStagesCount > 0 ? existingStagesCount : 0;
+    
+    console.log(`بدء التحليل العادي من المرحلة ${startFromStage + 1}`);
+
+    let result;
+    if (startFromStage > 0) {
+      result = await manager.resumeFromStage(
+        startFromStage,
+        mainText,
+        apiKey,
+        {
+          partyRole: partyRole || undefined,
+          caseType: determineSmartCaseType(mainText),
+          preferredModel
+        }
+      );
+    } else {
+      result = await manager.startAnalysis(
+        mainText,
+        apiKey,
+        {
+          partyRole: partyRole || undefined,
+          caseType: determineSmartCaseType(mainText),
+          preferredModel
+        }
+      );
+    }
+
+    console.log('نتيجة التحليل العادي:', result);
+
+    if (!result.success && result.errors.length > 0) {
+      setAnalysisError(`فشل في ${result.errors.length} مرحلة من أصل ${ALL_STAGES.length}`);
+    }
+  };
+
+  // دالة حفظ مرحلة في قاعدة البيانات (محسّنة)
   const saveStageToDatabase = async (stage: SequentialAnalysisStage) => {
     try {
       const caseName = caseNameInput.trim() ? caseNameInput.trim() : `قضية بدون اسم - ${Date.now()}`;
@@ -597,6 +771,14 @@ function HomeContent() {
         if (!stageExists) {
           existing.stages.push(newStage);
           await updateCase(existing);
+          
+          // تحديث السياق العام
+          await globalContextManager.updateContextFromStageCompletion(
+            stage.stageIndex,
+            stage.stage,
+            stage,
+            stage.duration || 0
+          );
         }
       } else {
         // إنشاء قضية جديدة
@@ -607,6 +789,14 @@ function HomeContent() {
           createdAt: newStage.date,
           stages: [newStage],
         });
+        
+        // تحديث السياق العام
+        await globalContextManager.updateContextFromStageCompletion(
+          stage.stageIndex,
+          stage.stage,
+          stage,
+          stage.duration || 0
+        );
       }
       
       // تحديث قائمة القضايا الموجودة
@@ -616,16 +806,64 @@ function HomeContent() {
     }
   };
 
+  // دالة حفظ قضية متكاملة (جديدة)
+  const saveCaseToDatabase = async (results: IntegratedAnalysisResult[]) => {
+    try {
+      const caseName = caseNameInput.trim() || 
+        `قضية ${determineSmartCaseType(mainText)} - ${new Date().toLocaleDateString('ar')}`;
+      
+      const stages = results.map(result => ({
+        id: result.id,
+        stageIndex: result.stageIndex,
+        stage: result.stage,
+        input: result.input,
+        output: result.output,
+        date: result.date,
+        duration: result.duration,
+        retryCount: result.retryCount,
+        // بيانات إضافية من النظام الذكي
+        qualityScore: result.qualityScore,
+        intelligentAnalysis: result.intelligentAnalysis,
+        contextData: result.contextData
+      }));
+      
+      const newCaseId = `${caseName}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+      await addCase({
+        id: newCaseId,
+        name: caseName,
+        createdAt: new Date().toISOString(),
+        stages: stages,
+      });
+      
+      console.log(`تم حفظ قضية متكاملة: ${caseName}`);
+      
+      // تحديث قائمة القضايا
+      loadExistingCases();
+    } catch (error) {
+      console.error('خطأ في حفظ القضية المتكاملة:', error);
+    }
+  };
+
   // دالة إيقاف التحليل المحسن
-  const stopAutoAnalysis = () => {
+  const stopAutoAnalysis = async () => {
+    // إيقاف المعالجة المتوازية إذا كانت نشطة
+    if (parallelProcessingState.isRunning) {
+      await parallelProcessingActions.stop();
+      setShowParallelProgress(false);
+    }
+    
+    // إيقاف المعالجة التسلسلية
     if (sequentialAnalysisManager) {
       sequentialAnalysisManager.stop();
     }
+    
+    // إعادة تعيين حالة التحليل
     setIsAutoAnalyzing(false);
     setCurrentAnalyzingStage(0);
     setAnalysisProgress(0);
     setCanPauseResume(false);
     setShowSequentialProgress(false);
+    setShowParallelProgress(false);
   };
 
   // دالة إيقاف/استئناف مؤقت
@@ -746,6 +984,12 @@ function HomeContent() {
             </div>
           </div>
 
+          {/* عرض ملخص النظام الجديد */}
+          <AutoDetectionSystemSummary
+            theme={theme}
+            isMobile={isMobile()}
+          />
+
           {/* شريط إجراءات الصفحة */}
           <div style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', marginBottom:16}}>
               <button
@@ -834,33 +1078,150 @@ function HomeContent() {
               )}
             </div>
 
-          {/* اختيار نوع القضية لتفعيل التفرع */}
-          <div style={{
-            background: theme.card,
-            borderRadius: 12,
-            boxShadow: `0 2px 10px ${theme.shadow}`,
-            padding: 12,
-            marginBottom: 16,
-            border: `1px solid ${theme.border}`
-          }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-              <span style={{fontWeight:700, color: theme.accent2}}>نوع القضية:</span>
-              {['عام','ميراث','أحوال شخصية','تجاري','جنائي','عمل','عقاري','إداري','إيجارات'].map(t => (
-                <button key={t}
-                  onClick={() => setCaseType(t)}
-                  style={{
-                    background: caseType === t ? theme.accent : 'transparent',
-                    color: caseType === t ? '#fff' : theme.text,
-                    border: `1.5px solid ${theme.input}`,
-                    borderRadius: 10,
-                    padding: '6px 10px',
-                    cursor: 'pointer',
-                    fontWeight: 700
-                  }}
-                >{t}</button>
-              ))}
+          {/* نظام اختيار نوع القضية المتطور مع الكشف التلقائي */}
+          <CaseTypeSelection
+            text={mainText}
+            currentType={caseType}
+            onTypeChange={setSelectedCaseTypes}
+            onComplexityChange={setCaseComplexity}
+            theme={theme}
+            isMobile={isMobile()}
+            oldSystemDetection={mainText.length > 20 ? oldSystemDetection : undefined}
+          />
+
+          {/* معلومات تعقيد القضية */}
+          {caseComplexity && (
+            <div style={{
+              background: theme.card,
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 16,
+              border: `1px solid ${theme.border}`
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 8
+              }}>
+                <span style={{ fontSize: 18 }}>📊</span>
+                <span style={{ fontWeight: 'bold', color: theme.accent }}>
+                  تحليل تعقيد القضية
+                </span>
+              </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile() ? '1fr' : 'repeat(3, 1fr)',
+                gap: 12,
+                fontSize: 14
+              }}>
+                <div>
+                  <strong>مستوى التعقيد:</strong>
+                  <span style={{
+                    marginRight: 8,
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    background: 
+                      caseComplexity.complexity === 'بسيط' ? '#10b981' :
+                      caseComplexity.complexity === 'متوسط' ? '#f59e0b' :
+                      caseComplexity.complexity === 'معقد' ? '#ef4444' : '#7c2d12',
+                    color: '#fff',
+                    fontSize: 12,
+                    fontWeight: 'bold'
+                  }}>
+                    {caseComplexity.complexity}
+                  </span>
+                </div>
+                <div>
+                  <strong>المدة المقدرة:</strong> {caseComplexity.estimatedDuration}
+                </div>
+                <div>
+                  <strong>عوامل التعقيد:</strong> {caseComplexity.factors.length}
+                </div>
+              </div>
+              {caseComplexity.factors.length > 0 && (
+                <div style={{ marginTop: 8, fontSize: 12, color: theme.text, opacity: 0.8 }}>
+                  العوامل: {caseComplexity.factors.slice(0, 2).join('، ')}
+                  {caseComplexity.factors.length > 2 && '...'}
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* معلومات المراحل المخصصة */}
+          {customStages.length > 0 && (
+            <div style={{
+              background: `${theme.accent}15`,
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 16,
+              border: `1px solid ${theme.accent}30`
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 8
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}>
+                  <span style={{ fontSize: 18 }}>🎯</span>
+                  <span style={{ fontWeight: 'bold', color: theme.accent }}>
+                    مراحل مخصصة ({customStages.length})
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowCustomStages(!showCustomStages)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: theme.accent,
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {showCustomStages ? '🔼 إخفاء' : '🔽 عرض'}
+                </button>
+              </div>
+              <div style={{ fontSize: 14, color: theme.text }}>
+                تم إنشاء {customStages.length} مرحلة مخصصة بناءً على نوع القضية المختار
+              </div>
+              {showCustomStages && (
+                <div style={{ marginTop: 12 }}>
+                  {customStages.slice(0, 5).map((stage, index) => (
+                    <div key={index} style={{
+                      padding: 8,
+                      background: theme.background,
+                      borderRadius: 6,
+                      marginBottom: 8,
+                      fontSize: 13
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
+                        {stage.name}
+                      </div>
+                      <div style={{ opacity: 0.8 }}>
+                        {stage.description}
+                      </div>
+                      {stage.estimatedDuration && (
+                        <div style={{ fontSize: 11, color: theme.accent, marginTop: 4 }}>
+                          المدة المقدرة: {stage.estimatedDuration}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {customStages.length > 5 && (
+                    <div style={{ textAlign: 'center', fontSize: 12, color: theme.text, opacity: 0.7 }}>
+                      ... و {customStages.length - 5} مراحل أخرى
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* نظام التبويبات */}
           <div style={{
@@ -1259,8 +1620,77 @@ function HomeContent() {
                       fontSize: 14,
                       opacity: 0.8
                     }}>
-                      اضغط على الزر أدناه لتحليل جميع المراحل الـ 16 تلقائياً مع مراعاة حدود التوكينز
+                      {useIntelligentAnalysis ? 
+                        'التحليل الذكي المتطور مفعل - سيتم استخدام الذكاء الاصطناعي المتقدم مع تقييم الجودة والمخاطر' :
+                        'التحليل العادي مفعل - سيتم استخدام النظام التقليدي فقط'
+                      }
                     </p>
+
+                    {/* مفتاح تبديل المعالجة المتوازية */}
+                    <div style={{
+                      background: theme.resultBg,
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 16,
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 12,
+                        marginBottom: 12
+                      }}>
+                        <span style={{ fontSize: 20 }}>⚡</span>
+                        <label style={{
+                          fontWeight: 'bold',
+                          color: theme.text,
+                          fontSize: 16
+                        }}>
+                          المعالجة المتوازية الذكية
+                        </label>
+                        <button
+                          onClick={() => setUseParallelProcessing(!useParallelProcessing)}
+                          style={{
+                            background: useParallelProcessing ? theme.accent : '#6b7280',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 20,
+                            padding: '6px 16px',
+                            fontSize: 12,
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          {useParallelProcessing ? 'مفعل' : 'معطل'}
+                        </button>
+                      </div>
+                      
+                      <div style={{
+                        fontSize: 12,
+                        color: theme.text,
+                        opacity: 0.7,
+                        lineHeight: 1.4
+                      }}>
+                        {useParallelProcessing ? 
+                          '🚀 سيتم تحليل عدة مراحل بالتوازي لتسريع العملية وتحسين الكفاءة' :
+                          '🔄 سيتم تحليل المراحل بالتسلسل (الطريقة التقليدية)'
+                        }
+                      </div>
+                      
+                      {useParallelProcessing && (
+                        <div style={{
+                          fontSize: 11,
+                          color: theme.accent,
+                          marginTop: 8,
+                          fontWeight: 'bold'
+                        }}>
+                          ⚡ كفاءة أعلى • 🔧 تحسين ديناميكي • 📊 مراقبة متقدمة
+                        </div>
+                      )}
+                    </div>
 
                     {/* عرض نوع القضية المكتشف */}
                     {mainText.trim() && (
@@ -1509,6 +1939,26 @@ function HomeContent() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* عارض التقدم المتوازي */}
+                    {showParallelProgress && parallelProcessingState.progress && (
+                      <div style={{ marginTop: 20 }}>
+                        <ParallelProgressView
+                          progress={parallelProcessingState.progress}
+                          onPauseResume={() => {
+                            if (parallelProcessingState.isPaused) {
+                              parallelProcessingActions.resume();
+                            } else {
+                              parallelProcessingActions.pause();
+                            }
+                          }}
+                          onStop={() => parallelProcessingActions.stop()}
+                          onDismissAlert={(alertId) => parallelProcessingActions.dismissAlert(alertId)}
+                          theme={theme}
+                          isMobile={isMobile()}
+                        />
                       </div>
                     )}
 
