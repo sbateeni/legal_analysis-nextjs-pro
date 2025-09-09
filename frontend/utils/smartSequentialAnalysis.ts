@@ -638,6 +638,90 @@ export class SmartSequentialAnalysisManager {
       config: this.config
     };
   }
+
+  /**
+   * استئناف التحليل الذكي من مرحلة معينة مع حفظ السياق
+   * Resume Smart Analysis from a Specific Stage with Context Preservation
+   */
+  async resumeFromStage(
+    startStageIndex: number,
+    input: string,
+    apiKey: string,
+    additionalParams: Record<string, any> = {}
+  ): Promise<any> {
+    if (startStageIndex < 0 || startStageIndex >= this.stages.length) {
+      throw new Error('رقم المرحلة غير صحيح');
+    }
+
+    console.log(`🔄 استئناف التحليل الذكي من المرحلة ${startStageIndex + 1}...`);
+    
+    // حفظ النتائج السابقة في السياق
+    if (additionalParams.previousResults) {
+      additionalParams.previousResults.forEach((result: string, index: number) => {
+        if (result && index < startStageIndex) {
+          this.context.completedStages.set(index, result);
+          this.stages[index].status = 'completed';
+          this.stages[index].output = result;
+        }
+      });
+      console.log(`💾 تم حفظ ${this.context.completedStages.size} مراحل مكتملة في السياق`);
+    }
+    
+    this.isRunning = true;
+    this.shouldStop = false;
+    const startTime = Date.now();
+
+    try {
+      // بدء من المرحلة المحددة
+      for (let i = startStageIndex; i < this.stages.length; i++) {
+        if (this.shouldStop) break;
+
+        // انتظار إذا كان متوقف مؤقتاً
+        await this.waitIfPaused();
+
+        const stage = this.stages[i];
+        
+        // تخطي المراحل المكتملة مسبقاً
+        if (stage.status === 'completed' && stage.output) {
+          console.log(`✅ تم تخطي المرحلة المكتملة ${i + 1}: ${stage.name}`);
+          continue;
+        }
+        
+        stage.status = 'processing';
+        this.updateProgress();
+
+        console.log(`🔄 معالجة المرحلة ${i + 1}: ${stage.name}`);
+
+        // محاولة تحليل المرحلة مع استخدام السياق المحفوظ
+        const success = await this.processStageWithSmartRetry(i, input, apiKey, additionalParams);
+
+        if (success) {
+          console.log(`✅ تمت المرحلة ${i + 1} بنجاح`);
+          stage.status = 'completed';
+          this.updateContextAfterSuccess(i);
+        } else {
+          console.warn(`❌ فشلت المرحلة ${i + 1}`);
+          await this.handleStageFailure(i);
+        }
+
+        this.updateProgress();
+
+        // فترة انتظار ذكية بين المراحل
+        if (i < this.stages.length - 1) {
+          const delay = this.calculateSmartDelay(i);
+          console.log(`⏰ انتظار ${delay / 1000} ثانية قبل المرحلة التالية...`);
+          await this.delay(delay);
+        }
+      }
+
+      const result = this.generateAnalysisResult(Date.now() - startTime);
+      console.log(`🎉 اكتمل الاستئناف الذكي:`, result.summary);
+      return result;
+
+    } finally {
+      this.isRunning = false;
+    }
+  }
 }
 
 // Factory function لإنشاء مدير محسن

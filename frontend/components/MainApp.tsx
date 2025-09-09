@@ -215,6 +215,18 @@ function HomeContent() {
   const startSmartAnalysis = async () => {
     console.log('🧠 بدء التحليل الذكي المحسن...');
     
+    // فحص المراحل المكتملة للاستكمال الذكي
+    const completedStages = stageResults.map((result, index) => ({
+      index,
+      isCompleted: result !== null && result !== '',
+      result: result || ''
+    }));
+    
+    const lastCompletedIndex = completedStages.reverse().find(stage => stage.isCompleted)?.index ?? -1;
+    const firstIncompleteIndex = lastCompletedIndex + 1;
+    
+    console.log(`📊 آخر مرحلة مكتملة: ${lastCompletedIndex + 1}، سيبدأ التحليل من المرحلة: ${firstIncompleteIndex + 1}`);
+    
     const manager = new SmartSequentialAnalysisManager(
       ALL_STAGES,
       smartAnalysisConfig,
@@ -254,17 +266,33 @@ function HomeContent() {
     setSmartAnalysisManager(manager);
     
     try {
-      const result = await manager.startSmartAnalysis(
-        mainText,
-        apiKey,
-        {
-          partyRole: partyRole || undefined,
-          caseType: selectedCaseTypes[0] || 'عام',
-          preferredModel,
-          selectedCaseTypes,
-          caseComplexity
-        }
-      );
+      // إذا كانت هناك مراحل مكتملة، استخدم الاستكمال الذكي
+      const result = lastCompletedIndex >= 0 ? 
+        await manager.resumeFromStage(
+          firstIncompleteIndex,
+          mainText,
+          apiKey,
+          {
+            partyRole: partyRole || undefined,
+            caseType: selectedCaseTypes[0] || 'عام',
+            preferredModel,
+            selectedCaseTypes,
+            caseComplexity,
+            // تمرير النتائج السابقة كسياق
+            previousResults: stageResults.slice(0, firstIncompleteIndex).filter(r => r !== null)
+          }
+        ) :
+        await manager.startSmartAnalysis(
+          mainText,
+          apiKey,
+          {
+            partyRole: partyRole || undefined,
+            caseType: selectedCaseTypes[0] || 'عام',
+            preferredModel,
+            selectedCaseTypes,
+            caseComplexity
+          }
+        );
       
       console.log('🎉 اكتمل التحليل الذكي:', result);
       
@@ -604,6 +632,39 @@ function HomeContent() {
                         🔍 التحليل اليدوي للمراحل
                       </h3>
                     </div>
+                    
+                    {/* عرض حالة الاستكمال */}
+                    {(() => {
+                      const completedCount = stageResults.filter(r => r !== null && r !== '').length;
+                      return completedCount > 0 ? (
+                        <div style={{
+                          background: `${theme.accent}20`,
+                          borderRadius: 8,
+                          padding: 12,
+                          marginBottom: 12,
+                          border: `1px solid ${theme.accent}50`
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: theme.accent
+                          }}>
+                            🔄 وضع الاستكمال الذكي
+                          </div>
+                          <div style={{
+                            fontSize: 12,
+                            color: theme.text,
+                            marginTop: 4,
+                            opacity: 0.8
+                          }}>
+                            تم العثور على {completedCount} مراحل مكتملة. التحليل الذكي سيبدأ من المرحلة {completedCount + 1} مع الاحتفاظ بالنتائج السابقة.
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
                     
                     <div style={{
                       fontSize: 14,
