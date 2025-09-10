@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import '../styles/globals.css';
 import '../styles/responsive.css';
 import '../styles/enable-copy.css';
+import '../styles/enhanced-stage-results.css';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Layout from '../components/Layout';
 import CopyEnabler from '../components/CopyEnabler';

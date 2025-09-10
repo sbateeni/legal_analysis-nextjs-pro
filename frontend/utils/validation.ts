@@ -1,4 +1,5 @@
 import { AnalysisRequest, AnalysisError, PartyRole } from '../types/analysis';
+import { validateRequestForCaseType, isValidCaseType, isValidPartyRoleForCaseType } from './validation-rules';
 
 // حدود التحقق
 const MIN_TEXT_LENGTH = 10;
@@ -49,6 +50,24 @@ export function validateAnalysisRequest(request: AnalysisRequest): AnalysisError
     };
   }
 
+  // التحقق من نوع القضية
+  if (request.caseType && !isValidCaseType(request.caseType)) {
+    return {
+      code: 'VALIDATION_ERROR',
+      message: `نوع القضية "${request.caseType}" غير مدعوم`,
+      details: { field: 'caseType', supportedTypes: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'] }
+    };
+  }
+
+  // التحقق من صفة الطرف حسب نوع القضية
+  if (request.partyRole && request.caseType && !isValidPartyRoleForCaseType(request.partyRole, request.caseType)) {
+    return {
+      code: 'VALIDATION_ERROR',
+      message: `صفة الطرف "${request.partyRole}" غير مناسبة لنوع القضية "${request.caseType}"`,
+      details: { field: 'partyRole', caseType: request.caseType }
+    };
+  }
+
   // التحقق من stageIndex
   const stageIndexIsFinal = request.finalPetition === true && request.stageIndex === -1;
   if (!stageIndexIsFinal) {
@@ -70,13 +89,16 @@ export function validateAnalysisRequest(request: AnalysisRequest): AnalysisError
     };
   }
 
-  // partyRole اختياري لكن إن وجد يجب أن يكون من القائمة
-  if (request.partyRole && !(['المشتكي','المشتكى عليه','المدعي','المدعى عليه'] as PartyRole[]).includes(request.partyRole)) {
-    return {
-      code: 'VALIDATION_ERROR',
-      message: 'صفة الطرف غير صحيحة',
-      details: { field: 'partyRole' }
-    };
+  // التحقق الشامل حسب التخصص
+  if (request.caseType && request.caseType !== 'عام') {
+    const specializedValidation = validateRequestForCaseType(request);
+    if (specializedValidation) {
+      return {
+        code: 'VALIDATION_ERROR',
+        message: specializedValidation,
+        details: { field: 'text', caseType: request.caseType }
+      };
+    }
   }
 
   return null; // لا توجد أخطاء
