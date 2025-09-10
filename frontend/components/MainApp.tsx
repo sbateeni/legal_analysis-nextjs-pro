@@ -111,11 +111,99 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   const [stageGating, setStageGating] = useState<boolean>(true);
   const [showDeadlines, setShowDeadlines] = useState<boolean>(true);
   
+  // نظام الكشف التلقائي
+  const [selectedCaseTypes, setSelectedCaseTypes] = useState<string[]>([caseType]);
+  const [caseComplexity, setCaseComplexity] = useState<any>(null);
+  const [customStages, setCustomStages] = useState<any[]>([]);
+  const [showCustomStages, setShowCustomStages] = useState(false);
+  const [oldSystemDetection] = useState<string>('أحوال شخصية');
+  
+  // دالة تحديد المراحل المناسبة بناءً على نوع القضية
+  const getRelevantStages = () => {
+    const baseStages = STAGES; // المراحل الأساسية (12 مرحلة)
+    const finalStage = FINAL_STAGE; // المرحلة الأخيرة
+    
+    // إذا لم يتم اختيار نوع محدد أو كان "عام"، أعرض المراحل الأساسية فقط
+    if (!selectedCaseTypes || selectedCaseTypes.length === 0 || 
+        (selectedCaseTypes.length === 1 && selectedCaseTypes[0] === 'عام')) {
+      return [...baseStages, finalStage];
+    }
+    
+    // إنشاء المراحل المخصصة بناءً على نوع القضية
+    try {
+      const customStagesForCase = generateCustomStages(selectedCaseTypes);
+      const relevantCustomStages = customStagesForCase
+        .filter(stage => stage.isRequired || selectedCaseTypes.some(type => stage.caseTypes.includes(type)))
+        .slice(0, 8); // حد أقصى 8 مراحل مخصصة
+      
+      // دمج المراحل الأساسية مع المراحل المخصصة
+      const combinedStages = [
+        ...baseStages, // المراحل الأساسية (12 مرحلة)
+        ...relevantCustomStages.map(stage => stage.name), // المراحل المخصصة (حتى 8 مراحل)
+        finalStage // المرحلة الأخيرة
+      ];
+      
+      console.log(`🎯 تم إنشاء ${combinedStages.length} مرحلة لأنواع القضايا: ${selectedCaseTypes.join('، ')}`);
+      return combinedStages;
+    } catch (error) {
+      console.error('خطأ في إنشاء المراحل المخصصة:', error);
+      return [...baseStages, finalStage]; // العودة للمراحل الأساسية في حالة الخطأ
+    }
+  };
+  
+  // تحديد المراحل عند تغيير نوع القضية
+  const CURRENT_STAGES = getRelevantStages();
+  
   // نتائج المراحل
-  const [stageResults, setStageResults] = useState<(string|null)[]>(() => Array(ALL_STAGES.length).fill(null));
-  const [stageLoading, setStageLoading] = useState<boolean[]>(() => Array(ALL_STAGES.length).fill(false));
-  const [stageErrors, setStageErrors] = useState<(string|null)[]>(() => Array(ALL_STAGES.length).fill(null));
-  const [stageShowResult, setStageShowResult] = useState<boolean[]>(() => Array(ALL_STAGES.length).fill(false));
+  const [stageResults, setStageResults] = useState<(string|null)[]>(() => Array(CURRENT_STAGES.length).fill(null));
+  const [stageLoading, setStageLoading] = useState<boolean[]>(() => Array(CURRENT_STAGES.length).fill(false));
+  const [stageErrors, setStageErrors] = useState<(string|null)[]>(() => Array(CURRENT_STAGES.length).fill(null));
+  const [stageShowResult, setStageShowResult] = useState<boolean[]>(() => Array(CURRENT_STAGES.length).fill(false));
+
+  // تحديث حجم arrays النتائج عند تغيير المراحل
+  useEffect(() => {
+    const currentStagesLength = CURRENT_STAGES.length;
+    const resultsLength = stageResults.length;
+    
+    if (currentStagesLength !== resultsLength) {
+      console.log(`🔄 تحديث المراحل من ${resultsLength} إلى ${currentStagesLength} مرحلة`);
+      
+      // تحديث حجم arrays مع الحفاظ على النتائج الموجودة
+      setStageResults(prev => {
+        const newResults = Array(currentStagesLength).fill(null);
+        // نسخ النتائج الموجودة
+        for (let i = 0; i < Math.min(prev.length, currentStagesLength); i++) {
+          newResults[i] = prev[i];
+        }
+        return newResults;
+      });
+      
+      setStageLoading(prev => {
+        const newLoading = Array(currentStagesLength).fill(false);
+        for (let i = 0; i < Math.min(prev.length, currentStagesLength); i++) {
+          newLoading[i] = prev[i];
+        }
+        return newLoading;
+      });
+      
+      setStageErrors(prev => {
+        const newErrors = Array(currentStagesLength).fill(null);
+        for (let i = 0; i < Math.min(prev.length, currentStagesLength); i++) {
+          newErrors[i] = prev[i];
+        }
+        return newErrors;
+      });
+      
+      setStageShowResult(prev => {
+        const newShow = Array(currentStagesLength).fill(false);
+        for (let i = 0; i < Math.min(prev.length, currentStagesLength); i++) {
+          newShow[i] = prev[i];
+        }
+        return newShow;
+      });
+    }
+  }, [selectedCaseTypes]);
+
   
   // حالة التحليل
   const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
@@ -138,13 +226,6 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   const [showSmartSettings, setShowSmartSettings] = useState(false);
   const [smartAnalysisProgress, setSmartAnalysisProgress] = useState<any>(null);
   
-  // نظام الكشف التلقائي
-  const [selectedCaseTypes, setSelectedCaseTypes] = useState<string[]>([caseType]);
-  const [caseComplexity, setCaseComplexity] = useState<any>(null);
-  const [customStages, setCustomStages] = useState<any[]>([]);
-  const [showCustomStages, setShowCustomStages] = useState(false);
-  const [oldSystemDetection] = useState<string>('أحوال شخصية');
-  
   // متغيرات أخرى
   const [existingCases, setExistingCases] = useState<LegalCase[]>([]);
   const [selectedStageForCollab, setSelectedStageForCollab] = useState<string | null>(null);
@@ -152,6 +233,50 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   
   const collabRef = useRef<HTMLDivElement | null>(null);
+
+  // تحديث حجم arrays النتائج عند تغيير المراحل
+  useEffect(() => {
+    const currentStagesLength = CURRENT_STAGES.length;
+    const resultsLength = stageResults.length;
+    
+    if (currentStagesLength !== resultsLength) {
+      console.log(`🔄 تحديث المراحل من ${resultsLength} إلى ${currentStagesLength} مرحلة`);
+      
+      // تحديث حجم arrays مع الحفاظ على النتائج الموجودة
+      setStageResults(prev => {
+        const newResults = Array(currentStagesLength).fill(null);
+        // نسخ النتائج الموجودة
+        for (let i = 0; i < Math.min(prev.length, currentStagesLength); i++) {
+          newResults[i] = prev[i];
+        }
+        return newResults;
+      });
+      
+      setStageLoading(prev => {
+        const newLoading = Array(currentStagesLength).fill(false);
+        for (let i = 0; i < Math.min(prev.length, currentStagesLength); i++) {
+          newLoading[i] = prev[i];
+        }
+        return newLoading;
+      });
+      
+      setStageErrors(prev => {
+        const newErrors = Array(currentStagesLength).fill(null);
+        for (let i = 0; i < Math.min(prev.length, currentStagesLength); i++) {
+          newErrors[i] = prev[i];
+        }
+        return newErrors;
+      });
+      
+      setStageShowResult(prev => {
+        const newShow = Array(currentStagesLength).fill(false);
+        for (let i = 0; i < Math.min(prev.length, currentStagesLength); i++) {
+          newShow[i] = prev[i];
+        }
+        return newShow;
+      });
+    }
+  }, [selectedCaseTypes, CURRENT_STAGES.length]);
 
   // تهيئة المكون
   useEffect(() => {
@@ -229,7 +354,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     console.log(`📊 آخر مرحلة مكتملة: ${lastCompletedIndex + 1}، سيبدأ التحليل من المرحلة: ${firstIncompleteIndex + 1}`);
     
     const manager = new SmartSequentialAnalysisManager(
-      ALL_STAGES,
+      CURRENT_STAGES, // استخدام المراحل المحدثة بناءً على نوع القضية
       smartAnalysisConfig,
       (progress: any) => {
         setSmartAnalysisProgress(progress);
@@ -420,7 +545,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
         const newStage = {
           id: `${idx}-${btoa(unescape(encodeURIComponent(text))).slice(0,8)}-${Date.now()}`,
           stageIndex: idx,
-          stage: ALL_STAGES[idx],
+          stage: CURRENT_STAGES[idx],
           input: text,
           output: data.analysis,
           date: new Date().toISOString(),
@@ -638,6 +763,54 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
 
             {activeTab === 'stages' && (
               <div>
+                {/* عرض معلومات المراحل المخصصة */}
+                {selectedCaseTypes.length > 0 && selectedCaseTypes[0] !== 'عام' && (
+                  <div style={{
+                    background: `${theme.accent}10`,
+                    borderRadius: 12,
+                    padding: isMobile() ? 16 : 20,
+                    marginBottom: 20,
+                    border: `1px solid ${theme.accent}30`
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 12
+                    }}>
+                      <h4 style={{
+                        color: theme.accent,
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8
+                      }}>
+                        ⚙️ مراحل مخصصة لقضايا: {selectedCaseTypes.join('، ')}
+                      </h4>
+                      <div style={{
+                        background: theme.accent,
+                        color: '#fff',
+                        borderRadius: 12,
+                        padding: '4px 8px',
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                      }}>
+                        {CURRENT_STAGES.length} مرحلة
+                      </div>
+                    </div>
+                    <div style={{
+                      fontSize: 13,
+                      color: theme.text,
+                      opacity: 0.8,
+                      lineHeight: 1.5
+                    }}>
+                      🎯 تم تخصيص المراحل بناءً على نوع القضية المختار. يتضمن التحليل المراحل الأساسية (12 مرحلة) بالإضافة إلى مراحل متخصصة لنوع قضيتك.
+                    </div>
+                  </div>
+                )}
+
                 {/* قسم التحليل اليدوي المبرز - دائماً مرئي */}
                 <div style={{
                   background: `linear-gradient(135deg, ${theme.accent}15 0%, ${theme.accent}08 100%)`,
@@ -783,7 +956,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                     gridTemplateColumns: isMobile() ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
                     gap: 8
                   }}>
-                    {ALL_STAGES.slice(0, 8).map((stageName, index) => {
+                    {CURRENT_STAGES.slice(0, 8).map((stageName, index) => {
                       const isCompleted = stageResults[index] && stageShowResult[index];
                       const isLoading = stageLoading[index];
                       const hasError = stageErrors[index];
@@ -830,7 +1003,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                       opacity: 0.7,
                       textAlign: 'center'
                     }}>
-                      👇 انتقل إلى قسم "عرض جميع المراحل" أدناه لرؤية باقي المراحل
+                      👇 انتقل إلى قسم "عرض جميع المراحل" أدناه لرؤية باقي المراحل ({CURRENT_STAGES.length - 8} مراحل إضافية)
                     </div>
                   )}
                 </div>
@@ -872,7 +1045,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                   sequentialProgress={sequentialProgress}
                   analysisProgress={analysisProgress}
                   currentAnalyzingStage={currentAnalyzingStage}
-                  allStages={ALL_STAGES}
+                  allStages={CURRENT_STAGES}
                   estimatedTimeRemaining={estimatedTimeRemaining}
                   canPauseResume={canPauseResume}
                   onTogglePauseResume={togglePauseResume}
@@ -888,7 +1061,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                   stageShowResult={stageShowResult}
                   stageErrors={stageErrors}
                   stageLoading={stageLoading}
-                  allStages={ALL_STAGES}
+                  allStages={CURRENT_STAGES}
                   onAnalyzeStage={handleAnalyzeStage}
                   apiKey={apiKey}
                   mainText={mainText}
@@ -905,7 +1078,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                   stageResults={stageResults}
                   stageShowResult={stageShowResult}
                   stageErrors={stageErrors}
-                  allStages={ALL_STAGES}
+                  allStages={CURRENT_STAGES}
                   theme={theme}
                   isMobile={isMobile()}
                 />
