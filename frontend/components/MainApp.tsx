@@ -45,6 +45,7 @@ import AdvancedSettings from '../components/sections/AdvancedSettings';
 import CaseTypeSelection from '../components/CaseTypeSelection';
 import AutoDetectionSystemSummary from '../components/AutoDetectionSystemSummary';
 import EnhancedAnalysisSettings from '../components/EnhancedAnalysisSettings';
+import SavedProgressNotification from '../components/SavedProgressNotification';
 import CollabPanel from '../components/CollabPanel';
 
 // تعريف المراحل - فقط المراحل الأساسية (1-12)
@@ -126,7 +127,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   
   // دالة تحديد المراحل المناسبة بناءً على نوع القضية مع النظام التدريجي
   const getRelevantStages = () => {
-    const baseStages = STAGES; // المراحل الأساسية (12 مرحلة)
+    const baseStages = STAGES; // المراحل الأساسية (12 مراحل)
     const finalStage = FINAL_STAGE; // المرحلة الأخيرة
     
     // النظام التدريجي - عرض المراحل بالتدريج
@@ -198,8 +199,39 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   const [stageLoading, setStageLoading] = useState<boolean[]>(() => Array(CURRENT_STAGES.length).fill(false));
   const [stageErrors, setStageErrors] = useState<(string|null)[]>(() => Array(CURRENT_STAGES.length).fill(null));
   const [stageShowResult, setStageShowResult] = useState<boolean[]>(() => Array(CURRENT_STAGES.length).fill(false));
+  
+  // حالة التحليل
+  const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
+  const [currentAnalyzingStage, setCurrentAnalyzingStage] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisError, setAnalysisError] = useState('');
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<string>('');
+  
+  // النظام المتسلسل
+  const [sequentialAnalysisManager, setSequentialAnalysisManager] = useState<SequentialAnalysisManager | null>(null);
+  const [sequentialProgress, setSequentialProgress] = useState<AnalysisProgress | null>(null);
+  const [showSequentialProgress, setShowSequentialProgress] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<SequentialAnalysisStage[]>([]);
+  const [canPauseResume, setCanPauseResume] = useState(false);
+  
+  // النظام الذكي المحسن
+  const [smartAnalysisManager, setSmartAnalysisManager] = useState<SmartSequentialAnalysisManager | null>(null);
+  const [smartAnalysisConfig, setSmartAnalysisConfig] = useState(ROBUST_ANALYSIS_CONFIG);
+  const [useSmartAnalysis, setUseSmartAnalysis] = useState(true);
+  const [showSmartSettings, setShowSmartSettings] = useState(false);
+  const [smartAnalysisProgress, setSmartAnalysisProgress] = useState<any>(null);
+  
+  // حالة حفظ المراحل التلقائي
+  const [currentAnalysisCase, setCurrentAnalysisCase] = useState<LegalCase | null>(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
 
-  // تحديث حجم arrays النتائج عند تغيير المراحل
+  // متغيرات أخرى
+  const [existingCases, setExistingCases] = useState<LegalCase[]>([]);
+  const [selectedStageForCollab, setSelectedStageForCollab] = useState<string | null>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  // تحديث حجم arrays النتائج عند تغيير عدد المراحل المفتوحة
   useEffect(() => {
     const currentStagesLength = CURRENT_STAGES.length;
     const resultsLength = stageResults.length;
@@ -241,37 +273,21 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
         return newShow;
       });
     }
-  }, [selectedCaseTypes]);
+  }, [unlockedStages, CURRENT_STAGES.length]);
 
-  
-  // حالة التحليل
-  const [isAutoAnalyzing, setIsAutoAnalyzing] = useState(false);
-  const [currentAnalyzingStage, setCurrentAnalyzingStage] = useState(0);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisError, setAnalysisError] = useState('');
-  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<string>('');
-  
-  // النظام المتسلسل
-  const [sequentialAnalysisManager, setSequentialAnalysisManager] = useState<SequentialAnalysisManager | null>(null);
-  const [sequentialProgress, setSequentialProgress] = useState<AnalysisProgress | null>(null);
-  const [showSequentialProgress, setShowSequentialProgress] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<SequentialAnalysisStage[]>([]);
-  const [canPauseResume, setCanPauseResume] = useState(false);
-  
-  // النظام الذكي المحسن
-  const [smartAnalysisManager, setSmartAnalysisManager] = useState<SmartSequentialAnalysisManager | null>(null);
-  const [smartAnalysisConfig, setSmartAnalysisConfig] = useState(ROBUST_ANALYSIS_CONFIG);
-  const [useSmartAnalysis, setUseSmartAnalysis] = useState(true);
-  const [showSmartSettings, setShowSmartSettings] = useState(false);
-  const [smartAnalysisProgress, setSmartAnalysisProgress] = useState<any>(null);
-  
-  // متغيرات أخرى
-  const [existingCases, setExistingCases] = useState<LegalCase[]>([]);
-  const [selectedStageForCollab, setSelectedStageForCollab] = useState<string | null>(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  
-  const collabRef = useRef<HTMLDivElement | null>(null);
+  // تحميل المراحل المحفوظة تلقائياً عند تغيير اسم القضية أو نوعها
+  useEffect(() => {
+    const loadSavedData = async () => {
+      if (caseNameInput.trim() || selectedCaseTypes.length > 0) {
+        await loadSavedStagesFromDatabase();
+      }
+    };
+    
+    // تأخير قصير لضمان اكتمال تحديث CURRENT_STAGES
+    const timeoutId = setTimeout(loadSavedData, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [caseNameInput, selectedCaseTypes, CURRENT_STAGES.length]);
 
   // خاصية فتح مراحل إضافية تدريجياً (نظام ثابت: 17 مرحلة)
   const unlockNextStages = () => {
@@ -394,6 +410,18 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     }
   }, [unlockedStages, CURRENT_STAGES.length]);
 
+  // تحميل المراحل المحفوظة عند تغيير النص أو اسم القضية
+  useEffect(() => {
+    if (mainText && mainText.length > 10) {
+      loadSavedStagesFromDatabase();
+    }
+  }, [mainText, caseNameInput]);
+
+  // تحميل المراحل المحفوظة عند بدء التطبيق
+  useEffect(() => {
+    loadExistingCases();
+  }, []);
+
   // تشغيل فتح المراحل عند إنجاز مراحل
   useEffect(() => {
     unlockNextStages();
@@ -465,7 +493,121 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     }
   };
 
-  // دوال التحليل الذكي
+  // دالة تحميل المراحل المحفوظة سابقاً (عند بدء التطبيق)
+  const loadSavedStagesFromDatabase = async () => {
+    try {
+      const caseName = caseNameInput.trim() || 
+        `قضية ${selectedCaseTypes[0] || 'عام'} - ${new Date().toLocaleDateString('ar')}`;
+      
+      const allCases: LegalCase[] = await getAllCases();
+      const existing = allCases.find((c: LegalCase) => c.name === caseName);
+      
+      if (existing && existing.stages.length > 0) {
+        console.log(`💼 تم العثور على قضية محفوظة: ${caseName} بها ${existing.stages.length} مراحل`);
+        
+        // ترتيب المراحل حسب الفهرس
+        const sortedStages = existing.stages.sort((a, b) => a.stageIndex - b.stageIndex);
+        
+        // إعادة تعبئة النتائج في الواجهة
+        const loadedResults = Array(CURRENT_STAGES.length).fill(null);
+        const loadedShowResults = Array(CURRENT_STAGES.length).fill(false);
+        
+        sortedStages.forEach(stage => {
+          if (stage.stageIndex < CURRENT_STAGES.length) {
+            loadedResults[stage.stageIndex] = stage.output;
+            loadedShowResults[stage.stageIndex] = true;
+          }
+        });
+        
+        setStageResults(loadedResults);
+        setStageShowResult(loadedShowResults);
+        setCurrentAnalysisCase(existing); // حفظ مرجع القضية الحالية
+        
+        const completedCount = loadedResults.filter(r => r !== null).length;
+        console.log(`✅ تم استعادة ${completedCount} مراحل محفوظة`);
+        
+        // عرض إشعار للمستخدم
+        if (completedCount > 0) {
+          setShowUnlockNotification(`🔄 تم استعادة ${completedCount} مراحل محفوظة من قبل`);
+          setTimeout(() => setShowUnlockNotification(null), 4000);
+        }
+        
+        return true; // تم تحميل مراحل محفوظة
+      }
+      
+      return false; // لا توجد مراحل محفوظة
+      
+    } catch (error) {
+      console.error('❌ خطأ في تحميل المراحل المحفوظة:', error);
+      return false;
+    }
+  };
+
+  // دالة حفظ مرحلة واحدة فور اكتمالها (تحديث تلقائي)
+  const saveCompletedStageToDatabase = async (stageIndex: number, stageOutput: string) => {
+    try {
+      const caseName = caseNameInput.trim() || 
+        `قضية ${selectedCaseTypes[0] || 'عام'} - ${new Date().toLocaleDateString('ar')}`;
+      
+      const newStage = {
+        id: `${stageIndex}-${btoa(unescape(encodeURIComponent(mainText))).slice(0,8)}-${Date.now()}`,
+        stageIndex,
+        stage: CURRENT_STAGES[stageIndex],
+        input: mainText,
+        output: stageOutput,
+        date: new Date().toISOString(),
+      };
+      
+      const allCases: LegalCase[] = await getAllCases();
+      const existing = allCases.find((c: LegalCase) => c.name === caseName);
+      
+      if (existing) {
+        // تحديث المرحلة إذا كانت موجودة، أو إضافة مرحلة جديدة
+        const stageExists = existing.stages.findIndex(s => s.stageIndex === stageIndex);
+        if (stageExists >= 0) {
+          existing.stages[stageExists] = newStage;
+          console.log(`📝 تم تحديث المرحلة ${stageIndex + 1} في القضية: ${caseName}`);
+        } else {
+          existing.stages.push(newStage);
+          console.log(`➕ تم إضافة المرحلة ${stageIndex + 1} إلى القضية: ${caseName}`);
+        }
+        
+        // ترتيب المراحل حسب الفهرس
+        existing.stages.sort((a, b) => a.stageIndex - b.stageIndex);
+        await updateCase(existing);
+      } else {
+        // إنشاء قضية جديدة
+        const newCaseId = `${caseName}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+        await addCase({
+          id: newCaseId,
+          name: caseName,
+          createdAt: newStage.date,
+          stages: [newStage],
+        });
+        console.log(`🆕 تم إنشاء قضية جديدة وحفظ المرحلة ${stageIndex + 1}: ${caseName}`);
+      }
+      
+      // تحديث قائمة القضايا الموجودة
+      loadExistingCases();
+      
+    } catch (error) {
+      console.error(`❌ خطأ في حفظ المرحلة ${stageIndex + 1}:`, error);
+    }
+  };
+
+  // دالة عرض معلومات التقدم المحفوظ
+  const getSavedProgressInfo = () => {
+    const completedCount = stageResults.filter(r => r !== null).length;
+    const totalCount = CURRENT_STAGES.length;
+    const progressPercentage = Math.round((completedCount / totalCount) * 100);
+    
+    return {
+      completedCount,
+      totalCount,
+      progressPercentage,
+      hasProgress: completedCount > 0
+    };
+  };
   const startSmartAnalysis = async () => {
     console.log('🧠 بدء التحليل الذكي المحسن...');
     
@@ -506,6 +648,9 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
           });
           
           console.log(`📝 تم عرض نتيجة المرحلة ${progress.stageIndex + 1} فورًا`);
+          
+          // حفظ المرحلة فور اكتمالها في قاعدة البيانات
+          saveCompletedStageToDatabase(progress.stageIndex, progress.result);
         }
         
         // تحديث النتائج في الواجهة
@@ -522,6 +667,9 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
               newShow[index] = true;
               return newShow;
             });
+            
+            // حفظ المرحلة فور اكتمالها
+            saveCompletedStageToDatabase(index, stage.output);
           }
           
           if (stage.status === 'failed') {
@@ -764,6 +912,8 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     }
   };
 
+
+
   // دالة تحديد نوع القضية الذكي
   const determineSmartCaseType = (text: string): string => {
     if (!text || text.length < 10) return 'عام';
@@ -813,6 +963,34 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
         margin: '0 auto',
         padding: isMobile() ? '1rem 0.5rem' : '2rem 1rem',
       }}>
+        {/* تنبيه استعادة المراحل */}
+        {showUnlockNotification && (
+          <div style={{
+            background: showUnlockNotification.includes('استعادة') ? 
+              'linear-gradient(135deg, #10b981 0%, #34d399 100%)' : 
+              'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+            borderRadius: 12,
+            padding: '16px 20px',
+            marginBottom: 16,
+            boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+            fontWeight: 600,
+            textAlign: 'center',
+            color: '#fff',
+            animation: 'slideInRight 0.5s ease-out'
+          }}>
+            <div style={{fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8}}>
+              {showUnlockNotification.includes('استعادة') && <span>🔄</span>}
+              {showUnlockNotification.includes('فتح') && <span>🎉</span>}
+              <span>{showUnlockNotification}</span>
+            </div>
+            {showUnlockNotification.includes('استعادة') && (
+              <div style={{fontSize: '13px', marginTop: '8px', opacity: 0.9}}>
+                يمكنك الاستمرار من حيث توقفت باستخدام التحليل الذكي
+              </div>
+            )}
+          </div>
+        )}
+
         {/* تنبيه الترحيب */}
         {!apiKey && (
           <div style={{
@@ -934,6 +1112,14 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                   darkMode={darkMode}
                   existingCases={existingCases}
                   onSelectExistingCase={handleSelectExistingCase}
+                />
+
+                {/* إشعار التقدم المحفوظ */}
+                <SavedProgressNotification
+                  {...getSavedProgressInfo()}
+                  onLoadProgress={loadSavedStagesFromDatabase}
+                  theme={theme}
+                  isMobile={isMobile()}
                 />
 
                 {/* نظام اختيار نوع القضية */}
