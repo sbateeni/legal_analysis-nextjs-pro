@@ -43,6 +43,7 @@ import AnalysisControls from '../components/sections/AnalysisControls';
 import ProgressIndicator from '../components/sections/ProgressIndicator';
 import StageResults from '../components/sections/StageResults';
 import EnhancedStageResults from '../components/EnhancedStageResults';
+import CaseOrganizer from '../components/CaseOrganizer';
 import AdvancedSettings from '../components/sections/AdvancedSettings';
 import CaseTypeSelection from '../components/CaseTypeSelection';
 import AutoDetectionSystemSummary from '../components/AutoDetectionSystemSummary';
@@ -93,6 +94,7 @@ export default function Home() {
       console.warn('Failed to save to localStorage:', error);
     }
   };
+
 
   if (showLandingPage) {
     return <LandingPage onSkip={handleSkipLanding} />;
@@ -238,7 +240,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
         status,
         timeSpent: hasResult ? Math.floor(Math.random() * 5) + 1 : undefined, // وقت وهمي للعرض
         textLength: hasResult ? stageResults[index]?.length || 0 : undefined,
-        error: hasError ? stageErrors[index] : undefined,
+        error: hasError ? stageErrors[index] ?? undefined : undefined,
         requiresApiKey: requiresApiKey && !hasResult
       };
     });
@@ -261,6 +263,27 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisError, setAnalysisError] = useState('');
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<string>('');
+  
+  // حالة منظم القضية
+  const [showCaseOrganizer, setShowCaseOrganizer] = useState(false);
+  
+  // دوال منظم القضية
+  const handleOrganizeCase = () => {
+    if (!mainText.trim()) {
+      alert('يرجى إدخال تفاصيل القضية أولاً');
+      return;
+    }
+    setShowCaseOrganizer(true);
+  };
+
+  const handleCaseOrganized = (organizedText: string) => {
+    setMainText(organizedText);
+    setShowCaseOrganizer(false);
+  };
+
+  const handleCancelOrganizer = () => {
+    setShowCaseOrganizer(false);
+  };
   
   // النظام المتسلسل
   const [sequentialAnalysisManager, setSequentialAnalysisManager] = useState<SequentialAnalysisManager | null>(null);
@@ -1163,6 +1186,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                   darkMode={darkMode}
                   existingCases={existingCases}
                   onSelectExistingCase={handleSelectExistingCase}
+                  onOrganizeCase={handleOrganizeCase}
                 />
 
                 {/* إشعار التقدم المحفوظ */}
@@ -1716,6 +1740,15 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
             📱 تثبيت التطبيق
           </button>
         )}
+
+        {/* منظم القضية */}
+        <CaseOrganizer
+          originalText={mainText}
+          onOrganized={handleCaseOrganized}
+          onCancel={handleCancelOrganizer}
+          isVisible={showCaseOrganizer}
+          apiKey={apiKey}
+        />
       </main>
     </div>
   );

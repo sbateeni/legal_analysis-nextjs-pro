@@ -18,6 +18,8 @@ interface DataInputSectionProps {
   // إضافة دعم القضايا السابقة
   existingCases?: any[];
   onSelectExistingCase?: (caseId: string) => void;
+  // إضافة دعم منظم القضية
+  onOrganizeCase?: () => void;
 }
 
 export const DataInputSection: React.FC<DataInputSectionProps> = ({
@@ -31,7 +33,8 @@ export const DataInputSection: React.FC<DataInputSectionProps> = ({
   isMobile,
   darkMode,
   existingCases = [],
-  onSelectExistingCase
+  onSelectExistingCase,
+  onOrganizeCase
 }) => {
   return (
     <div style={{
@@ -224,15 +227,50 @@ export const DataInputSection: React.FC<DataInputSectionProps> = ({
 
       {/* حقل تفاصيل القضية */}
       <div>
-        <label style={{
-          display: 'block',
-          fontSize: 14,
-          fontWeight: 'bold',
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           marginBottom: 8,
-          color: theme.text,
         }}>
-          📄 تفاصيل القضية:
-        </label>
+          <label style={{
+            fontSize: 14,
+            fontWeight: 'bold',
+            color: theme.text,
+          }}>
+            📄 تفاصيل القضية:
+          </label>
+          {onOrganizeCase && mainText.trim() && (
+            <button
+              onClick={onOrganizeCase}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+              }}
+            >
+              🔧 تنظيم القضية
+            </button>
+          )}
+        </div>
         <textarea
           value={mainText}
           onChange={(e) => setMainText(e.target.value)}
