@@ -18,6 +18,7 @@ import { Button } from '../components/UI';
 
 // استيراد أنظمة التحليل
 import stagesDef from '../stages';
+import { buildSpecializedStages } from '../types/caseTypes';
 import type { StageDetails } from '../types/analysis';
 import { 
   SequentialAnalysisManager, 
@@ -191,7 +192,21 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     return fixedStages;
   };
   
-  const ALL_POSSIBLE_STAGES = getAllPossibleStages();
+  // دمج المراحل الأساسية مع مراحل التخصص المختارة
+  const ALL_POSSIBLE_STAGES = React.useMemo(() => {
+    const fixed = getAllPossibleStages(); // 12 أساسية + 4 متقدمة + عريضة
+    const specialized = buildSpecializedStages(selectedCaseTypes, false);
+    // إدراج مراحل التخصص بعد الأساسية مباشرة دون تكرار
+    const first12 = fixed.slice(0, 12);
+    const rest = fixed.slice(12);
+    const merged: string[] = [];
+    const seen = new Set<string>();
+    for (const s of first12) { if (!seen.has(s)) { seen.add(s); merged.push(s); } }
+    for (const s of specialized) { if (!seen.has(s)) { seen.add(s); merged.push(s); } }
+    for (const s of rest) { if (!seen.has(s)) { seen.add(s); merged.push(s); } }
+    return merged;
+  }, [selectedCaseTypes]);
+
   const CURRENT_STAGES = ALL_POSSIBLE_STAGES.slice(0, unlockedStages);
   
   // نتائج المراحل
@@ -322,19 +337,17 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     }
   };
 
-  // دالة فتح جميع المراحل الثابتة (17 مرحلة)
+  // دالة فتح جميع المراحل (ديناميكي بناءً على الدمج)
   const unlockAllStages = () => {
-    const totalFixedStages = 17; // 12 أساسية + 4 متقدمة + 1 عريضة
-    
-    console.log(`🔓 فتح جميع المراحل الثابتة: ${totalFixedStages} مرحلة`);
-    
-    setUnlockedStages(totalFixedStages);
+    const totalStages = ALL_POSSIBLE_STAGES.length;
+    console.log(`🔓 فتح جميع المراحل: ${totalStages} مرحلة`);
+    setUnlockedStages(totalStages);
     setCurrentPhase('complete');
     
-    setShowUnlockNotification(`🔓 تم فتح جميع المراحل (${totalFixedStages} مرحلة)`);
+    setShowUnlockNotification(`🔓 تم فتح جميع المراحل (${totalStages} مرحلة)`);
     setTimeout(() => setShowUnlockNotification(null), 4000);
     
-    console.log(`✅ تم فتح جميع المراحل الثابتة: ${totalFixedStages} مرحلة`);
+    console.log(`✅ تم فتح جميع المراحل: ${totalStages} مرحلة`);
   };
 
   // دالة اقتراح المرحلة التالية
@@ -346,13 +359,11 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     return null;
   };
 
-  // إعادة ضبط عند تغيير نوع القضية (نظام ثابت: 17 مرحلة دائماً)
+  // إعادة ضبط عند تغيير نوع القضية (ديناميكي)
   useEffect(() => {
-    const totalFixedStages = 17; // 12 أساسية + 4 متقدمة + 1 عريضة
-    
-    console.log(`🔄 نظام ثابت: عرض ${totalFixedStages} مرحلة دائماً (بغض النظر عن نوع القضية)`);
-    
-    // إعادة ضبط عدد المراحل المفتوحة إلى 5 (المرحلة الأساسية)
+    const totalStages = ALL_POSSIBLE_STAGES.length;
+    console.log(`🔄 تحديث عدد المراحل وفق التخصص: ${totalStages} مرحلة`);
+    // إعادة ضبط عدد المراحل المفتوحة إلى 5 كبداية
     const initialStages = 5;
     setUnlockedStages(initialStages);
     setCurrentPhase('essential');
@@ -364,7 +375,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     setStageShowResult(Array(initialStages).fill(false));
     
     console.log(`✅ تم إعادة ضبط النظام: ${initialStages} مراحل مفتوحة`);
-  }, [selectedCaseTypes]);
+  }, [selectedCaseTypes, ALL_POSSIBLE_STAGES.length]);
 
   // تحديث حجم arrays النتائج عند تغيير عدد المراحل المفتوحة
   useEffect(() => {
