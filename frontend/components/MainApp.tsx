@@ -47,15 +47,21 @@ import AutoDetectionSystemSummary from '../components/AutoDetectionSystemSummary
 import EnhancedAnalysisSettings from '../components/EnhancedAnalysisSettings';
 import CollabPanel from '../components/CollabPanel';
 
-// تعريف المراحل
-const STAGES = Object.keys(stagesDef).sort((a, b) => {
-  const da = (stagesDef as Record<string, StageDetails>)[a]?.order ?? 9999;
-  const db = (stagesDef as Record<string, StageDetails>)[b]?.order ?? 9999;
-  return da - db;
-});
+// تعريف المراحل - فقط المراحل الأساسية (1-12)
+const STAGES = Object.keys(stagesDef)
+  .filter(stageName => {
+    const stageOrder = (stagesDef as Record<string, StageDetails>)[stageName]?.order ?? 9999;
+    // فقط المراحل الأساسية (رقم 1-12) واستبعاد المراحل المتخصصة (101+)
+    return stageOrder >= 1 && stageOrder <= 12;
+  })
+  .sort((a, b) => {
+    const da = (stagesDef as Record<string, StageDetails>)[a]?.order ?? 9999;
+    const db = (stagesDef as Record<string, StageDetails>)[b]?.order ?? 9999;
+    return da - db;
+  });
 
-const FINAL_STAGE = 'المرحلة الثالثة عشرة: العريضة القانونية النهائية';
-const ALL_STAGES = [...STAGES, FINAL_STAGE];
+const FINAL_STAGE = 'المرحلة السابعة عشرة: العريضة القانونية النهائية';
+// ملاحظة: ALL_STAGES هذا متغير قديم ولن يستخدم في النظام الثابت
 
 type PartyRole = 'المشتكي' | 'المشتكى عليه' | 'المدعي' | 'المدعى عليه';
 
@@ -118,41 +124,74 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   const [showCustomStages, setShowCustomStages] = useState(false);
   const [oldSystemDetection] = useState<string>('أحوال شخصية');
   
-  // دالة تحديد المراحل المناسبة بناءً على نوع القضية
+  // دالة تحديد المراحل المناسبة بناءً على نوع القضية مع النظام التدريجي
   const getRelevantStages = () => {
     const baseStages = STAGES; // المراحل الأساسية (12 مرحلة)
     const finalStage = FINAL_STAGE; // المرحلة الأخيرة
     
+    // النظام التدريجي - عرض المراحل بالتدريج
+    // المرحلة الأولى: المراحل الأساسية فقط (5 مراحل)
+    const essentialStages = baseStages.slice(0, 5);
+    
     // إذا لم يتم اختيار نوع محدد أو كان "عام"، أعرض المراحل الأساسية فقط
     if (!selectedCaseTypes || selectedCaseTypes.length === 0 || 
         (selectedCaseTypes.length === 1 && selectedCaseTypes[0] === 'عام')) {
-      return [...baseStages, finalStage];
+      return [...essentialStages]; // ابدأ بـ 5 مراحل فقط
     }
     
-    // إنشاء المراحل المخصصة بناءً على نوع القضية
+    // للقضايا المخصصة، أضف مراحل تدريجية
     try {
       const customStagesForCase = generateCustomStages(selectedCaseTypes);
       const relevantCustomStages = customStagesForCase
         .filter(stage => stage.isRequired || selectedCaseTypes.some(type => stage.caseTypes.includes(type)))
-        .slice(0, 8); // حد أقصى 8 مراحل مخصصة
+        .slice(0, 3); // حد أقصى 3 مراحل مخصصة في البداية
       
-      // دمج المراحل الأساسية مع المراحل المخصصة
-      const combinedStages = [
-        ...baseStages, // المراحل الأساسية (12 مرحلة)
-        ...relevantCustomStages.map(stage => stage.name), // المراحل المخصصة (حتى 8 مراحل)
-        finalStage // المرحلة الأخيرة
+      // دمج المراحل التدريجي
+      const progressiveStages = [
+        ...essentialStages, // المراحل الأساسية (5 مراحل)
+        ...relevantCustomStages.map(stage => stage.name), // المراحل المخصصة (حتى 3 مراحل)
       ];
       
-      console.log(`🎯 تم إنشاء ${combinedStages.length} مرحلة لأنواع القضايا: ${selectedCaseTypes.join('، ')}`);
-      return combinedStages;
+      console.log(`🎯 نظام تدريجي: بدء بـ ${progressiveStages.length} مرحلة لأنواع القضايا: ${selectedCaseTypes.join('، ')}`);
+      return progressiveStages;
     } catch (error) {
       console.error('خطأ في إنشاء المراحل المخصصة:', error);
-      return [...baseStages, finalStage]; // العودة للمراحل الأساسية في حالة الخطأ
+      return [...essentialStages]; // العودة للمراحل الأساسية في حالة الخطأ
     }
   };
   
-  // تحديد المراحل عند تغيير نوع القضية
-  const CURRENT_STAGES = getRelevantStages();
+  // حالة النظام التدريجي
+  const [currentPhase, setCurrentPhase] = useState<'essential' | 'intermediate' | 'advanced' | 'complete'>('essential');
+  const [unlockedStages, setUnlockedStages] = useState<number>(5); // ابدأ بـ 5 مراحل
+  const [showUnlockNotification, setShowUnlockNotification] = useState<string | null>(null);
+  
+  // تحديد المراحل الثابتة: 12 مرحلة أساسية + 4 مراحل متقدمة فقط
+  const getAllPossibleStages = () => {
+    const baseStages = STAGES; // 12 مرحلة أساسية
+    const finalStage = FINAL_STAGE; // العريضة النهائية
+    
+    // فقط المراحل الأساسية الـ 12 الأولى (بدون مراحل مخصصة لنوع القضية)
+    const first12BasicStages = baseStages.slice(0, 12);
+    
+    // عرض دائم للمراحل الأساسية والمتقدمة فقط (بدون مراحل مخصصة لنوع القضية)
+    const fixedStages = [
+      ...first12BasicStages, // 12 مرحلة أساسية
+      // المراحق المتقدمة الإضافية الـ4:
+      'المرحلة الثالثة عشرة: تحليل المخاطر القانونية',
+      'المرحلة الرابعة عشرة: استراتيجية الدفاع/الادعاء',
+      'المرحضة الخامسة عشرة: خطة التنفيذ العملي',
+      'المرحلة السادسة عشرة: تحليل التكلفة والوقت',
+      finalStage // العريضة النهآية
+    ];
+    
+    console.log(`📁 النظام الثابت: ${first12BasicStages.length} مرحلة أساسية + 4 مراحل متقدمة + 1 عريضة = ${fixedStages.length} مرحلة إجمالي`);
+    console.log(`🔍 المراحل الأساسية الـ 12:`, first12BasicStages);
+    console.log(`🔍 قائمة المراحل الثابتة النهائية:`, fixedStages);
+    return fixedStages;
+  };
+  
+  const ALL_POSSIBLE_STAGES = getAllPossibleStages();
+  const CURRENT_STAGES = ALL_POSSIBLE_STAGES.slice(0, unlockedStages);
   
   // نتائج المراحل
   const [stageResults, setStageResults] = useState<(string|null)[]>(() => Array(CURRENT_STAGES.length).fill(null));
@@ -234,7 +273,84 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   
   const collabRef = useRef<HTMLDivElement | null>(null);
 
-  // تحديث حجم arrays النتائج عند تغيير المراحل
+  // خاصية فتح مراحل إضافية تدريجياً (نظام ثابت: 17 مرحلة)
+  const unlockNextStages = () => {
+    const completedStages = stageResults.filter(result => result !== null).length;
+    const currentUnlockedStages = unlockedStages;
+    const totalFixedStages = 17; // 12 أساسية + 4 متقدمة + 1 عريضة
+    
+    // فتح مراحل إضافية عند إنجاز 80% من المراحل الحالية
+    const completionRate = completedStages / currentUnlockedStages;
+    
+    if (completionRate >= 0.8 && unlockedStages < totalFixedStages) {
+      const newUnlockedStages = Math.min(
+        totalFixedStages,
+        unlockedStages + 3 // فتح 3 مراحل إضافية
+      );
+      
+      console.log(`🔓 فتح مراحل جديدة: ${unlockedStages} -> ${newUnlockedStages}`);
+      setUnlockedStages(newUnlockedStages);
+      
+      // عرض إشعار الفتح
+      setShowUnlockNotification(`🎉 تم فتح ${newUnlockedStages - unlockedStages} مراحل جديدة!`);
+      setTimeout(() => setShowUnlockNotification(null), 4000);
+      
+      // تحديث المرحلة
+      if (newUnlockedStages <= 8) {
+        setCurrentPhase('intermediate');
+      } else if (newUnlockedStages <= 15) {
+        setCurrentPhase('advanced');
+      } else {
+        setCurrentPhase('complete');
+      }
+    }
+  };
+
+  // دالة فتح جميع المراحل الثابتة (17 مرحلة)
+  const unlockAllStages = () => {
+    const totalFixedStages = 17; // 12 أساسية + 4 متقدمة + 1 عريضة
+    
+    console.log(`🔓 فتح جميع المراحل الثابتة: ${totalFixedStages} مرحلة`);
+    
+    setUnlockedStages(totalFixedStages);
+    setCurrentPhase('complete');
+    
+    setShowUnlockNotification(`🔓 تم فتح جميع المراحل (${totalFixedStages} مرحلة)`);
+    setTimeout(() => setShowUnlockNotification(null), 4000);
+    
+    console.log(`✅ تم فتح جميع المراحل الثابتة: ${totalFixedStages} مرحلة`);
+  };
+
+  // دالة اقتراح المرحلة التالية
+  const getNextRecommendedStage = (): number | null => {
+    const completedCount = stageResults.filter(r => r !== null).length;
+    if (completedCount < unlockedStages) {
+      return completedCount; // أول مرحلة غير مكتملة
+    }
+    return null;
+  };
+
+  // إعادة ضبط عند تغيير نوع القضية (نظام ثابت: 17 مرحلة دائماً)
+  useEffect(() => {
+    const totalFixedStages = 17; // 12 أساسية + 4 متقدمة + 1 عريضة
+    
+    console.log(`🔄 نظام ثابت: عرض ${totalFixedStages} مرحلة دائماً (بغض النظر عن نوع القضية)`);
+    
+    // إعادة ضبط عدد المراحل المفتوحة إلى 5 (المرحلة الأساسية)
+    const initialStages = 5;
+    setUnlockedStages(initialStages);
+    setCurrentPhase('essential');
+    
+    // مسح النتائج السابقة عند تغيير نوع القضية
+    setStageResults(Array(initialStages).fill(null));
+    setStageLoading(Array(initialStages).fill(false));
+    setStageErrors(Array(initialStages).fill(null));
+    setStageShowResult(Array(initialStages).fill(false));
+    
+    console.log(`✅ تم إعادة ضبط النظام: ${initialStages} مراحل مفتوحة`);
+  }, [selectedCaseTypes]);
+
+  // تحديث حجم arrays النتائج عند تغيير عدد المراحل المفتوحة
   useEffect(() => {
     const currentStagesLength = CURRENT_STAGES.length;
     const resultsLength = stageResults.length;
@@ -276,7 +392,19 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
         return newShow;
       });
     }
-  }, [selectedCaseTypes, CURRENT_STAGES.length]);
+  }, [unlockedStages, CURRENT_STAGES.length]);
+
+  // تشغيل فتح المراحل عند إنجاز مراحل
+  useEffect(() => {
+    unlockNextStages();
+    
+    // احتفال عند إنجاز جميع المراحل
+    const completedCount = stageResults.filter(r => r !== null && r !== '').length;
+    if (completedCount === unlockedStages && completedCount >= 12) {
+      setShowUnlockNotification('🎉 مبروك! تم إنجاز جميع المراحل المتاحة!');
+      setTimeout(() => setShowUnlockNotification(null), 5000);
+    }
+  }, [stageResults]);
 
   // تهيئة المكون
   useEffect(() => {
@@ -325,7 +453,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
       // تحديث النتائج السابقة
       const existingResults = selectedCase.stages.map(stage => stage.output);
       const filledResults = [...existingResults];
-      while (filledResults.length < ALL_STAGES.length) {
+      while (filledResults.length < ALL_POSSIBLE_STAGES.length) {
         filledResults.push('');
       }
       setStageResults(filledResults);
@@ -362,6 +490,24 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
         setAnalysisProgress(progress.progress);
         setIsAutoAnalyzing(progress.isRunning);
         
+        // عرض فوري لنتائج المراحل المكتملة
+        if (progress.type === 'stage_completed' && progress.displayImmediate) {
+          // تحديث النتائج فورًا في الواجهة
+          setStageResults(prev => {
+            const newResults = [...prev];
+            newResults[progress.stageIndex] = progress.result;
+            return newResults;
+          });
+          
+          setStageShowResult(prev => {
+            const newShow = [...prev];
+            newShow[progress.stageIndex] = true;
+            return newShow;
+          });
+          
+          console.log(`📝 تم عرض نتيجة المرحلة ${progress.stageIndex + 1} فورًا`);
+        }
+        
         // تحديث النتائج في الواجهة
         progress.stages?.forEach((stage: any, index: number) => {
           if (stage.status === 'completed' && stage.output) {
@@ -390,6 +536,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
     );
     
     setSmartAnalysisManager(manager);
+    setCanPauseResume(true); // تفعيل إمكانية الإيقاف المؤقت والاستئناف
     
     try {
       // إذا كانت هناك مراحل مكتملة، استخدم الاستكمال الذكي
@@ -433,6 +580,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
       setAnalysisError(error instanceof Error ? error.message : 'خطأ غير معروف');
     } finally {
       setIsAutoAnalyzing(false);
+      setCanPauseResume(false); // إلغاء إمكانية الإيقاف المؤقت عند انتهاء التحليل
     }
   };
 
@@ -443,21 +591,40 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   };
 
   const stopAutoAnalysis = () => {
+    console.log('⏹️ إيقاف التحليل بناءً على طلب المستخدم...');
+    
     if (smartAnalysisManager) {
+      console.log('⚙️ إيقاف مدير التحليل الذكي...');
       smartAnalysisManager.stop();
     }
     if (sequentialAnalysisManager) {
+      console.log('⚙️ إيقاف مدير التحليل العادي...');
       sequentialAnalysisManager.stop();
     }
+    
     setIsAutoAnalyzing(false);
+    setCanPauseResume(false); // إلغاء إمكانية الإيقاف المؤقت عند الإيقاف
+    
+    console.log('✅ تم إيقاف التحليل بنجاح');
   };
 
   const togglePauseResume = () => {
     if (smartAnalysisManager) {
       if (smartAnalysisProgress?.isPaused) {
+        console.log('♾️ استئناف التحليل الذكي...');
         smartAnalysisManager.resume();
       } else {
+        console.log('⏸️ إيقاف مؤقت للتحليل الذكي...');
         smartAnalysisManager.pause();
+      }
+    }
+    if (sequentialAnalysisManager) {
+      if (sequentialProgress?.isPaused) {
+        console.log('♾️ استئناف التحليل العادي...');
+        sequentialAnalysisManager.resume();
+      } else {
+        console.log('⏸️ إيقاف مؤقت للتحليل العادي...');
+        sequentialAnalysisManager.pause();
       }
     }
   };
@@ -465,7 +632,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   // دالة تحليل مرحلة واحدة
   const handleAnalyzeStage = async (idx: number) => {
     // إذا كانت المرحلة الأخيرة (العريضة النهائية)
-    if (idx === ALL_STAGES.length - 1) {
+    if (idx === CURRENT_STAGES.length - 1) {
       setStageLoading(arr => arr.map((v, i) => i === idx ? true : v));
       setStageErrors(arr => arr.map((v, i) => i === idx ? null : v));
       setStageResults(arr => arr.map((v, i) => i === idx ? null : v));
@@ -606,6 +773,27 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
 
   if (!mounted) {
     return null;
+  }
+
+  // إضافة CSS للأنيميشن
+  if (typeof document !== 'undefined') {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    `;
+    if (!document.querySelector('#progressive-stages-styles')) {
+      styleElement.id = 'progressive-stages-styles';
+      document.head.appendChild(styleElement);
+    }
   }
 
   return (
@@ -763,53 +951,183 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
 
             {activeTab === 'stages' && (
               <div>
-                {/* عرض معلومات المراحل المخصصة */}
-                {selectedCaseTypes.length > 0 && selectedCaseTypes[0] !== 'عام' && (
+                {/* عرض معلومات النظام الثابت */}
+                <div style={{
+                  background: `${theme.accent}10`,
+                  borderRadius: 12,
+                  padding: isMobile() ? 16 : 20,
+                  marginBottom: 20,
+                  border: `1px solid ${theme.accent}30`
+                }}>
                   <div style={{
-                    background: `${theme.accent}10`,
-                    borderRadius: 12,
-                    padding: isMobile() ? 16 : 20,
-                    marginBottom: 20,
-                    border: `1px solid ${theme.accent}30`
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 12
+                  }}>
+                    <h4 style={{
+                      color: theme.accent,
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      margin: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
+                    }}>
+                      ⚙️ نظام ثابت: 12 مرحلة أساسية + 4 مراحل متقدمة
+                    </h4>
+                    <div style={{
+                      background: theme.accent,
+                      color: '#fff',
+                      borderRadius: 12,
+                      padding: '4px 8px',
+                      fontSize: 12,
+                      fontWeight: 'bold'
+                    }}>
+                      17 مرحلة
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: 13,
+                    color: theme.text,
+                    opacity: 0.8,
+                    lineHeight: 1.5
+                  }}>
+                    🎯 نظام مبسط وفعال: 12 مرحلة أساسية للتحليل القانوني + 4 مراحل متقدمة + عريضة نهائية
+                  </div>
+                </div>
+
+                {/* قسم النظام التدريجي */}
+                <div style={{
+                  background: `linear-gradient(135deg, ${theme.accent}20 0%, ${theme.accent}10 100%)`,
+                  borderRadius: 12,
+                  padding: isMobile() ? 12 : 16,
+                  marginBottom: 16,
+                  border: `1px solid ${theme.accent}30`
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 12
                   }}>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 12
+                      gap: 8
                     }}>
-                      <h4 style={{
-                        color: theme.accent,
+                      <span style={{
                         fontSize: 16,
-                        fontWeight: 'bold',
-                        margin: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8
+                        color: theme.accent
                       }}>
-                        ⚙️ مراحل مخصصة لقضايا: {selectedCaseTypes.join('، ')}
-                      </h4>
-                      <div style={{
-                        background: theme.accent,
-                        color: '#fff',
-                        borderRadius: 12,
-                        padding: '4px 8px',
-                        fontSize: 12,
+                        🎯
+                      </span>
+                      <span style={{
+                        color: theme.text,
+                        fontSize: isMobile() ? 14 : 16,
                         fontWeight: 'bold'
                       }}>
-                        {CURRENT_STAGES.length} مرحلة
-                      </div>
+                        نظام ثابت: {unlockedStages} من 17 مرحلة
+                      </span>
                     </div>
+                    
                     <div style={{
-                      fontSize: 13,
-                      color: theme.text,
-                      opacity: 0.8,
-                      lineHeight: 1.5
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
                     }}>
-                      🎯 تم تخصيص المراحل بناءً على نوع القضية المختار. يتضمن التحليل المراحل الأساسية (12 مرحلة) بالإضافة إلى مراحل متخصصة لنوع قضيتك.
+                      {/* مؤشر التقدم */}
+                      <div style={{
+                        background: theme.input,
+                        borderRadius: 20,
+                        height: 8,
+                        width: 100,
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          background: `linear-gradient(90deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
+                          height: '100%',
+                          width: `${(unlockedStages / 17) * 100}%`,
+                          transition: 'width 0.3s ease'
+                        }} />
+                      </div>
+                      
+                      {/* زر فتح جميع المراحل */}
+                      {unlockedStages < ALL_POSSIBLE_STAGES.length && (
+                        <button
+                          onClick={unlockAllStages}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                            border: 'none',
+                            background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
+                            color: '#fff',
+                            fontSize: 12,
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = `0 4px 12px ${theme.accent}40`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        >
+                          🔓 فتح الكل
+                        </button>
+                      )}
                     </div>
                   </div>
-                )}
+                  
+                  {/* رسالة توضيحية */}
+                  <div style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: `${theme.text}88`,
+                    lineHeight: 1.4
+                  }}>
+                    {currentPhase === 'essential' && 'تبدأ بالمراحل الأساسية. أكمل 80% لفتح مراحل متقدمة.'}
+                    {currentPhase === 'intermediate' && 'مرحلة متوسطة - تم فتح مراحل إضافية. استمر لفتح المزيد.'}
+                    {currentPhase === 'advanced' && 'مرحلة متقدمة - معظم المراحل متاحة. أكمل للوصول للنظام الشامل.'}
+                    {currentPhase === 'complete' && 'اكتمل! جميع المراحل متاحة الآن.'}
+                  </div>
+                  
+                  {/* إحصائيات واقتراحات ذكية */}
+                  <div style={{
+                    marginTop: 12,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: 11,
+                    color: `${theme.text}66`
+                  }}>
+                    <span>📊 معدل الإنجاز: {Math.round((stageResults.filter(r => r !== null).length / unlockedStages) * 100)}%</span>
+                    <span>🎯 متبقي: {ALL_POSSIBLE_STAGES.length - unlockedStages} مرحلة</span>
+                  </div>
+                  
+                  {/* اقتراح المرحلة التالية */}
+                  {(() => {
+                    const nextStage = getNextRecommendedStage();
+                    return nextStage !== null ? (
+                      <div style={{
+                        marginTop: 8,
+                        padding: '6px 10px',
+                        background: `${theme.accent}15`,
+                        borderRadius: 6,
+                        fontSize: 11,
+                        color: theme.accent,
+                        fontWeight: 'bold',
+                        border: `1px solid ${theme.accent}30`
+                      }}>
+                        📝 اقتراح: ابدأ بالمرحلة {nextStage + 1}
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
 
                 {/* قسم التحليل اليدوي المبرز - دائماً مرئي */}
                 <div style={{
@@ -995,7 +1313,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                     })}
                   </div>
                   
-                  {ALL_STAGES.length > 8 && (
+                  {CURRENT_STAGES.length > 8 && (
                     <div style={{
                       marginTop: 12,
                       fontSize: 12,
@@ -1100,6 +1418,27 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
             fontWeight: 'bold'
           }}>
             ❌ خطأ: {analysisError}
+          </div>
+        )}
+
+        {/* إشعار فتح المراحل */}
+        {showUnlockNotification && (
+          <div style={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
+            background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
+            color: '#fff',
+            border: 'none',
+            borderRadius: 12,
+            padding: '12px 20px',
+            fontSize: 14,
+            fontWeight: 'bold',
+            boxShadow: `0 6px 20px ${theme.accent}40`,
+            zIndex: 1001,
+            animation: 'slideInRight 0.3s ease-out'
+          }}>
+            {showUnlockNotification}
           </div>
         )}
 

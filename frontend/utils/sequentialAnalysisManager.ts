@@ -68,8 +68,8 @@ export class SequentialAnalysisManager {
   ) {
     this.stages = stages;
     this.config = {
-      baseDelay: 5000, // 5 ثواني
-      maxDelay: 15000, // 15 ثانية
+      baseDelay: 15000, // الحد الأدنى 15 ثانية
+      maxDelay: 30000, // 30 ثانية
       maxRetries: 3,
       timeoutPerStage: 60000, // دقيقة
       enableProgressSave: true,

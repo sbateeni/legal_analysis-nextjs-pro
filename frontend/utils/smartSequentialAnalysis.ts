@@ -52,7 +52,7 @@ export class SmartSequentialAnalysisManager {
   ) {
     this.config = {
       maxRetries: 5, // زيادة المحاولات الافتراضية
-      baseDelay: 3000,
+      baseDelay: 15000, // الحد الأدنى 15 ثانية بين المراحل
       maxDelay: 30000, // زيادة أقصى انتظار
       exponentialBackoff: true,
       criticalStageRetries: 8, // محاولات إضافية للمراحل الحرجة
@@ -156,6 +156,9 @@ export class SmartSequentialAnalysisManager {
           console.log(`✅ تمت المرحلة ${i + 1} بنجاح`);
           stage.status = 'completed';
           this.updateContextAfterSuccess(i);
+          
+          // عرض فوري لنتيجة المرحلة للقراءة
+          this.displayStageResult(i, stage.output || 'تم التحليل بنجاح');
         } else {
           console.warn(`❌ فشلت المرحلة ${i + 1}`);
           await this.handleStageFailure(i);
@@ -442,25 +445,27 @@ export class SmartSequentialAnalysisManager {
   }
 
   /**
-   * حساب فترة انتظار ذكية
+   * حساب فترة انتظار ذكية مع حد أدنى 15 ثانية
    */
   private calculateSmartDelay(stageIndex: number): number {
-    let delay = this.config.baseDelay;
+    // الحد الأدنى 15 ثانية بين كل مرحلة والأخرى
+    let delay = Math.max(this.config.baseDelay, 15000); // 15 ثانية على الأقل
 
     // زيادة التأخير بناءً على الفشل الحديث
     const recentFailures = Array.from(this.context.failedStages.keys())
       .filter(index => index >= stageIndex - 2).length;
     
-    delay += recentFailures * 2000;
+    delay += recentFailures * 3000; // زيادة 3 ثواني لكل فشل حديث
 
     // زيادة التأخير للمراحل المتأخرة (أكثر تعقيداً)
     if (stageIndex > 10) {
-      delay += 3000;
+      delay += 5000; // 5 ثواني إضافية للمراحل المتقدمة
     } else if (stageIndex > 5) {
-      delay += 1500;
+      delay += 2000; // ثانيتان إضافيتان للمراحل المتوسطة
     }
 
-    return Math.min(this.config.maxDelay, delay);
+    // ضمان عدم تجاوز الحد الأقصى وعدم النزول تحت 15 ثانية
+    return Math.max(15000, Math.min(this.config.maxDelay, delay));
   }
 
   /**
@@ -590,6 +595,81 @@ export class SmartSequentialAnalysisManager {
     return recommendations;
   }
 
+  /**
+   * عرض فوري لنتيجة المرحلة مع عنوان واضح وفاصل زمني
+   */
+  private displayStageResult(stageIndex: number, result: string): void {
+    const stage = this.stages[stageIndex];
+    const timestamp = new Date().toLocaleTimeString('ar-EG', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    
+    console.log(`
+┌${''.padEnd(80, '─')}┐`);
+    console.log(`│ 📄 انتهى من: ${stage.name.padEnd(50)} │`);
+    console.log(`│ ⏰ الوقت: ${timestamp.padEnd(58)} │`);
+    console.log(`├${''.padEnd(80, '─')}┤`);
+    console.log(`│ 📝 النتيجة:${' '.repeat(66)} │`);
+    
+    // تقسيم النتيجة إلى أسطر للعرض المنظم
+    const lines = this.formatResultForDisplay(result, 76);
+    lines.forEach(line => {
+      console.log(`│ ${line.padEnd(78)} │`);
+    });
+    
+    console.log(`└${''.padEnd(80, '─')}┘
+`);
+    
+    // إرسال إشعار للواجهة لعرض النتيجة فورًا
+    if (this.progressCallback) {
+      this.progressCallback({
+        type: 'stage_completed',
+        stageIndex,
+        stageName: stage.name,
+        result,
+        timestamp,
+        displayImmediate: true // إشارة لعرض فوري
+      });
+    }
+  }
+
+  /**
+   * تنسيق النتيجة للعرض في أسطر محددة العرض
+   */
+  private formatResultForDisplay(text: string, maxWidth: number): string[] {
+    const lines: string[] = [];
+    const paragraphs = text.split('\n');
+    
+    paragraphs.forEach(paragraph => {
+      if (paragraph.trim() === '') {
+        lines.push('');
+        return;
+      }
+      
+      const words = paragraph.split(' ');
+      let currentLine = '';
+      
+      words.forEach(word => {
+        if ((currentLine + word).length <= maxWidth) {
+          currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+          if (currentLine) {
+            lines.push(currentLine);
+          }
+          currentLine = word;
+        }
+      });
+      
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+    });
+    
+    return lines;
+  }
+
   // Helper methods
   private async waitIfPaused(): Promise<void> {
     while (this.isPaused && !this.shouldStop) {
@@ -699,6 +779,9 @@ export class SmartSequentialAnalysisManager {
           console.log(`✅ تمت المرحلة ${i + 1} بنجاح`);
           stage.status = 'completed';
           this.updateContextAfterSuccess(i);
+          
+          // عرض فوري لنتيجة المرحلة للقراءة
+          this.displayStageResult(i, stage.output || 'تم التحليل بنجاح');
         } else {
           console.warn(`❌ فشلت المرحلة ${i + 1}`);
           await this.handleStageFailure(i);
