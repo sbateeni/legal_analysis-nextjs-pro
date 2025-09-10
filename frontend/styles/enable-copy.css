@@ -65,7 +65,6 @@ textarea, input, pre, code,
   -khtml-user-drag: auto !important;
   -moz-user-drag: auto !important;
   -o-user-drag: auto !important;
-  user-drag: auto !important;
 }
 
 /* Enable copying shortcuts */
