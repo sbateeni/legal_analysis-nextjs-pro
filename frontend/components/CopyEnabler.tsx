@@ -22,6 +22,8 @@ export const CopyEnabler = () => {
               eventsToRemove.forEach(eventName => {
                 document.removeEventListener(eventName, function(e) { return false; }, true);
                 document.removeEventListener(eventName, function(e) { return false; }, false);
+                document.removeEventListener(eventName, function(e) { e.preventDefault(); return false; }, true);
+                document.removeEventListener(eventName, function(e) { e.preventDefault(); return false; }, false);
               });
 
               // Override common copy prevention methods
@@ -31,6 +33,14 @@ export const CopyEnabler = () => {
               document.oncopy = null;
               document.oncut = null;
               document.onpaste = null;
+
+              // Override window-level event handlers
+              window.onselectstart = null;
+              window.ondragstart = null;
+              window.oncontextmenu = null;
+              window.oncopy = null;
+              window.oncut = null;
+              window.onpaste = null;
 
               // Add CSS styles to enable copying
               const style = document.createElement('style');
@@ -97,6 +107,11 @@ export const CopyEnabler = () => {
             document.addEventListener('focus', enableCopyFunctionality);
             document.addEventListener('click', enableCopyFunctionality);
             document.addEventListener('DOMContentLoaded', enableCopyFunctionality);
+            document.addEventListener('load', enableCopyFunctionality);
+            window.addEventListener('load', enableCopyFunctionality);
+            
+            // Re-enable periodically to catch any new blocking code
+            setInterval(enableCopyFunctionality, 2000);
             
             console.log('✅ Copy functionality enabled globally - تم تفعيل وظيفة النسخ عالمياً');
           })();

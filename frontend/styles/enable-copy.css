@@ -13,6 +13,14 @@
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
 }
 
+/* Ensure body allows text selection */
+html, body {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+
 /* Remove any pointer events that might block selection */
 body {
   -webkit-user-select: text !important;
@@ -72,4 +80,43 @@ body {
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   user-select: text !important;
+}
+
+/* Additional overrides for common blocking classes */
+.no-copy, .no-select, .noselect, .unselectable, .disable-select {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+
+/* Ensure all interactive elements allow text selection */
+button, a, div, span, p, h1, h2, h3, h4, h5, h6 {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Override any inline styles that might block selection */
+[style*="user-select: none"], [style*="user-select:none"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Enable context menu for copying */
+* {
+  -webkit-touch-callout: default !important;
+}
+
+/* Remove any drag restrictions that might interfere */
+* {
+  -webkit-user-drag: auto !important;
+  -khtml-user-drag: auto !important;
+  -moz-user-drag: auto !important;
+  -o-user-drag: auto !important;
+  user-drag: auto !important;
 }
