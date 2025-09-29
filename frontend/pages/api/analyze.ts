@@ -1,26 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { 
-  AnalysisRequest, 
-  AnalysisResponse, 
-  AnalysisError, 
-  AnalysisContext 
-} from '../../types/analysis';
-import { validateAnalysisRequest, sanitizeText } from '../../utils/validation';
-import { getCachedAnalysis, cacheAnalysis, checkRateLimit, checkRateLimitForKey } from '../../utils/cache';
+import { sanitizeText, validateAnalysisRequest } from '@utils/validation';
+import { checkRateLimitForKey, getCachedAnalysis, cacheAnalysis } from '@utils/cache';
 import { 
   buildEnhancedPrompt, 
   buildFinalPetitionPrompt,
   determineComplexity,
   determineCaseType 
-<<<<<<< HEAD
 } from '@utils/prompts';
 import { callAIService, AIProviderError, getRecommendedModel } from '@utils/apiIntegration';
 import { getProviderFromModel, getModelConfig } from '@utils/aiProvider';
 import { getApiKeyForProvider } from '@utils/appSettings';
-=======
-} from '../../utils/prompts';
->>>>>>> 8664678bfaf305aa3806395b55eb9aa4ed3c6035
 import stages from '../../stages';
+import { AnalysisRequest, AnalysisError, AnalysisContext, AnalysisResponse } from '../../types/analysis';
 
 // تعريف مراحل التحليل القانوني (12 مرحلة)
 const STAGES = Object.keys(stages);
