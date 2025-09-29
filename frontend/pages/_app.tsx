@@ -3,8 +3,11 @@ import Head from 'next/head';
 import { useEffect, useRef, useState } from 'react';
 import '../styles/globals.css';
 import '../styles/responsive.css';
+import '../styles/enable-copy.css';
+import '../styles/enhanced-stage-results.css';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Layout from '../components/Layout';
+import CopyEnabler from '../components/CopyEnabler';
 import type { NextWebVitalsMetric } from 'next/app';
 import { recordWebVital } from '@utils/metrics';
 // تم حذف نظام المصادقة لجعل الموقع عاماً
@@ -171,19 +174,6 @@ export default function App({ Component, pageProps }: AppProps) {
         /* تحسين أداء التطبيق */
         * {
           -webkit-tap-highlight-color: transparent;
-          -webkit-touch-callout: none;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-        }
-        
-        /* السماح بالتحديد للنصوص والإدخالات */
-        input, textarea, [contenteditable] {
-          -webkit-user-select: text;
-          -moz-user-select: text;
-          -ms-user-select: text;
-          user-select: text;
         }
         
         /* أنيميشن زر التثبيت */
@@ -224,6 +214,7 @@ export default function App({ Component, pageProps }: AppProps) {
         fontWeight: 'bold'
       }} onFocus={(e) => e.currentTarget.style.top = '6px'} onBlur={(e) => e.currentTarget.style.top = '-40px'}>تخطي إلى المحتوى</a>
       <ThemeProvider>
+        <CopyEnabler />
         <Layout>
           <main id="main-content">
             <Component {...pageProps} />

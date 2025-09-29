@@ -5,17 +5,21 @@ import {
   AnalysisError, 
   AnalysisContext 
 } from '../../types/analysis';
-import { validateAnalysisRequest, sanitizeText } from '@utils/validation';
-import { getCachedAnalysis, cacheAnalysis, checkRateLimit, checkRateLimitForKey } from '@utils/cache';
+import { validateAnalysisRequest, sanitizeText } from '../../utils/validation';
+import { getCachedAnalysis, cacheAnalysis, checkRateLimit, checkRateLimitForKey } from '../../utils/cache';
 import { 
   buildEnhancedPrompt, 
   buildFinalPetitionPrompt,
   determineComplexity,
   determineCaseType 
+<<<<<<< HEAD
 } from '@utils/prompts';
 import { callAIService, AIProviderError, getRecommendedModel } from '@utils/apiIntegration';
 import { getProviderFromModel, getModelConfig } from '@utils/aiProvider';
 import { getApiKeyForProvider } from '@utils/appSettings';
+=======
+} from '../../utils/prompts';
+>>>>>>> 8664678bfaf305aa3806395b55eb9aa4ed3c6035
 import stages from '../../stages';
 
 // تعريف مراحل التحليل القانوني (12 مرحلة)

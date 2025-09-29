@@ -4,6 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { buildSpecializedStages } from '../types/caseTypes';
+import CustomTypeModal from './CustomTypeModal';
+import { saveCaseTypeSettings, loadCaseTypeSettings, CaseTypeSettings } from '../utils/caseTypeStorage';
 import { detectCaseType, suggestAdditionalTypes, analyzeCaseComplexity, compareWithOldSystem, CaseTypeDetectionResult } from '../utils/caseTypeDetection';
 
 interface CaseTypeSelectionProps {
@@ -41,12 +44,50 @@ export const CaseTypeSelection: React.FC<CaseTypeSelectionProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lastDetectedType, setLastDetectedType] = useState<string>('');
   const [comparisonResult, setComparisonResult] = useState<any>(null);
+  const [mode, setMode] = useState<'basic' | 'advanced'>('basic');
+  const [stagePreview, setStagePreview] = useState<string[]>([]);
+  const [includeOptionals, setIncludeOptionals] = useState<boolean>(false);
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customTypes, setCustomTypes] = useState<string[]>([]);
 
-  // الأنواع المتاحة مسبقاً
+  // الأنواع المتاحة مسبقاً + المخصصة
   const predefinedTypes = [
     'عام', 'مدني', 'جنائي', 'تجاري', 'أحوال شخصية',
     'عمالي', 'إداري', 'عقاري', 'ضريبي', 'دستوري', 'بيئي'
   ];
+  const allAvailableTypes = [...predefinedTypes, ...customTypes];
+
+  // تحميل الإعدادات المحفوظة عند بدء التطبيق
+  useEffect(() => {
+    const savedSettings = loadCaseTypeSettings();
+    setSelectedTypes(savedSettings.selectedTypes);
+    setMode(savedSettings.mode);
+    setIncludeOptionals(savedSettings.includeOptionals);
+    setCustomTypes(savedSettings.customTypes);
+    onTypeChange(savedSettings.selectedTypes);
+  }, []);
+
+  // حفظ الإعدادات عند تغييرها
+  useEffect(() => {
+    if (selectedTypes.length > 0) {
+      saveCaseTypeSettings({
+        selectedTypes,
+        mode,
+        includeOptionals,
+        customTypes
+      });
+    }
+  }, [selectedTypes, mode, includeOptionals, customTypes]);
+
+  // معاينة المراحل المتخصصة وفق الاختيار والوضع
+  useEffect(() => {
+    try {
+      const specialized = buildSpecializedStages(selectedTypes, mode === 'advanced' && includeOptionals);
+      setStagePreview(specialized);
+    } catch {
+      setStagePreview([]);
+    }
+  }, [selectedTypes, mode, includeOptionals]);
 
   // إجراء الكشف التلقائي عند تغيير النص
   useEffect(() => {
@@ -309,8 +350,48 @@ export const CaseTypeSelection: React.FC<CaseTypeSelectionProps> = ({
         </div>
       )}
 
-      {/* الأنواع المحددة مسبقاً */}
+      {/* وضع أساسي/متقدم + الأنواع المحددة مسبقاً */}
       <div style={{ marginBottom: 16 }}>
+        <div style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 8
+        }}>
+          <button
+            onClick={() => setMode('basic')}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 8,
+              border: '1px solid ' + theme.input,
+              background: mode === 'basic' ? theme.accent : 'transparent',
+              color: mode === 'basic' ? '#fff' : theme.text,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
+            أساسي
+          </button>
+          <button
+            onClick={() => setMode('advanced')}
+            style={{
+              padding: '6px 10px',
+              borderRadius: 8,
+              border: '1px solid ' + theme.input,
+              background: mode === 'advanced' ? theme.accent : 'transparent',
+              color: mode === 'advanced' ? '#fff' : theme.text,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
+            متقدم
+          </button>
+          {mode === 'advanced' && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+              <input type="checkbox" checked={includeOptionals} onChange={(e) => setIncludeOptionals(e.target.checked)} />
+              تضمين المراحل الاختيارية
+            </label>
+          )}
+        </div>
         <div style={{
           fontSize: 14,
           fontWeight: 'bold',
@@ -324,7 +405,7 @@ export const CaseTypeSelection: React.FC<CaseTypeSelectionProps> = ({
           gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
           gap: 8
         }}>
-          {predefinedTypes.map(type => (
+          {allAvailableTypes.map(type => (
             <button
               key={type}
               onClick={() => handleTypeToggle(type)}
@@ -348,82 +429,72 @@ export const CaseTypeSelection: React.FC<CaseTypeSelectionProps> = ({
         </div>
       </div>
 
+      {/* معاينة المراحل المتخصصة */}
+      {stagePreview.length > 0 && (
+        <div style={{
+          background: theme.background,
+          border: '1px solid ' + theme.input,
+          borderRadius: 8,
+          padding: 12,
+          marginTop: 8
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 6, color: theme.accent }}>
+            معاينة المراحل المتخصصة ({stagePreview.length})
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {stagePreview.map((s, i) => (
+              <span key={i} style={{
+                fontSize: 12,
+                padding: '4px 6px',
+                borderRadius: 6,
+                background: theme.card,
+                border: '1px solid ' + theme.input
+              }}>
+                {s}
+              </span>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, opacity: 0.8, marginTop: 8 }}>
+            سيتم دمج هذه المراحل بعد المراحل الأساسية تلقائياً.
+          </div>
+        </div>
+      )}
+
       {/* إضافة نوع مخصص */}
       <div>
-        {!showCustomInput ? (
-          <button
-            onClick={() => setShowCustomInput(true)}
-            style={{
-              background: 'transparent',
-              color: theme.accent2,
-              border: `1px dashed ${theme.accent2}`,
-              borderRadius: 8,
-              padding: '8px 12px',
-              fontSize: 13,
-              cursor: 'pointer',
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6
-            }}
-          >
-            ➕ إضافة نوع مخصص
-          </button>
-        ) : (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="text"
-              value={customType}
-              onChange={(e) => setCustomType(e.target.value)}
-              placeholder="اكتب نوع القضية المخصص..."
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                border: `1px solid ${theme.input}`,
-                borderRadius: 6,
-                background: theme.background,
-                color: theme.text,
-                fontSize: 13
-              }}
-              onKeyPress={(e) => e.key === 'Enter' && addCustomType()}
-            />
-            <button
-              onClick={addCustomType}
-              disabled={!customType.trim()}
-              style={{
-                background: theme.accent2,
-                color: '#fff',
-                border: 'none',
-                borderRadius: 6,
-                padding: '8px 12px',
-                fontSize: 13,
-                cursor: customType.trim() ? 'pointer' : 'not-allowed',
-                opacity: customType.trim() ? 1 : 0.5
-              }}
-            >
-              إضافة
-            </button>
-            <button
-              onClick={() => {
-                setShowCustomInput(false);
-                setCustomType('');
-              }}
-              style={{
-                background: 'transparent',
-                color: theme.text,
-                border: `1px solid ${theme.input}`,
-                borderRadius: 6,
-                padding: '8px 12px',
-                fontSize: 13,
-                cursor: 'pointer'
-              }}
-            >
-              إلغاء
-            </button>
-          </div>
-        )}
+        <button
+          onClick={() => setShowCustomModal(true)}
+          style={{
+            background: 'transparent',
+            color: theme.accent2,
+            border: `1px dashed ${theme.accent2}`,
+            borderRadius: 8,
+            padding: '8px 12px',
+            fontSize: 13,
+            cursor: 'pointer',
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6
+          }}
+        >
+          ➕ إضافة نوع مخصص
+        </button>
       </div>
+
+      {/* مودال النوع المخصص */}
+      <CustomTypeModal
+        isOpen={showCustomModal}
+        onClose={() => setShowCustomModal(false)}
+        onSave={(customTypeData) => {
+          setCustomTypes(prev => [...prev, customTypeData.name]);
+          setSelectedTypes(prev => [...prev, customTypeData.name]);
+          onTypeChange([...selectedTypes, customTypeData.name]);
+        }}
+        theme={theme}
+        isMobile={isMobile}
+      />
 
       {/* مقارنة مع النظام القديم */}
       {comparisonResult && oldSystemDetection && (

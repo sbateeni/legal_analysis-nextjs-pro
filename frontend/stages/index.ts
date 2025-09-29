@@ -31,7 +31,7 @@ const stages: StageDetailsMap = {
       'إن وُجد خلاف على الاختصاص: قدّم دفوع عدم الاختصاص النوعي/المكاني مبكراً'
     ],
     complexity: 'basic',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 1,
     prerequisites: [],
     deadlines: [
@@ -67,7 +67,7 @@ const stages: StageDetailsMap = {
       'تبليغات الخصوم والمكاتبات المؤرخة تفيد في ضبط المواعيد'
     ],
     complexity: 'basic',
-    applicableTo: ['عام','ميراث','تجاري','جنائي','عمل','عقاري','إداري','إيجارات','أحوال شخصية'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 2,
     prerequisites: ['المرحلة الأولى: تحديد المشكلة القانونية'],
     deadlines: [
@@ -103,7 +103,7 @@ const stages: StageDetailsMap = {
       'الرجوع للمواد المنظمة للتعاريف والاصطلاحات في القوانين الخاصة إن وجدت'
     ],
     complexity: 'intermediate',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 3,
     prerequisites: [
       'المرحلة الأولى: تحديد المشكلة القانونية',
@@ -140,7 +140,7 @@ const stages: StageDetailsMap = {
       'تحقق من النسخ الأحدث للنصوص النافذة وأي تعديلات لاحقة'
     ],
     complexity: 'intermediate',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 4,
     prerequisites: [
       'المرحلة الثالثة: تحليل النصوص القانونية'
@@ -176,7 +176,7 @@ const stages: StageDetailsMap = {
       'ميّز بين السوابق الملزمة والارشادية وفق النظام القضائي'
     ],
     complexity: 'advanced',
-    applicableTo: ['عام','ميراث','تجاري','جنائي','عمل','عقاري','إداري','إيجارات','أحوال شخصية'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 5,
     prerequisites: [
       'المرحلة الرابعة: تحديد القواعد القانونية المنطبقة'
@@ -212,7 +212,7 @@ const stages: StageDetailsMap = {
       'استخدم الفقه كمُعضّد لا كمصدر تشريعي مستقل'
     ],
     complexity: 'advanced',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 6,
     optional: true,
     prerequisites: [
@@ -249,7 +249,7 @@ const stages: StageDetailsMap = {
       'انتبِه لآجال التبليغ وآثارها الإجرائية على الوقائع'
     ],
     complexity: 'intermediate',
-    applicableTo: ['عام','ميراث','تجاري','جنائي','عمل','عقاري','إداري','إيجارات','أحوال شخصية'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 7,
     prerequisites: [
       'المرحلة السادسة: تحليل الفقه القانوني'
@@ -285,7 +285,7 @@ const stages: StageDetailsMap = {
       'افحص بدائل التسوية/التحكيم إن كانت أسرع وأقل كلفة'
     ],
     complexity: 'intermediate',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 8,
     prerequisites: [
       'المرحلة السابعة: تحليل الظروف الواقعية'
@@ -321,7 +321,7 @@ const stages: StageDetailsMap = {
       'وازن بين التكلفة والجدول الزمني واحتمالات الاستئناف'
     ],
     complexity: 'advanced',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 9,
     prerequisites: [
       'المرحلة الثامنة: تحديد الحلول القانونية الممكنة'
@@ -357,7 +357,7 @@ const stages: StageDetailsMap = {
       'تحقق من استيفاء الشروط الشكلية والإجرائية قبل اعتماد الحل'
     ],
     complexity: 'advanced',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 10,
     prerequisites: [
       'المرحلة التاسعة: تقييم الحلول القانونية'
@@ -393,7 +393,7 @@ const stages: StageDetailsMap = {
       'احرص على الطلبات الختامية المحددة والقابلة للتنفيذ'
     ],
     complexity: 'advanced',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 11,
     prerequisites: [
       'المرحلة العاشرة: اختيار الحل الأمثل'
@@ -429,7 +429,7 @@ const stages: StageDetailsMap = {
       'ضمّن بدائل عملية إذا تعذر المسار القضائي الأنسب'
     ],
     complexity: 'advanced',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 12,
     prerequisites: [
       'المرحلة الحادية عشرة: صياغة الحل القانوني'
@@ -460,7 +460,7 @@ const stages: StageDetailsMap = {
       'قانون أصول المحاكمات المدنية والتجارية'
     ],
     complexity: 'advanced',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 13,
     optional: true,
     prerequisites: [
@@ -491,7 +491,7 @@ const stages: StageDetailsMap = {
       'قانون الإجراءات الجزائية/المدنية بحسب طبيعة القضية'
     ],
     complexity: 'advanced',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 14,
     prerequisites: [
       'المرحلة الثالثة عشرة: تحليل المخاطر القانونية'
@@ -521,7 +521,7 @@ const stages: StageDetailsMap = {
       'قانون التنفيذ'
     ],
     complexity: 'intermediate',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 15,
     prerequisites: [
       'المرحلة الرابعة عشرة: استراتيجية الدفاع/الادعاء'
@@ -553,7 +553,7 @@ const stages: StageDetailsMap = {
       'قانون التحكيم والوساطة'
     ],
     complexity: 'intermediate',
-    applicableTo: ['عام'],
+    applicableTo: ['عام', 'ميراث', 'تجاري', 'جنائي', 'عمل', 'عقاري', 'إداري', 'إيجارات', 'أحوال شخصية'],
     order: 16,
     optional: true,
     prerequisites: [

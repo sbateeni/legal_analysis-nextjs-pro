@@ -135,7 +135,9 @@ export const StageResults: React.FC<StageResultsProps> = ({
                   `${theme.accent}10` : 
                   isFailed ? 
                     '#ef444415' : 
-                    theme.background,
+                    isPending && index >= (stageLoading.length > 0 ? Math.min(stageLoading.length, 5) : 5) ?
+                      `${theme.input}50` : // مراحل غير مفتوحة بعد
+                      theme.background,
                 border: `1px solid ${
                   isCompleted ? theme.accent : 
                   isFailed ? '#ef4444' : 
