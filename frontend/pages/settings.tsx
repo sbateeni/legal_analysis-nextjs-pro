@@ -107,19 +107,33 @@ function SettingsPageContent() {
     try {
       // Validate the key first
       const validation = await validateProviderApiKey('openrouter', openRouterKey.trim());
-      if (!validation.valid) {
+      
+      // For OpenRouter, we'll be more permissive with validation in online environments
+      // If we get a network error but not a clear invalid key message, we'll allow it
+      if (!validation.valid && !validation.error?.includes('لا يمكن التحقق')) {
         const detailedMessage = validation.error || 'غير معروف';
         const additionalGuidance = detailedMessage.includes('غير معروف') ? ' قد تحتاج إلى إضافة طريقة دفع حتى لو كنت تستخدم النماذج المجانية. تأكد من تفعيل المفتاح في لوحة التحكم الخاصة بك في OpenRouter.' : '';
+        const onlineEnvironmentGuidance = 'في البيئة الإلكترونية، قد تواجه مشاكل في التحقق بسبب قيود الشبكة، ولكن المفتاح قد يكون صحيحًا.';
         setNotices(prev => [...prev, { 
           id: Math.random().toString(36).slice(2), 
           type: 'error', 
-          message: `مفتاح OpenRouter غير صالح: ${detailedMessage}.${additionalGuidance} يرجى التأكد من صحة المفتاح والتحقق من اتصال الإنترنت.` 
+          message: `مفتاح OpenRouter غير صالح: ${detailedMessage}.${additionalGuidance} ${onlineEnvironmentGuidance} يرجى التأكد من صحة المفتاح والتحقق من اتصال الإنترنت.` 
         }]);
         return;
       }
       
       await saveApiKeyForProvider('openrouter', openRouterKey.trim());
-      setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم حفظ مفتاح OpenRouter بنجاح.' }]);
+      
+      // Show warning if validation had network issues but we're saving anyway
+      if (validation.error?.includes('لا يمكن التحقق')) {
+        setNotices(prev => [...prev, { 
+          id: Math.random().toString(36).slice(2), 
+          type: 'warning', 
+          message: 'تم حفظ مفتاح OpenRouter رغم عدم القدرة على التحقق منه بالكامل. هذا قد يكون بسبب قيود الشبكة في البيئة الإلكترونية. إذا كان المفتاح صحيحًا، يجب أن يعمل بشكل طبيعي.' 
+        }]);
+      } else {
+        setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم حفظ مفتاح OpenRouter بنجاح.' }]);
+      }
       
       // Update health status
       setProviderHealth(prev => ({ ...prev, openrouter: true }));
@@ -350,10 +364,12 @@ function SettingsPageContent() {
                <strong>ℹ️ معلومات مهمة حول OpenRouter:</strong>
                <ul style={{margin: '4px 0 0 0', paddingRight: 16}}>
                  <li>يجب إنشاء مفتاح API من موقع OpenRouter الرسمي</li>
-                 <li>قد تحتاج إلى إضافة طريقة دفع حتى لو كنت تستخدم النماذج المجانية</li>
+                 <li><strong>متطلب مهم:</strong> يجب ربط طريقة دفع بالحساب حتى عند استخدام النماذج المجانية (هذا متطلب من OpenRouter)</li>
                  <li>تأكد من تفعيل المفتاح بعد إنشائه</li>
                  <li>قد يستغرق تفعيل المفتاح بضع دقائق</li>
                  <li>تأكد من نسخ المفتاح بالكامل دون أي مسافات إضافية</li>
+                 <li>في البيئة الإلكترونية، قد تواجه مشاكل في التحقق بسبب قيود الشبكة حتى بعد ربط طريقة الدفع</li>
+                 <li>إذا كنت متأكدًا من صحة المفتاح، يمكنك حفظه رغم ظهور رسالة التحذير</li>
                </ul>
              </div>
            </div>

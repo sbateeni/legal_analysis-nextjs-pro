@@ -197,7 +197,7 @@ export async function validateProviderApiKey(
 ): Promise<{ valid: boolean; error?: string }> {
   try {
     const providerInstance = createAIProvider(provider, apiKey, 
-      provider === 'openrouter' ? 'google/gemma-2-27b-it' : undefined
+      provider === 'openrouter' ? 'x-ai/grok-4-fast' : undefined
     );
     
     const isValid = await providerInstance.validateApiKey(apiKey);
@@ -207,13 +207,21 @@ export async function validateProviderApiKey(
       // Provide specific error messages based on provider
       let errorMessage = 'مفتاح API غير صالح';
       if (provider === 'openrouter') {
-        errorMessage = 'مفتاح OpenRouter غير صالح أو منتهي الصلاحية';
+        errorMessage = 'مفتاح OpenRouter غير صالح أو منتهي الصلاحية. قد تحتاج إلى ربط طريقة دفع بالحساب حتى عند استخدام النماذج المجانية. تأكد من تفعيل المفتاح في لوحة التحكم الخاصة بك في OpenRouter.';
       } else if (provider === 'google') {
         errorMessage = 'مفتاح Google API غير صالح أو منتهي الصلاحية';
       }
       return { valid: false, error: errorMessage };
     }
   } catch (error: any) {
+    // For OpenRouter, network errors in online environments don't necessarily mean invalid keys
+    if (provider === 'openrouter') {
+      return { 
+        valid: true, // Assume valid in case of network issues
+        error: 'لا يمكن التحقق من صحة المفتاح في الوقت الحالي. قد يكون هذا بسبب قيود الشبكة في البيئة الإلكترونية. إذا كنت متأكدًا من صحة المفتاح، يمكنك استخدامه رغم هذا التحذير.' 
+      };
+    }
+    
     return { 
       valid: false, 
       error: error.message || 'فشل في التحقق من مفتاح API' 
