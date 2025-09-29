@@ -4,7 +4,7 @@
  */
 
 import Link from 'next/link';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { mapApiErrorToMessage, extractApiError } from '@utils/errors';
 import { saveApiKey, loadApiKey, addCase, getAllCases, updateCase, LegalCase } from '@utils/db';
 import { isMobile } from '@utils/crypto';
@@ -111,48 +111,57 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
   const [stageGating, setStageGating] = useState<boolean>(true);
   const [showDeadlines, setShowDeadlines] = useState<boolean>(true);
   
-  // نظام الكشف التلقائي
-  const [selectedCaseTypes, setSelectedCaseTypes] = useState<string[]>([caseType]);
+  // نظام الكشف التلقائي - البدء بـ "عام" لضمان عرض المراحل الأساسية فقط عند عدم اختيار نوع محدد
+  const [selectedCaseTypes, setSelectedCaseTypes] = useState<string[]>(['عام']);
   const [caseComplexity, setCaseComplexity] = useState<any>(null);
   const [customStages, setCustomStages] = useState<any[]>([]);
   const [showCustomStages, setShowCustomStages] = useState(false);
   const [oldSystemDetection] = useState<string>('أحوال شخصية');
   
-  // دالة تحديد المراحل المناسبة بناءً على نوع القضية
-  const getRelevantStages = () => {
+  // تحديد المراحل عند تغيير نوع القضية - باستخدام useMemo للأداء
+  const CURRENT_STAGES = useMemo(() => {
     const baseStages = STAGES; // المراحل الأساسية (12 مرحلة)
     const finalStage = FINAL_STAGE; // المرحلة الأخيرة
     
-    // إذا لم يتم اختيار نوع محدد أو كان "عام"، أعرض المراحل الأساسية فقط
+    console.log('🔍 فحص أنواع القضايا المختارة:', selectedCaseTypes);
+    
+    // إذا لم يتم اختيار أي نوع أو كان "عام" فقط، أعرض المراحل الأساسية فقط
     if (!selectedCaseTypes || selectedCaseTypes.length === 0 || 
         (selectedCaseTypes.length === 1 && selectedCaseTypes[0] === 'عام')) {
+      console.log('✅ عرض المراحل الأساسية فقط (13 مرحلة) - الأنواع:', selectedCaseTypes);
       return [...baseStages, finalStage];
     }
     
-    // إنشاء المراحل المخصصة بناءً على نوع القضية
+    // تفيلتر الأنواع لاستبعاد "عام" عند وجود أنواع أخرى
+    const filteredTypes = selectedCaseTypes.filter(type => type !== 'عام');
+    
+    if (filteredTypes.length === 0) {
+      console.log('✅ عرض المراحل الأساسية فقط - لا توجد أنواع مخصصة');
+      return [...baseStages, finalStage];
+    }
+    
+    // إنشاء المراحل المخصصة بناءً على نوع القضية المختار
     try {
-      const customStagesForCase = generateCustomStages(selectedCaseTypes);
+      const customStagesForCase = generateCustomStages(filteredTypes);
       const relevantCustomStages = customStagesForCase
-        .filter(stage => stage.isRequired || selectedCaseTypes.some(type => stage.caseTypes.includes(type)))
-        .slice(0, 8); // حد أقصى 8 مراحل مخصصة
+        .filter(stage => stage.isRequired || filteredTypes.some(type => stage.caseTypes.includes(type)))
+        .slice(0, 6); // حد أقصى 6 مراحل مخصصة لتجنب الإرهاق
       
-      // دمج المراحل الأساسية مع المراحل المخصصة
+      // دمج المراحل: الأساسية + المخصصة + النهائية
       const combinedStages = [
         ...baseStages, // المراحل الأساسية (12 مرحلة)
-        ...relevantCustomStages.map(stage => stage.name), // المراحل المخصصة (حتى 8 مراحل)
+        ...relevantCustomStages.map(stage => stage.name), // المراحل المخصصة (حتى 6 مراحل)
         finalStage // المرحلة الأخيرة
       ];
       
-      console.log(`🎯 تم إنشاء ${combinedStages.length} مرحلة لأنواع القضايا: ${selectedCaseTypes.join('، ')}`);
+      console.log(`🎯 تم إنشاء ${combinedStages.length} مرحلة لأنواع القضايا: ${filteredTypes.join('، ')} (منها ${relevantCustomStages.length} مراحل مخصصة)`);
       return combinedStages;
     } catch (error) {
       console.error('خطأ في إنشاء المراحل المخصصة:', error);
+      console.log('☠️ العودة للمراحل الأساسية بسبب خطأ');
       return [...baseStages, finalStage]; // العودة للمراحل الأساسية في حالة الخطأ
     }
-  };
-  
-  // تحديد المراحل عند تغيير نوع القضية
-  const CURRENT_STAGES = getRelevantStages();
+  }, [selectedCaseTypes]);
   
   // نتائج المراحل
   const [stageResults, setStageResults] = useState<(string|null)[]>(() => Array(CURRENT_STAGES.length).fill(null));
@@ -763,8 +772,10 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
 
             {activeTab === 'stages' && (
               <div>
-                {/* عرض معلومات المراحل المخصصة */}
-                {selectedCaseTypes.length > 0 && selectedCaseTypes[0] !== 'عام' && (
+                {/* عرض معلومات المراحل المخصصة - يظهر فقط عندما تكون هناك مراحل مخصصة فعلية */}
+                {selectedCaseTypes.length > 0 && 
+                 selectedCaseTypes.some(type => type !== 'عام') && 
+                 CURRENT_STAGES.length > 13 ? (
                   <div style={{
                     background: `${theme.accent}10`,
                     borderRadius: 12,
@@ -787,7 +798,7 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                         alignItems: 'center',
                         gap: 8
                       }}>
-                        ⚙️ مراحل مخصصة لقضايا: {selectedCaseTypes.join('، ')}
+                        ⚙️ مراحل مخصصة لقضايا: {selectedCaseTypes.filter(type => type !== 'عام').join('، ')}
                       </h4>
                       <div style={{
                         background: theme.accent,
@@ -806,7 +817,53 @@ function HomeContent({ onShowLandingPage }: { onShowLandingPage: () => void }) {
                       opacity: 0.8,
                       lineHeight: 1.5
                     }}>
-                      🎯 تم تخصيص المراحل بناءً على نوع القضية المختار. يتضمن التحليل المراحل الأساسية (12 مرحلة) بالإضافة إلى مراحل متخصصة لنوع قضيتك.
+                      🎯 تم تخصيص المراحل بناءً على نوع القضية المختار. يتضمن التحليل المراحل الأساسية (13 مرحلة) بالإضافة إلى مراحل متخصصة لنوع قضيتك.
+                    </div>
+                  </div>
+                ) : (
+                  /* عرض رسالة عند عرض المراحل الأساسية فقط */
+                  <div style={{
+                    background: `${theme.card}80`,
+                    borderRadius: 12,
+                    padding: isMobile() ? 16 : 20,
+                    marginBottom: 20,
+                    border: `1px solid ${theme.border}`
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 12
+                    }}>
+                      <h4 style={{
+                        color: theme.text,
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8
+                      }}>
+                        📋 المراحل الأساسية للتحليل القانوني
+                      </h4>
+                      <div style={{
+                        background: theme.text,
+                        color: theme.card,
+                        borderRadius: 12,
+                        padding: '4px 8px',
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                      }}>
+                        13 مرحلة
+                      </div>
+                    </div>
+                    <div style={{
+                      fontSize: 13,
+                      color: theme.text,
+                      opacity: 0.8,
+                      lineHeight: 1.5
+                    }}>
+                      🔍 يعرض النظام حالياً المراحل الأساسية فقط. لإضافة مراحل متخصصة، قم باختيار نوع القضية من تبويب "إدخال البيانات".
                     </div>
                   </div>
                 )}

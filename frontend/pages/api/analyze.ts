@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { 
   AnalysisRequest, 
   AnalysisResponse, 
@@ -14,73 +13,70 @@ import {
   determineComplexity,
   determineCaseType 
 } from '@utils/prompts';
+import { callAIService, AIProviderError, getRecommendedModel } from '@utils/apiIntegration';
+import { getProviderFromModel, getModelConfig } from '@utils/aiProvider';
+import { getApiKeyForProvider } from '@utils/appSettings';
 import stages from '../../stages';
 
 // تعريف مراحل التحليل القانوني (12 مرحلة)
 const STAGES = Object.keys(stages);
 const DEFAULT_MAX_REQUESTS_PER_WINDOW = 8; // الحد الافتراضي للطلبات
 
-// دالة استدعاء Gemini API مع مهلة وإعادة المحاولة وفallback
-async function callGeminiAPI(prompt: string, apiKey: string, modelName?: string): Promise<string> {
-  if (!apiKey) throw new Error('يرجى إدخال مفتاح Gemini API الخاص بك.');
-  
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const name = modelName || (globalThis as { __PREFERRED_MODEL__?: string }).__PREFERRED_MODEL__ || 'gemini-1.5-flash';
-  const model = genAI.getGenerativeModel({ model: name });
-  
+// Enhanced AI call function using the new provider system
+async function callAIWithProvider(
+  prompt: string, 
+  modelId: string, 
+  apiKey?: string,
+  temperature?: number,
+  maxTokens?: number
+): Promise<string> {
   try {
-  const executeWithTimeout = async (ms: number) => {
-    return await Promise.race([
-      (async () => {
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
-      })(),
-      new Promise<string>((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), ms))
-    ]);
-  };
+    const provider = getProviderFromModel(modelId);
+    const modelConfig = getModelConfig(modelId);
+    
+    if (!modelConfig) {
+      throw new Error(`Model ${modelId} not supported`);
+    }
 
-  // محاولات محدودة + fallback للنموذج
-  const candidates = [name, 'gemini-1.5-flash', 'gemini-1.5-pro'];
-  const tried = new Set<string>();
-  let lastError: unknown = null;
-  for (let i = 0; i < candidates.length; i++) {
-    const m = candidates[i];
-    if (tried.has(m)) continue;
-    tried.add(m);
-    try {
-      const altModel = genAI.getGenerativeModel({ model: m });
-      const res = await Promise.race([
-        (async () => {
-          const r = await altModel.generateContent(prompt);
-          const rr = await r.response;
-          return rr.text();
-        })(),
-        executeWithTimeout(20000)
-      ]);
-      return res as string;
-    } catch (err) {
-      lastError = err;
-      // إعادة المحاولة السريعة مرة واحدة في حالة أخطاء الشبكة المؤقتة
-      try {
-        const res2 = await executeWithTimeout(20000);
-        return res2 as string;
-      } catch (e2) {
-        lastError = e2;
-        continue;
+    // Get API key from settings if not provided
+    let effectiveApiKey = apiKey;
+    if (!effectiveApiKey) {
+      effectiveApiKey = await getApiKeyForProvider(provider);
+    }
+    
+    if (!effectiveApiKey) {
+      throw new Error(`API key not found for provider: ${provider}`);
+    }
+
+    const response = await callAIService({
+      text: prompt,
+      modelId,
+      temperature: temperature || 0.7,
+      maxTokens: maxTokens || modelConfig.maxTokens || 4000,
+      rateLimitKey: effectiveApiKey
+    });
+
+    return response.text;
+  } catch (error) {
+    if (error instanceof AIProviderError) {
+      // Convert provider errors to user-friendly Arabic messages
+      switch (error.code) {
+        case 'INVALID_API_KEY':
+          throw new Error('مفتاح API غير صحيح أو منتهي الصلاحية');
+        case 'RATE_LIMIT_EXCEEDED':
+          throw new Error('تم تجاوز حد الطلبات، يرجى المحاولة لاحقاً');
+        case 'QUOTA_EXCEEDED':
+          throw new Error('تم استنفاذ الحد المسموح من طلبات API');
+        case 'MODEL_NOT_FOUND':
+        case 'MODEL_NOT_AVAILABLE':
+          throw new Error('النموذج المطلوب غير متوفر حالياً');
+        case 'INSUFFICIENT_CREDITS':
+          throw new Error('رصيد API غير كافي');
+        default:
+          throw new Error(error.message);
       }
     }
-  }
-  throw lastError instanceof Error ? lastError : new Error('فشل الاستدعاء بعد محاولات متعددة');
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف';
-    if (errorMessage.includes('API_KEY')) {
-      throw new Error('مفتاح API غير صحيح أو منتهي الصلاحية');
-    }
-    if (errorMessage.includes('quota')) {
-      throw new Error('تم استنفاذ الحد المسموح من طلبات API');
-    }
-    throw new Error(`خطأ في API: ${errorMessage}`);
+    throw error;
   }
 }
 
@@ -196,8 +192,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const petitionPrompt = buildFinalPetitionPrompt(request.text, trimmedSummaries, context);
 
       try {
-        // استخدم نموذج أقوى للعريضة النهائية
-        const analysis = await callGeminiAPI(petitionPrompt, request.apiKey, 'gemini-1.5-pro');
+        // Use best available model for final petition
+        const bestModel = getRecommendedModel('complex', 'high');
+        const analysis = await callAIWithProvider(petitionPrompt, bestModel, request.apiKey);
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         return res.status(200).json({ 
@@ -270,14 +267,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // اختيار النموذج تكيفياً حسب التعقيد والميزانية
       const stageComplexity = stageDetails.complexity || determineComplexity(request.text);
       let modelForStage = preferredModel || 'gemini-1.5-flash';
+      
+      // Enhanced model selection based on budget and complexity
       if (budget === 'low') {
-        modelForStage = 'gemini-1.5-flash';
+        modelForStage = getRecommendedModel('simple', 'low');
       } else if (budget === 'high') {
-        modelForStage = stageComplexity === 'advanced' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+        const complexity = stageComplexity === 'advanced' ? 'complex' : 'medium';
+        modelForStage = getRecommendedModel(complexity, 'high');
       } else {
-        // medium: استخدم pro فقط عندما تكون متقدمة بوضوح
-        modelForStage = stageComplexity === 'advanced' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+        // medium budget
+        const complexity = stageComplexity === 'advanced' ? 'complex' : 'medium';
+        modelForStage = getRecommendedModel(complexity, 'low');
       }
+      
       // إذا كان النص طويلاً جداً، نقسمه إلى أجزاء ونحلل كل جزء على حدة ثم ندمج النتائج
       const MAX_CHUNK = 6000; // أحرف تقريبية لكل جزء
       let analysis: string;
@@ -289,12 +291,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const chunkResults: string[] = [];
         for (let i = 0; i < chunks.length; i++) {
           const chunkPrompt = buildEnhancedPrompt(stageDetails, chunks[i], trimmedSummaries, context);
-          const r = await callGeminiAPI(chunkPrompt, request.apiKey, modelForStage);
+          const r = await callAIWithProvider(chunkPrompt, modelForStage, request.apiKey);
           chunkResults.push(`(جزء ${i + 1}/${chunks.length})\n${r}`);
         }
         analysis = chunkResults.join('\n\n');
       } else {
-        analysis = await callGeminiAPI(prompt, request.apiKey, modelForStage);
+        analysis = await callAIWithProvider(prompt, modelForStage, request.apiKey);
       }
       
       // حفظ في Cache
@@ -314,7 +316,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             // legalese
             summaryPrompt = `صُغ خلاصة قانونية رسمية بلهجة مذكّرات فلسطينية موجزة (3-5 جمل) مع إحالات مقتضبة حينما تتوفر:\n\n${snippet}`;
           }
-          summary = await callGeminiAPI(summaryPrompt, request.apiKey, modelForStage);
+          summary = await callAIWithProvider(summaryPrompt, modelForStage, request.apiKey);
         } catch {}
       }
 

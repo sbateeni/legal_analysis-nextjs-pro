@@ -5,7 +5,9 @@ import { isMobile } from '@utils/crypto';
 import { set as idbSet } from 'idb-keyval';
 import { saveApiKey, loadApiKey, getAllCases, saveAllCases, clearAllCases } from '@utils/db';
 import { loadExportPreferences, saveExportPreferences, type ExportPreferences } from '@utils/exportSettings';
-import { loadAppSettings, saveAppSettings, type AppSettings } from '@utils/appSettings';
+import { loadAppSettings, saveAppSettings, type AppSettings, saveApiKeyForProvider, getApiKeyForProvider } from '@utils/appSettings';
+import { AVAILABLE_MODELS, type ModelConfig, type AIProvider } from '@utils/aiProvider';
+import { validateProviderApiKey, checkProvidersHealth } from '@utils/apiIntegration';
 // تم حذف AuthGuard لجعل الموقع عاماً
 // جسر قاعدة البيانات (يُحمّل ديناميكياً وقت الحاجة)
 type BridgeAPI = {
@@ -33,11 +35,18 @@ export default function SettingsPage() {
 function SettingsPageContent() {
   const { theme, darkMode, setDarkMode, colorScheme, setColorScheme } = useTheme();
   const [apiKey, setApiKey] = useState('');
+  const [openRouterKey, setOpenRouterKey] = useState('');
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [exportPrefs, setExportPrefs] = useState<ExportPreferences>({ includeStages: true, includeInputs: false, includeOutputs: true, marginPt: 48 });
-  const [appSettings, setAppSettings] = useState<AppSettings>({ preferredModel: 'gemini-1.5-flash', rateLimitPerMin: 10 });
+  const [appSettings, setAppSettings] = useState<AppSettings>({ 
+    preferredModel: 'gemini-1.5-flash', 
+    preferredProvider: 'google',
+    rateLimitPerMin: 10,
+    apiKeys: {} 
+  });
+  const [providerHealth, setProviderHealth] = useState<Record<AIProvider, boolean>>({ google: false, openrouter: false });
   // لوحة تحكم عامة (تُخزن في SQLite user_preferences)
   const [ctrlDefaultCaseType, setCtrlDefaultCaseType] = useState<string>('عام');
   const [ctrlDefaultPartyRole, setCtrlDefaultPartyRole] = useState<string>('');
@@ -49,7 +58,16 @@ function SettingsPageContent() {
   useEffect(() => {
     loadApiKey().then(val => setApiKey(val || '')); 
     loadExportPreferences().then(setExportPrefs);
-    loadAppSettings().then(setAppSettings);
+    loadAppSettings().then(settings => {
+      setAppSettings(settings);
+      // Load provider-specific API keys
+      getApiKeyForProvider('google').then(key => setApiKey(key || ''));
+      getApiKeyForProvider('openrouter').then(key => setOpenRouterKey(key || ''));
+    });
+    
+    // Check provider health status
+    checkProvidersHealth().then(setProviderHealth);
+    
     // تحميل تفضيلات لوحة التحكم من SQLite
     (async () => {
       try {
@@ -75,10 +93,40 @@ function SettingsPageContent() {
   const handleSaveKey = async () => {
     setSaving(true);
     try {
-      await saveApiKey(apiKey.trim());
+      await saveApiKeyForProvider('google', apiKey.trim());
       // توافق مع إصدارات سابقة: حفظ نسخة في localStorage إن لزم
       try { localStorage.setItem('gemini_api_key', apiKey.trim()); } catch {}
-      setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم حفظ مفتاح API بنجاح.' }]);
+      setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم حفظ مفتاح Google API بنجاح.' }]);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveOpenRouterKey = async () => {
+    setSaving(true);
+    try {
+      // Validate the key first
+      const validation = await validateProviderApiKey('openrouter', openRouterKey.trim());
+      if (!validation.valid) {
+        setNotices(prev => [...prev, { 
+          id: Math.random().toString(36).slice(2), 
+          type: 'error', 
+          message: `مفتاح OpenRouter غير صالح: ${validation.error || 'غير معروف'}` 
+        }]);
+        return;
+      }
+      
+      await saveApiKeyForProvider('openrouter', openRouterKey.trim());
+      setNotices(prev => [...prev, { id: Math.random().toString(36).slice(2), type: 'success', message: 'تم حفظ مفتاح OpenRouter بنجاح.' }]);
+      
+      // Update health status
+      setProviderHealth(prev => ({ ...prev, openrouter: true }));
+    } catch (error: any) {
+      setNotices(prev => [...prev, { 
+        id: Math.random().toString(36).slice(2), 
+        type: 'error', 
+        message: `فشل في حفظ مفتاح OpenRouter: ${error.message}` 
+      }]);
     } finally {
       setSaving(false);
     }
@@ -248,31 +296,61 @@ function SettingsPageContent() {
           </div>
         </div>
 
-                 {/* بطاقة مفتاح API */}
+                 {/* بطاقة مفاتيح API متعددة المزودين */}
          <div className="card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile()? 16:24, marginBottom: 16 }}>
-           <div className="font-headline" style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+           <div className="font-headline" style={{display:'flex', alignItems:'center', gap:8, marginBottom:16}}>
              <span style={{fontSize: isMobile()? 22:24}}>🔑</span>
-             <h2 className="headline-sm" style={{margin:0, color: theme.accent2}}>مفتاح Gemini API</h2>
-           </div>
-           <input
-             type="password"
-             placeholder="أدخل مفتاح Gemini API"
-             value={apiKey}
-             onChange={(e) => setApiKey(e.target.value)}
-             style={{ width: '100%', padding: isMobile()? 12:14, border: `1.5px solid ${theme.input}`, borderRadius: 12, fontSize: isMobile()? 15:16, outline: 'none' }}
-           />
-           <div style={{display:'flex', gap:10, marginTop:10, flexWrap:'wrap'}}>
-             <button onClick={handleSaveKey} disabled={saving} className="btn btn-info" style={{ background: theme.accent2, cursor: saving? 'not-allowed':'pointer' }}>حفظ المفتاح</button>
-             <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="btn" style={{ background:'#fff', color: theme.accent, border:`1px solid ${theme.accent2}` }}>الحصول على المفتاح</a>
+             <h2 className="headline-sm" style={{margin:0, color: theme.accent2}}>مفاتيح API</h2>
            </div>
            
-           {/* شرح مفتاح API */}
+           {/* Google Gemini API Key */}
+           <div style={{marginBottom: 20}}>
+             <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+               <h3 style={{margin:0, fontSize:16, color: theme.accent2}}>Google Gemini API</h3>
+               {providerHealth.google && <span style={{color:'#10b981', fontSize:14}}>✓ متصل</span>}
+               {!providerHealth.google && apiKey && <span style={{color:'#ef4444', fontSize:14}}>✗ غير متصل</span>}
+             </div>
+             <input
+               type="password"
+               placeholder="أدخل مفتاح Google Gemini API"
+               value={apiKey}
+               onChange={(e) => setApiKey(e.target.value)}
+               style={{ width: '100%', padding: isMobile()? 12:14, border: `1.5px solid ${theme.input}`, borderRadius: 12, fontSize: isMobile()? 15:16, outline: 'none', marginBottom: 10 }}
+             />
+             <div style={{display:'flex', gap:10, marginBottom:10, flexWrap:'wrap'}}>
+               <button onClick={handleSaveKey} disabled={saving} className="btn btn-info" style={{ background: theme.accent2, cursor: saving? 'not-allowed':'pointer' }}>حفظ مفتاح Google</button>
+               <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="btn" style={{ background:'#fff', color: theme.accent, border:`1px solid ${theme.accent2}` }}>الحصول على المفتاح</a>
+             </div>
+           </div>
+
+           {/* OpenRouter API Key */}
+           <div style={{marginBottom: 20}}>
+             <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+               <h3 style={{margin:0, fontSize:16, color: theme.accent2}}>OpenRouter API</h3>
+               {providerHealth.openrouter && <span style={{color:'#10b981', fontSize:14}}>✓ متصل</span>}
+               {!providerHealth.openrouter && openRouterKey && <span style={{color:'#ef4444', fontSize:14}}>✗ غير متصل</span>}
+               <span style={{fontSize:12, color:'#9ca3af', background:'#f3f4f6', padding:'2px 6px', borderRadius:4}}>اختياري</span>
+             </div>
+             <input
+               type="password"
+               placeholder="أدخل مفتاح OpenRouter API (اختياري)"
+               value={openRouterKey}
+               onChange={(e) => setOpenRouterKey(e.target.value)}
+               style={{ width: '100%', padding: isMobile()? 12:14, border: `1.5px solid ${theme.input}`, borderRadius: 12, fontSize: isMobile()? 15:16, outline: 'none', marginBottom: 10 }}
+             />
+             <div style={{display:'flex', gap:10, marginBottom:10, flexWrap:'wrap'}}>
+               <button onClick={handleSaveOpenRouterKey} disabled={saving || !openRouterKey} className="btn btn-info" style={{ background: theme.accent, cursor: (saving || !openRouterKey)? 'not-allowed':'pointer' }}>حفظ مفتاح OpenRouter</button>
+               <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="btn" style={{ background:'#fff', color: theme.accent, border:`1px solid ${theme.accent2}` }}>الحصول على مفتاح OpenRouter</a>
+             </div>
+           </div>
+           
+           {/* شرح مفاتيح API */}
            <div style={{marginTop: 16, padding: '12px 16px', background: '#f0f9ff', borderRadius: 8, border: '1px solid #0ea5e9', fontSize: 14, lineHeight: 1.6, color: '#0c4a6e'}}>
-             <h4 style={{margin: '0 0 8px 0', fontSize: 16}}>📝 شرح مفتاح API:</h4>
-             <p style={{margin: '4px 0'}}><strong>ما هو مفتاح API؟</strong> مفتاح رقمي يسمح للتطبيق بالتواصل مع خدمة Google Gemini للذكاء الاصطناعي.</p>
-             <p style={{margin: '4px 0'}}><strong>كيف أحصل عليه؟</strong> اضغط على &quot;الحصول على المفتاح&quot; وسيأخذك إلى موقع Google، سجل دخولك واحصل على المفتاح مجاناً.</p>
-             <p style={{margin: '4px 0'}}><strong>هل هو آمن؟</strong> نعم، المفتاح محفوظ محلياً على جهازك فقط ولا يتم إرساله لأي خادم آخر.</p>
-             <p style={{margin: '4px 0'}}><strong>هل هو مجاني؟</strong> نعم، Google تقدم رصيد مجاني شهرياً يكفي لمعظم الاستخدامات.</p>
+             <h4 style={{margin: '0 0 8px 0', fontSize: 16}}>📝 شرح مفاتيح API:</h4>
+             <p style={{margin: '4px 0'}}><strong>Google Gemini (مطلوب):</strong> مفتاح رقمي يسمح للتطبيق بالتواصل مع خدمة Google Gemini - مجاني الاستخدام.</p>
+             <p style={{margin: '4px 0'}}><strong>OpenRouter (اختياري):</strong> يوفر الوصول إلى عدة نماذج ذكية متقدمة مثل Claude و GPT-4 - مدفوع.</p>
+             <p style={{margin: '4px 0'}}><strong>هل هو آمن؟</strong> نعم، جميع المفاتيح محفوظة محلياً على جهازك فقط.</p>
+             <p style={{margin: '4px 0'}}><strong>نصيحة:</strong> ابدأ بـ Google Gemini لأنه مجاني ويغطي معظم الاحتياجات. أضف OpenRouter عند الحاجة لنماذج متقدمة.</p>
            </div>
          </div>
 
@@ -462,12 +540,49 @@ function SettingsPageContent() {
           
           {/* شرح النماذج */}
           <div style={{marginBottom: 16, padding: '12px 16px', background: darkMode ? '#1e293b' : '#f8fafc', borderRadius: 8, border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`}}>
-            <h4 style={{margin: '0 0 8px 0', color: theme.accent2, fontSize: 16}}>🤖 اختيار نموذج الذكاء الاصطناعي:</h4>
-            <div style={{fontSize: 14, lineHeight: 1.6, color: '#4a5568'}}>
-              <p style={{margin: '4px 0'}}><strong>gemini-1.5-flash</strong> ⭐ <span style={{color: '#10b981'}}>مجاني</span> - سريع ومناسب لمعظم الاستخدامات</p>
-              <p style={{margin: '4px 0'}}><strong>gemini-1.5-pro</strong> 💰 مدفوع - أكثر دقة وتعقيداً للمهام المتقدمة</p>
-              <p style={{margin: '4px 0'}}><strong>gemini-2.0-flash</strong> 💰 مدفوع - أحدث وأسرع من Google</p>
-              <p style={{margin: '8px 0 0 0', fontSize: 13, color: '#6b7280'}}><strong>💡 نصيحة:</strong> ابدأ بـ gemini-1.5-flash فهو مجاني ويغطي معظم احتياجاتك</p>
+            <h4 style={{margin: '0 0 12px 0', color: theme.accent2, fontSize: 16}}>🤖 اختيار نموذج الذكاء الاصطناعي:</h4>
+            <div style={{display: 'grid', gridTemplateColumns: isMobile() ? '1fr' : '1fr 1fr', gap: 12}}>
+              {AVAILABLE_MODELS.map((model: ModelConfig) => {
+                const isSelected = appSettings.preferredModel === model.id;
+                const isAvailable = model.provider === 'google' ? !!apiKey : !!openRouterKey;
+                return (
+                  <div 
+                    key={model.id}
+                    onClick={() => isAvailable && setAppSettings(p => ({ ...p, preferredModel: model.id, preferredProvider: model.provider }))}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: `2px solid ${isSelected ? theme.accent : theme.border}`,
+                      background: isSelected ? theme.accent + '20' : 'transparent',
+                      cursor: isAvailable ? 'pointer' : 'not-allowed',
+                      opacity: isAvailable ? 1 : 0.5,
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4}}>
+                      <strong style={{fontSize: '14px', color: theme.text}}>{model.name}</strong>
+                      <div style={{display: 'flex', gap: 4, alignItems: 'center'}}>
+                        {model.costTier === 'free' && <span style={{fontSize: '10px', background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>مجاني</span>}
+                        {model.costTier === 'low' && <span style={{fontSize: '10px', background: '#f59e0b', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>منخفض</span>}
+                        {(model.costTier === 'medium' || model.costTier === 'high') && <span style={{fontSize: '10px', background: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>مدفوع</span>}
+                        {model.provider === 'openrouter' && <span style={{fontSize: '10px', background: '#8b5cf6', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>OpenRouter</span>}
+                      </div>
+                    </div>
+                    <div style={{fontSize: '12px', color: '#6b7280', lineHeight: 1.4}}>
+                      {model.arabicDescription}
+                    </div>
+                    {!isAvailable && (
+                      <div style={{fontSize: '11px', color: '#ef4444', marginTop: 4}}>
+                        يتطلب مفتاح {model.provider === 'google' ? 'Google' : 'OpenRouter'} API
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{marginTop: 12, fontSize: 13, color: '#6b7280'}}>
+              <p style={{margin: '0 0 4px 0'}}><strong>نصيحة:</strong> ابدأ بـ Gemini Flash لأنه مجاني وسريع.</p>
+              <p style={{margin: '0'}}><strong>للمهام المعقدة:</strong> جرب Claude 3.5 Sonnet أو GPT-4 Omni عبر OpenRouter.</p>
             </div>
           </div>
 
@@ -489,12 +604,21 @@ function SettingsPageContent() {
 
           <div style={{ display:'grid', gridTemplateColumns: isMobile()? '1fr' : '1fr 1fr', gap: 10 }}>
             <div>
-              <label style={{display: 'block', marginBottom: 6, fontWeight: 600, color: theme.accent2}}>نموذج الذكاء الاصطناعي:</label>
-              <select value={appSettings.preferredModel} onChange={e => setAppSettings(p => ({ ...p, preferredModel: e.target.value as AppSettings['preferredModel'] }))} style={{ width: '100%', border:`1.5px solid ${theme.input}`, borderRadius: 10, padding: 10 }}>
-                <option value="gemini-1.5-flash">gemini-1.5-flash (مجاني)</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro (مدفوع)</option>
-                <option value="gemini-2.0-flash">gemini-2.0-flash (مدفوع)</option>
-              </select>
+              <label style={{display: 'block', marginBottom: 6, fontWeight: 600, color: theme.accent2}}>النموذج المختار:</label>
+              <div style={{ 
+                padding: '10px 12px', 
+                border: `1.5px solid ${theme.input}`, 
+                borderRadius: 10, 
+                background: theme.card,
+                color: theme.text,
+                fontSize: 14
+              }}>
+                {AVAILABLE_MODELS.find(m => m.id === appSettings.preferredModel)?.name || 'Gemini 1.5 Flash'}
+                <br />
+                <span style={{fontSize: 12, color: '#6b7280'}}>
+                  {AVAILABLE_MODELS.find(m => m.id === appSettings.preferredModel)?.arabicDescription || 'سريع وفعال لمعظم المهام (مجاني)'}
+                </span>
+              </div>
             </div>
             <div>
               <label style={{display: 'block', marginBottom: 6, fontWeight: 600, color: theme.accent2}}>حد الطلبات في الدقيقة:</label>

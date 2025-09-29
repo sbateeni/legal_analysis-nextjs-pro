@@ -9,6 +9,9 @@ import { ChatModelResponseSchema, ChatRequestSchema, ChatModelResponse } from '@
 import { chatCacheGet, chatCacheSet, makeChatCacheKey } from '@utils/chatCache';
 import { isWithinPalestinianJurisdiction, sanitizeAnswer } from '@utils/safety';
 import { extractLegalContext, buildLegalContextString, optimizeLegalQuery } from '@utils/legalContextService';
+import { callAIService, getRecommendedModel } from '@utils/apiIntegration';
+import { getProviderFromModel } from '@utils/aiProvider';
+import { getApiKeyForProvider } from '@utils/appSettings';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -53,7 +56,9 @@ ${conversationHistory.slice(-5).map(msg => `${msg.role === 'user' ? 'المست�
 
   const kbSection = (kbSnippets && kbSnippets.length) ? `
 معرفة مشتركة ذات صلة (ملخص استراتيجيات قانونية فلسطينية):
-${kbSnippets.map((s, i) => `(${i+1}) ${s.strategy_title}\n- خطوات مختصرة: ${s.strategy_steps.slice(0,3).join(' | ')}\n- أساس قانوني: ${s.legal_basis.map(b=>`${b.source}${b.article?` ${b.article}`:''}`).slice(0,2).join(' ؛ ')}`).join('\n\n')}
+${kbSnippets.map((s, i) => `(${i+1}) ${s.strategy_title}
+- خطوات مختصرة: ${s.strategy_steps.slice(0,3).join(' | ')}
+- أساس قانوني: ${s.legal_basis.map(b=>`${b.source}${b.article?` ${b.article}`:''}`).slice(0,2).join(' ؛ ')}`).join('\n\n')}
 ` : '';
 
   const legalContextSection = legalContext ? `
@@ -249,14 +254,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     const prompt = mode === 'legal'
       ? buildChatPrompt(cleanMessage, conversationHistory as ChatMessage[], context, kbSnippets, legalContext)
-      : `أنت مساعد عام محترف يجيب بإيجاز ووضوح. أجب بالعربية الفصحى، وابتعد عن الإفتاء القانوني المتخصص ما لم يُطلب صراحة.\n\nالسؤال:\n${cleanMessage}\n\nسياق المحادثة (إن وجد):\n${(conversationHistory as ChatMessage[]).slice(-6).map(m => `${m.role}: ${m.content}`).join('\n')}`;
+      : `أنت مساعد عام محترف يجيب بإيجاز ووضوح. أجب بالعربية الفصحى، وابتعد عن الإفتاء القانوني المتخصص ما لم يُطلب صراحة.
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const preferredModel = modelName;
-    const model = genAI.getGenerativeModel({ model: preferredModel });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const rawText = response.text();
+السؤال:
+${cleanMessage}
+
+سياق المحادثة (إن وجد):
+${(conversationHistory as ChatMessage[]).slice(-6).map(m => `${m.role}: ${m.content}`).join('\n')}`;
+
+    // Enhanced AI call using provider system
+    let rawText: string;
+    try {
+      const provider = getProviderFromModel(modelName);
+      
+      // Get appropriate API key for the provider
+      let effectiveApiKey = apiKey;
+      if (!effectiveApiKey) {
+        const providerKey = await getApiKeyForProvider(provider);
+        effectiveApiKey = providerKey || '';
+      }
+      
+      if (!effectiveApiKey) {
+        return res.status(400).json({
+          code: 'API_KEY_MISSING',
+          message: `API key not found for provider: ${provider}`
+        });
+      }
+
+      const aiResponse = await callAIService({
+        text: prompt,
+        modelId: modelName,
+        temperature: 0.7,
+        rateLimitKey: effectiveApiKey
+      });
+      
+      rawText = aiResponse.text;
+    } catch (error: any) {
+      // Fallback to direct Google API call for backwards compatibility
+      console.warn('AI service failed, falling back to direct Google API:', error.message);
+      
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      rawText = response.text();
+    }
 
     let modelJson: ChatModelResponse | null = null;
     try {
