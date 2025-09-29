@@ -111,7 +111,7 @@ function SettingsPageContent() {
         setNotices(prev => [...prev, { 
           id: Math.random().toString(36).slice(2), 
           type: 'error', 
-          message: `مفتاح OpenRouter غير صالح: ${validation.error || 'غير معروف'}` 
+          message: `مفتاح OpenRouter غير صالح: ${validation.error || 'غير معروف'}. يرجى التأكد من صحة المفتاح والتحقق من اتصال الإنترنت.` 
         }]);
         return;
       }
@@ -342,15 +342,27 @@ function SettingsPageContent() {
                <button onClick={handleSaveOpenRouterKey} disabled={saving || !openRouterKey} className="btn btn-info" style={{ background: theme.accent, cursor: (saving || !openRouterKey)? 'not-allowed':'pointer' }}>حفظ مفتاح OpenRouter</button>
                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="btn" style={{ background:'#fff', color: theme.accent, border:`1px solid ${theme.accent2}` }}>الحصول على مفتاح OpenRouter</a>
              </div>
+                        
+             {/* معلومات إضافية حول OpenRouter */}
+             <div style={{marginTop: 8, padding: '8px 12px', background: '#eff6ff', borderRadius: 6, border: '1px solid #3b82f6', fontSize: 13, color: '#1e40af'}}>
+               <strong>ℹ️ معلومات مهمة حول OpenRouter:</strong>
+               <ul style={{margin: '4px 0 0 0', paddingRight: 16}}>
+                 <li>يجب إنشاء مفتاح API من موقع OpenRouter الرسمي</li>
+                 <li>قد تحتاج إلى إضافة طريقة دفع حتى لو كنت تستخدم النماذج المجانية</li>
+                 <li>تأكد من تفعيل المفتاح بعد إنشائه</li>
+                 <li>قد يستغرق تفعيل المفتاح بضع دقائق</li>
+               </ul>
+             </div>
            </div>
            
            {/* شرح مفاتيح API */}
            <div style={{marginTop: 16, padding: '12px 16px', background: '#f0f9ff', borderRadius: 8, border: '1px solid #0ea5e9', fontSize: 14, lineHeight: 1.6, color: '#0c4a6e'}}>
              <h4 style={{margin: '0 0 8px 0', fontSize: 16}}>📝 شرح مفاتيح API:</h4>
              <p style={{margin: '4px 0'}}><strong>Google Gemini (مطلوب):</strong> مفتاح رقمي يسمح للتطبيق بالتواصل مع خدمة Google Gemini - مجاني الاستخدام.</p>
-             <p style={{margin: '4px 0'}}><strong>OpenRouter (اختياري):</strong> يوفر الوصول إلى عدة نماذج ذكية متقدمة مثل Claude و GPT-4 - مدفوع.</p>
+             <p style={{margin: '4px 0'}}><strong>OpenRouter (اختياري):</strong> يوفر الوصول إلى عدة نماذج ذكية متقدمة مثل Claude و GPT-4 - قد يتطلب دفع رسوم حسب الاستخدام.</p>
              <p style={{margin: '4px 0'}}><strong>هل هو آمن؟</strong> نعم، جميع المفاتيح محفوظة محلياً على جهازك فقط.</p>
              <p style={{margin: '4px 0'}}><strong>نصيحة:</strong> ابدأ بـ Google Gemini لأنه مجاني ويغطي معظم الاحتياجات. أضف OpenRouter عند الحاجة لنماذج متقدمة.</p>
+             <p style={{margin: '4px 0'}}><strong> troubleshoot:</strong> إذا واجهت مشكلة في مفتاح OpenRouter، تأكد من أنه مفعل ومرتبط بطريقة دفع حتى لو كنت تستخدم النماذج المجانية.</p>
            </div>
          </div>
 
@@ -582,7 +594,8 @@ function SettingsPageContent() {
             </div>
             <div style={{marginTop: 12, fontSize: 13, color: '#6b7280'}}>
               <p style={{margin: '0 0 4px 0'}}><strong>نصيحة:</strong> ابدأ بـ Gemini Flash لأنه مجاني وسريع.</p>
-              <p style={{margin: '0'}}><strong>للمهام المعقدة:</strong> جرب Claude 3.5 Sonnet أو GPT-4 Omni عبر OpenRouter.</p>
+              <p style={{margin: '0 0 4px 0'}}><strong>للمهام المعقدة:</strong> جرب Claude 3.5 Sonnet أو GPT-4 Omni عبر OpenRouter.</p>
+              <p style={{margin: '0'}}><strong>ملاحظة OpenRouter:</strong> قد تحتاج إلى إضافة طريقة دفع حتى لو كنت تستخدم النماذج المجانية.</p>
             </div>
           </div>
 

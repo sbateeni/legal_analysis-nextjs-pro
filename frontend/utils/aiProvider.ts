@@ -221,8 +221,21 @@ export class OpenRouterProvider implements AIProviderInterface {
           'Authorization': `Bearer ${apiKey}`,
         }
       });
-      return response.ok;
-    } catch {
+      
+      if (response.ok) {
+        return true;
+      } else {
+        // Try to get error details
+        try {
+          const errorData = await response.json();
+          console.error('OpenRouter API key validation failed:', errorData);
+        } catch {
+          console.error('OpenRouter API key validation failed with status:', response.status);
+        }
+        return false;
+      }
+    } catch (error) {
+      console.error('OpenRouter API key validation error:', error);
       return false;
     }
   }

@@ -200,11 +200,22 @@ export async function validateProviderApiKey(
     );
     
     const isValid = await providerInstance.validateApiKey(apiKey);
-    return { valid: isValid };
+    if (isValid) {
+      return { valid: true };
+    } else {
+      // Provide specific error messages based on provider
+      let errorMessage = 'مفتاح API غير صالح';
+      if (provider === 'openrouter') {
+        errorMessage = 'مفتاح OpenRouter غير صالح أو منتهي الصلاحية';
+      } else if (provider === 'google') {
+        errorMessage = 'مفتاح Google API غير صالح أو منتهي الصلاحية';
+      }
+      return { valid: false, error: errorMessage };
+    }
   } catch (error: any) {
     return { 
       valid: false, 
-      error: error.message || 'Failed to validate API key' 
+      error: error.message || 'فشل في التحقق من مفتاح API' 
     };
   }
 }
