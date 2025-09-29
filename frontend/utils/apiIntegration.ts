@@ -72,7 +72,8 @@ const TOKEN_COSTS: Record<string, { input: number; output: number }> = {
   'anthropic/claude-3.5-sonnet': { input: 0.003, output: 0.015 },
   'openai/gpt-4o': { input: 0.0025, output: 0.01 },
   'meta-llama/llama-3.2-90b-vision-instruct': { input: 0.0009, output: 0.0009 },
-  'google/gemma-2-27b-it': { input: 0.00027, output: 0.00027 }
+  'google/gemma-2-27b-it': { input: 0.00027, output: 0.00027 },
+  'x-ai/grok-4-fast': { input: 0, output: 0 } // Free tier
 };
 
 /**
@@ -168,10 +169,10 @@ export async function callAIService(request: AnalysisRequest): Promise<AnalysisR
     } else if (provider === 'openrouter') {
       if (error.message?.includes('401')) {
         code = 'INVALID_API_KEY';
-        message = 'مفتاح OpenRouter API غير صالح';
+        message = 'مفتاح OpenRouter API غير صالح أو منتهي الصلاحية. تأكد من نسخ المفتاح بالكامل دون أي مسافات إضافية.';
       } else if (error.message?.includes('402')) {
         code = 'INSUFFICIENT_CREDITS';
-        message = 'رصيد OpenRouter غير كافي';
+        message = 'رصيد OpenRouter غير كافي. قد تحتاج إلى إضافة طريقة دفع حتى لو كنت تستخدم النماذج المجانية.';
       } else if (error.message?.includes('429')) {
         code = 'RATE_LIMIT_EXCEEDED';
         message = 'تم تجاوز حد الطلبات في OpenRouter';
@@ -259,19 +260,24 @@ export function getRecommendedModel(
   provider?: AIProvider
 ): string {
   if (budget === 'free') {
+    // If OpenRouter is available, use Grok 4 Fast as it's free
+    if (provider === 'openrouter') {
+      return 'x-ai/grok-4-fast';
+    }
     return 'gemini-1.5-flash';
   }
 
   if (provider === 'openrouter') {
     switch (complexity) {
       case 'simple':
-        return budget === 'low' ? 'google/gemma-2-27b-it' : 'meta-llama/llama-3.2-90b-vision-instruct';
+        // For simple tasks, prefer the free Grok 4 Fast model
+        return budget === 'low' ? 'x-ai/grok-4-fast' : 'meta-llama/llama-3.2-90b-vision-instruct';
       case 'medium':
         return 'meta-llama/llama-3.2-90b-vision-instruct';
       case 'complex':
         return budget === 'high' ? 'anthropic/claude-3.5-sonnet' : 'openai/gpt-4o';
       default:
-        return 'google/gemma-2-27b-it';
+        return 'x-ai/grok-4-fast';
     }
   }
 

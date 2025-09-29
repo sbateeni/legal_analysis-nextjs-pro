@@ -81,6 +81,15 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     costTier: 'low',
     description: 'Lightweight and cost-effective',
     arabicDescription: 'خفيف واقتصادي (مدفوع منخفض)'
+  },
+  {
+    id: 'x-ai/grok-4-fast',
+    name: 'Grok 4 Fast',
+    provider: 'openrouter',
+    maxTokens: 131072,
+    costTier: 'free',
+    description: 'Fast version of xAI Grok 4 (free)',
+    arabicDescription: 'نسخة سريعة من xAI Grok 4 (مجاني)'
   }
 ];
 
@@ -216,14 +225,18 @@ export class OpenRouterProvider implements AIProviderInterface {
 
   async validateApiKey(apiKey: string): Promise<boolean> {
     try {
+      // Make a simple test request to validate the API key
       const response = await fetch('https://openrouter.ai/api/v1/models', {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
         }
       });
       
+      // Check if we can access the models endpoint
       if (response.ok) {
-        return true;
+        const data = await response.json();
+        // Additional validation: check if we got models data
+        return Array.isArray(data?.data) && data.data.length > 0;
       } else {
         // Try to get error details
         try {
