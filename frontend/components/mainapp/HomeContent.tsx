@@ -803,8 +803,8 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                 />
                 
                 {/* عرض النتائج التفصيلية التقليدية */}
-                <div className="mt-6">
-                  <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">📋 النتائج التفصيلية</h3>
+                <div style={{ marginTop: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: theme.text }}>📋 النتائج التفصيلية</h3>
                   <StageResults
                     stageResults={stageResults}
                     stageShowResult={stageShowResult}
