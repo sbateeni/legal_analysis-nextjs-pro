@@ -448,6 +448,83 @@ function SettingsPageContent() {
           </div>
         </div>
 
+        {/* بطاقة مفاتيح API */}
+        <div className="card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile()? 16:24, marginTop: 16 }}>
+          <div className="font-headline" style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+            <span style={{fontSize: isMobile()? 22:24}}>🔑</span>
+            <h2 className="headline-sm" style={{margin:0, color: theme.accent2}}>مفاتيح API</h2>
+          </div>
+          
+          <div style={{marginBottom: 16}}>
+            <label style={{display: 'block', marginBottom: 6, fontWeight: 600, color: theme.accent2}}>مفتاح Google Gemini API:</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input 
+                type="password" 
+                value={apiKey} 
+                onChange={e => setApiKey(e.target.value)} 
+                placeholder="أدخل مفتاح Google Gemini API" 
+                style={{ flex: 1, border: `1.5px solid ${theme.input}`, borderRadius: 10, padding: 10 }} 
+              />
+              <button 
+                onClick={handleSaveKey} 
+                disabled={saving}
+                className="btn btn-info" 
+                style={{ background: theme.accent2, minWidth: 100 }}
+              >
+                {saving ? 'جاري الحفظ...' : 'حفظ'}
+              </button>
+            </div>
+            <div style={{marginTop: 8, fontSize: 13, color: '#6b7280'}}>
+              <p style={{margin: '4px 0'}}><strong>كيف تحصل على المفتاح:</strong></p>
+              <ol style={{margin: '4px 0', paddingRight: 16}}>
+                <li>انتقل إلى <a href="https://aistudio.google.com/u/1/api-keys" target="_blank" rel="noopener noreferrer" style={{color: theme.accent2}}>https://ai.google.dev/</a></li>
+                <li>سجل الدخول بحساب Google الخاص بك</li>
+                <li>انقر على "Get API key"</li>
+                <li>انسخ المفتاح وأدخله في الحقل أعلاه</li>
+              </ol>
+              <p style={{margin: '4px 0', color: '#ef4444'}}><strong>ملاحظة:</strong> المفتاح مجاني بالكامل وبدون قيود على الاستخدام</p>
+            </div>
+          </div>
+          
+          <div>
+            <label style={{display: 'block', marginBottom: 6, fontWeight: 600, color: theme.accent2}}>مفتاح OpenRouter API:</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input 
+                type="password" 
+                value={openRouterKey} 
+                onChange={e => setOpenRouterKey(e.target.value)} 
+                placeholder="أدخل مفتاح OpenRouter API" 
+                style={{ flex: 1, border: `1.5px solid ${theme.input}`, borderRadius: 10, padding: 10 }} 
+              />
+              <button 
+                onClick={handleSaveOpenRouterKey} 
+                disabled={saving}
+                className="btn btn-info" 
+                style={{ background: theme.accent2, minWidth: 100 }}
+              >
+                {saving ? 'جاري الحفظ...' : 'حفظ'}
+              </button>
+            </div>
+            <div style={{marginTop: 8, fontSize: 13, color: '#6b7280'}}>
+              <p style={{margin: '4px 0'}}><strong>كيف تحصل على المفتاح:</strong></p>
+              <ol style={{margin: '4px 0', paddingRight: 16}}>
+                <li>انتقل إلى <a href="https://openrouter.ai/" target="_blank" rel="noopener noreferrer" style={{color: theme.accent2}}>https://openrouter.ai/</a></li>
+                <li>سجل حساب جديد أو سجل الدخول</li>
+                <li>انتقل إلى صفحة "Keys" في لوحة التحكم</li>
+                <li>أنشئ مفتاح جديد وانسخه وأدخله في الحقل أعلاه</li>
+              </ol>
+              <p style={{margin: '4px 0'}}><strong>ملاحظة:</strong> بعض النماذج مجانية، وبعضها مدفوع. تحقق من الأسعار في موقع OpenRouter</p>
+            </div>
+          </div>
+          
+          <div style={{marginTop: 16, padding: '12px 16px', background: darkMode ? '#3a2a0a' : '#fef3c7', borderRadius: 8, border: `1px solid ${darkMode ? '#92400e' : '#f59e0b'}`, fontSize: 14, lineHeight: 1.6, color: darkMode ? '#fbbf24' : '#92400e'}}>
+            <h4 style={{margin: '0 0 8px 0', fontSize: 16}}>🛡️ شرح الأمان:</h4>
+            <p style={{margin: '4px 0'}}><strong>التشفير:</strong> جميع مفاتيحك مشفرة ومحمية في متصفحك فقط، ولا تُرسل إلى أي خوادم خارجية.</p>
+            <p style={{margin: '4px 0'}}><strong>الخصوصية:</strong> لا نقوم بتخزين أو جمع مفاتيحك في أي مكان، فهي تبقى على جهازك فقط.</p>
+            <p style={{margin: '4px 0'}}><strong>الأمان:</strong> استخدم مفتاحاً محدود النطاق إذا كنت قلقاً بشأن الأمان، وقم بتغييره دورياً.</p>
+          </div>
+        </div>
+
        {/* إعدادات التطبيق */}
        <div className="card-ui" style={{ background: theme.card, borderColor: theme.border, padding: isMobile()? 16:24, marginTop: 16 }}>
          <div className="font-headline" style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
