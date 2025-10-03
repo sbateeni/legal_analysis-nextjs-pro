@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 interface ElegantSidebarContextValue {
   showMobileMenu: boolean;
@@ -9,15 +10,16 @@ const ElegantSidebarContext = createContext<ElegantSidebarContextValue | undefin
 
 export function ElegantSidebarProvider({ children }: { children: React.ReactNode }) {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const router = useRouter();
 
   // Show mobile menu by default on non-landing pages
   useEffect(() => {
     // Check if we're on a landing page
-    const isLandingPage = window.location.pathname === '/';
+    const isLandingPage = router.pathname === '/';
     
     // Show mobile menu on all pages except landing page
     setShowMobileMenu(!isLandingPage);
-  }, []);
+  }, [router.pathname]);
 
   const value = {
     showMobileMenu,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from '../contexts/ThemeContext';
+import { useElegantSidebar } from '../contexts/ElegantSidebarContext';
 import ElegantSidebarHeader from './sidebar/ElegantSidebarHeader';
 import ElegantSidebarNav, { SidebarItem, IconComponents } from './sidebar/ElegantSidebarNav';
 import ElegantSidebarFooter from './sidebar/ElegantSidebarFooter';
@@ -10,9 +11,9 @@ import ElegantSidebarFooter from './sidebar/ElegantSidebarFooter';
 const ElegantSidebar: React.FC = () => {
   const router = useRouter();
   const { darkMode, setDarkMode, theme, colorScheme, mounted: themeMounted } = useTheme();
+  const { showMobileMenu, setShowMobileMenu } = useElegantSidebar();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);

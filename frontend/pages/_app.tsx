@@ -6,6 +6,7 @@ import '../styles/responsive.css';
 import '../styles/enable-copy.css';
 import '../styles/enhanced-stage-results.css';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import { ElegantSidebarProvider } from '../contexts/ElegantSidebarContext';
 import Layout from '../components/Layout';
 import CopyEnabler from '../components/CopyEnabler';
 import type { NextWebVitalsMetric } from 'next/app';
@@ -214,37 +215,39 @@ export default function App({ Component, pageProps }: AppProps) {
         fontWeight: 'bold'
       }} onFocus={(e) => e.currentTarget.style.top = '6px'} onBlur={(e) => e.currentTarget.style.top = '-40px'}>تخطي إلى المحتوى</a>
       <ThemeProvider>
-        <CopyEnabler />
-        <Layout>
-          <main id="main-content">
-            <Component {...pageProps} />
-          </main>
-          {updateReady && (
-            <div style={{
-              position: 'fixed',
-              bottom: 16,
-              right: 16,
-              zIndex: 10000,
-              background: '#111827',
-              color: 'white',
-              padding: '12px 16px',
-              borderRadius: 12,
-              boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-              maxWidth: 320,
-              fontFamily: 'Tajawal, Arial, sans-serif'
-            }}>
-              <div style={{ fontWeight: 800 }}>تحديث متاح</div>
-              <div style={{ fontSize: 13, opacity: 0.9 }}>هناك نسخة جديدة من التطبيق. يمكنك التحديث الآن أو سيُطبّق عند تشغيل التطبيق لاحقاً.</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button onClick={applyUpdateNow} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>تحديث الآن</button>
-                <button onClick={applyNextOpen} style={{ background: '#374151', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>عند الفتح القادم</button>
+        <ElegantSidebarProvider>
+          <CopyEnabler />
+          <Layout>
+            <main id="main-content">
+              <Component {...pageProps} />
+            </main>
+            {updateReady && (
+              <div style={{
+                position: 'fixed',
+                bottom: 16,
+                right: 16,
+                zIndex: 10000,
+                background: '#111827',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: 12,
+                boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                maxWidth: 320,
+                fontFamily: 'Tajawal, Arial, sans-serif'
+              }}>
+                <div style={{ fontWeight: 800 }}>تحديث متاح</div>
+                <div style={{ fontSize: 13, opacity: 0.9 }}>هناك نسخة جديدة من التطبيق. يمكنك التحديث الآن أو سيُطبّق عند تشغيل التطبيق لاحقاً.</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button onClick={applyUpdateNow} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>تحديث الآن</button>
+                  <button onClick={applyNextOpen} style={{ background: '#374151', color: 'white', border: 'none', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 700 }}>عند الفتح القادم</button>
+                </div>
               </div>
-            </div>
-          )}
-        </Layout>
+            )}
+          </Layout>
+        </ElegantSidebarProvider>
       </ThemeProvider>
     </>
   );

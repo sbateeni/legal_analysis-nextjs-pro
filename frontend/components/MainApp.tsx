@@ -7,7 +7,6 @@ import React, { useState, useEffect } from 'react';
 import { LandingPage, ProfessionalLandingPage } from '../components/pages/landing';
 import HomeContent from './mainapp/HomeContent';
 import { useTheme } from '../contexts/ThemeContext';
-import { useElegantSidebar } from '../contexts/ElegantSidebarContext';
 
 export default function Home() {
   const { professionalMode } = useTheme();
