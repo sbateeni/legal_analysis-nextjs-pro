@@ -467,16 +467,11 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
       } else if (settings.apiKeys?.google) {
         // إذا لم يكن هناك مفتاح OpenRouter أو المزود المفضل هو Google، استخدم مفتاح Google
         setApiKey(settings.apiKeys.google);
-      } else if (!apiKey) {
-        // كحل احتياطي، حاول تحميل مفتاح Google من الإعدادات
-        if (settings.apiKeys?.google) {
-          setApiKey(settings.apiKeys.google);
-        }
       }
     });
     
     loadExistingCases();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // حفظ مفتاح API
   const handleApiKeyChange = async (newKey: string) => {
