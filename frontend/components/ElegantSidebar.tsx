@@ -12,6 +12,7 @@ const ElegantSidebar: React.FC = () => {
   const { darkMode, setDarkMode, theme, colorScheme, mounted: themeMounted } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -254,13 +255,15 @@ const ElegantSidebar: React.FC = () => {
       )}
 
       {/* Mobile Menu Button */}
-      <div 
-        className="mobile-menu-btn" 
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        style={{ display: isMobile ? 'block' : 'none' }}
-      >
-        <span>{isMobileOpen ? '✕' : '☰'}</span>
-      </div>
+      {showMobileMenu && (
+        <div 
+          className="mobile-menu-btn" 
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          style={{ display: isMobile ? 'block' : 'none' }}
+        >
+          <span>{isMobileOpen ? '✕' : '☰'}</span>
+        </div>
+      )
       
       <div 
         ref={sidebarRef}

@@ -45,7 +45,8 @@
 
 /* Dark Mode Overrides */
 [data-theme="dark"],
-.dark-mode {
+.dark-mode,
+body.professional-mode.dark-mode {
   --text-primary: var(--dark-text-primary);
   --text-secondary: var(--dark-text-secondary);
   --text-muted: var(--dark-text-muted);
@@ -80,6 +81,74 @@ body {
   background-color: var(--background, var(--legal-white));
   font-feature-settings: 'liga' 1, 'kern' 1;
   text-rendering: optimizeLegibility;
+}
+
+/* Improve text clarity in dark mode */
+body.professional-mode.dark-mode {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+  text-rendering: optimizeSpeed;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Text enhancement in dark mode */
+body.professional-mode.dark-mode * {
+  text-shadow: 0 0 0.5px currentColor;
+}
+
+/* Ensure paragraphs and buttons have white text in dark mode */
+body.professional-mode.dark-mode p,
+body.professional-mode.dark-mode button {
+  color: var(--text-primary) !important;
+}
+
+body.professional-mode.dark-mode .text-muted {
+  text-shadow: 0 0 1px currentColor;
+  opacity: 0.9;
+}
+
+body.professional-mode.dark-mode small,
+body.professional-mode.dark-mode .text-sm {
+  text-shadow: 0 0 0.8px currentColor;
+  font-weight: 600;
+}
+
+body.professional-mode.dark-mode h1,
+body.professional-mode.dark-mode h2,
+body.professional-mode.dark-mode h3,
+body.professional-mode.dark-mode h4,
+body.professional-mode.dark-mode h5,
+body.professional-mode.dark-mode h6 {
+  text-shadow: 0 0 1px currentColor;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+body.professional-mode.dark-mode a {
+  text-shadow: 0 0 0.5px currentColor;
+  font-weight: 600;
+}
+
+body.professional-mode.dark-mode .card-ui {
+  text-shadow: 0 0 0.3px currentColor;
+}
+
+body.professional-mode.dark-mode input,
+body.professional-mode.dark-mode textarea,
+body.professional-mode.dark-mode select {
+  text-shadow: 0 0 0.5px currentColor;
+  font-weight: 500;
+}
+
+body.professional-mode.dark-mode table {
+  text-shadow: 0 0 0.4px currentColor;
+}
+
+body.professional-mode.dark-mode th,
+body.professional-mode.dark-mode td {
+  text-shadow: 0 0 0.4px currentColor;
+  font-weight: 500;
 }
 
 /* Typography */

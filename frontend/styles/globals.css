@@ -87,7 +87,8 @@ body.professional-mode {
 
 /* تحسين وضوح الخطوط في الوضع الليلي */
 [data-theme="dark"] body,
-.dark-mode body {
+.dark-mode body,
+body.professional-mode.dark-mode {
   -webkit-font-smoothing: subpixel-antialiased;
   -moz-osx-font-smoothing: auto;
   text-rendering: optimizeSpeed;
@@ -97,13 +98,25 @@ body.professional-mode {
 
 /* تحسين وضوح النصوص في الوضع الليلي */
 [data-theme="dark"] *,
-.dark-mode * {
+.dark-mode *,
+body.professional-mode.dark-mode * {
   text-shadow: 0 0 0.5px currentColor;
+}
+
+/* Ensure paragraphs and buttons have white text in dark mode */
+[data-theme="dark"] p,
+[data-theme="dark"] button,
+.dark-mode p,
+.dark-mode button,
+body.professional-mode.dark-mode p,
+body.professional-mode.dark-mode button {
+  color: var(--foreground) !important;
 }
 
 /* تحسين وضوح النصوص الثانوية */
 [data-theme="dark"] .text-muted,
-.dark-mode .text-muted {
+.dark-mode .text-muted,
+body.professional-mode.dark-mode .text-muted {
   text-shadow: 0 0 1px currentColor;
   opacity: 0.9;
 }
@@ -112,7 +125,9 @@ body.professional-mode {
 [data-theme="dark"] small,
 [data-theme="dark"] .text-sm,
 .dark-mode small,
-.dark-mode .text-sm {
+.dark-mode .text-sm,
+body.professional-mode.dark-mode small,
+body.professional-mode.dark-mode .text-sm {
   text-shadow: 0 0 0.8px currentColor;
   font-weight: 600;
 }
@@ -129,7 +144,13 @@ body.professional-mode {
 .dark-mode h3,
 .dark-mode h4,
 .dark-mode h5,
-.dark-mode h6 {
+.dark-mode h6,
+body.professional-mode.dark-mode h1,
+body.professional-mode.dark-mode h2,
+body.professional-mode.dark-mode h3,
+body.professional-mode.dark-mode h4,
+body.professional-mode.dark-mode h5,
+body.professional-mode.dark-mode h6 {
   text-shadow: 0 0 1px currentColor;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -137,14 +158,16 @@ body.professional-mode {
 
 /* تحسين وضوح الروابط */
 [data-theme="dark"] a,
-.dark-mode a {
+.dark-mode a,
+body.professional-mode.dark-mode a {
   text-shadow: 0 0 0.5px currentColor;
   font-weight: 600;
 }
 
 /* تحسين وضوح الأزرار */
 [data-theme="dark"] button,
-.dark-mode button {
+.dark-mode button,
+body.professional-mode.dark-mode button {
   text-shadow: 0 0 0.5px currentColor;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -152,7 +175,8 @@ body.professional-mode {
 
 /* تحسين وضوح النصوص في البطاقات */
 [data-theme="dark"] .card-ui,
-.dark-mode .card-ui {
+.dark-mode .card-ui,
+body.professional-mode.dark-mode .card-ui {
   text-shadow: 0 0 0.3px currentColor;
 }
 
@@ -162,21 +186,27 @@ body.professional-mode {
 [data-theme="dark"] select,
 .dark-mode input,
 .dark-mode textarea,
-.dark-mode select {
+.dark-mode select,
+body.professional-mode.dark-mode input,
+body.professional-mode.dark-mode textarea,
+body.professional-mode.dark-mode select {
   text-shadow: 0 0 0.5px currentColor;
   font-weight: 500;
 }
 
 /* تحسين وضوح النصوص في الجداول */
 [data-theme="dark"] table,
-.dark-mode table {
+.dark-mode table,
+body.professional-mode.dark-mode table {
   text-shadow: 0 0 0.4px currentColor;
 }
 
 [data-theme="dark"] th,
 [data-theme="dark"] td,
 .dark-mode th,
-.dark-mode td {
+.dark-mode td,
+body.professional-mode.dark-mode th,
+body.professional-mode.dark-mode td {
   text-shadow: 0 0 0.4px currentColor;
   font-weight: 500;
 }
@@ -616,4 +646,54 @@ select:focus-visible,
 a:focus-visible {
   outline: 3px solid #6366f1;
   outline-offset: 2px;
-} 
+}
+
+/* Switch Styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #4f46e5;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #4f46e5;
+}

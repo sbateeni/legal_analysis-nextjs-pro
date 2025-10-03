@@ -45,6 +45,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
     idbSet('legal_dark_mode', darkMode ? '1' : '0');
+    
+    // Update body class for dark mode
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      document.documentElement.removeAttribute('data-theme');
+    }
   }, [darkMode, mounted]);
 
   useEffect(() => {
@@ -55,6 +64,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
     idbSet('legal_professional_mode', professionalMode ? '1' : '0');
+    
+    // Update body class for professional mode
+    if (professionalMode) {
+      document.body.classList.add('professional-mode');
+    } else {
+      document.body.classList.remove('professional-mode');
+    }
+    
+    // Also update dark mode class when professional mode changes
+    if (professionalMode && darkMode) {
+      document.body.classList.add('dark-mode');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
   }, [professionalMode, mounted]);
 
   const theme = useMemo<Theme>(() => {
@@ -93,4 +115,4 @@ export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
   return ctx;
-} 
+}
