@@ -13,6 +13,8 @@ import { SmartSequentialAnalysisManager, ROBUST_ANALYSIS_CONFIG, PATIENT_ANALYSI
 import { detectCaseType, analyzeCaseComplexity } from '../utils/caseTypeDetection';
 import { generateCustomStages } from '../utils/customStages';
 import { mapApiErrorToMessage, extractApiError } from '@utils/errors';
+import { loadAppSettings, getApiKeyForProvider } from '@utils/appSettings';
+import { AIProvider } from '@utils/aiProvider';
 
 // تعريف المراحل - فقط المراحل الأساسية (1-12)
 const STAGES = Object.keys(stagesDef)
@@ -160,11 +162,13 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
     const failedStages = stageErrors.filter(error => error !== null).length;
     const totalTime = 0; // يمكن حساب الوقت الفعلي لاحقاً
     
+    // التحقق من وجود أي من مفاتيح API (Google أو OpenRouter)
+    const requiresApiKey = !apiKey;
+    
     const stages = CURRENT_STAGES_FINAL.map((stageName, index) => {
       const hasResult = stageResults[index] !== null && stageResults[index] !== '';
       const hasError = stageErrors[index] !== null;
       const isLoading = stageLoading[index];
-      const requiresApiKey = !apiKey;
       
       let status: 'completed' | 'failed' | 'pending' | 'locked' = 'pending';
       if (hasResult) status = 'completed';
@@ -449,9 +453,28 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
   // تهيئة المكون
   useEffect(() => {
     setMounted(true);
+    
+    // تحميل مفتاح Google API القديم (للتوافق)
     loadApiKey().then(val => {
       if (val) setApiKey(val);
     });
+    
+    // تحميل مفاتيح API الجديدة من إعدادات التطبيق
+    loadAppSettings().then(settings => {
+      // تحميل مفتاح API المناسب بناءً على المزود المفضل
+      if (settings.preferredProvider === 'openrouter' && settings.apiKeys?.openrouter) {
+        setApiKey(settings.apiKeys.openrouter);
+      } else if (settings.apiKeys?.google) {
+        // إذا لم يكن هناك مفتاح OpenRouter أو المزود المفضل هو Google، استخدم مفتاح Google
+        setApiKey(settings.apiKeys.google);
+      } else if (!apiKey) {
+        // كحل احتياطي، حاول تحميل مفتاح Google من الإعدادات
+        if (settings.apiKeys?.google) {
+          setApiKey(settings.apiKeys.google);
+        }
+      }
+    });
+    
     loadExistingCases();
   }, []);
 
@@ -635,6 +658,25 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
     
     console.log(`📊 آخر مرحلة مكتملة: ${lastCompletedIndex + 1}، سيبدأ التحليل من المرحلة: ${firstIncompleteIndex + 1}`);
     
+    // تحميل إعدادات التطبيق للحصول على مفتاح API الصحيح
+    const appSettings = await loadAppSettings();
+    let effectiveApiKey = apiKey; // استخدم مفتاح API الحالي كقيمة افتراضية
+    
+    // إذا لم يكن هناك مفتاح API في الحالة، فاستخدم المفتاح المناسب من الإعدادات
+    if (!effectiveApiKey) {
+      if (appSettings.preferredProvider === 'openrouter' && appSettings.apiKeys?.openrouter) {
+        effectiveApiKey = appSettings.apiKeys.openrouter;
+      } else if (appSettings.apiKeys?.google) {
+        effectiveApiKey = appSettings.apiKeys.google;
+      }
+    }
+    
+    // التحقق من توفر مفتاح API قبل بدء التحليل
+    if (!effectiveApiKey) {
+      setAnalysisError('يرجى إعداد مفتاح API من صفحة الإعدادات أولاً.');
+      return;
+    }
+    
     const manager = new SmartSequentialAnalysisManager(
       CURRENT_STAGES_FINAL, // استخدام المراحل المحدثة بناءً على نوع القضية
       smartAnalysisConfig,
@@ -704,7 +746,7 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
         await manager.resumeFromStage(
           firstIncompleteIndex,
           mainText,
-          apiKey,
+          effectiveApiKey, // استخدام مفتاح API الصحيح
           {
             partyRole: partyRole || undefined,
             caseType: selectedCaseTypes[0] || 'عام',
@@ -717,7 +759,7 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
         ) :
         await manager.startSmartAnalysis(
           mainText,
-          apiKey,
+          effectiveApiKey, // استخدام مفتاح API الصحيح
           {
             partyRole: partyRole || undefined,
             caseType: selectedCaseTypes[0] || 'عام',
@@ -747,7 +789,27 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
   const startStandardAnalysis = async () => {
     // دالة التحليل العادي (للاحتياط)
     console.log('🚀 بدء التحليل العادي...');
-    // التنفيذ يمكن إضافته لاحقاً إذا لزم الأمر
+    
+    // تحميل إعدادات التطبيق للحصول على مفتاح API الصحيح
+    const appSettings = await loadAppSettings();
+    let effectiveApiKey = apiKey; // استخدم مفتاح API الحالي كقيمة افتراضية
+    
+    // إذا لم يكن هناك مفتاح API في الحالة، فاستخدم المفتاح المناسب من الإعدادات
+    if (!effectiveApiKey) {
+      if (appSettings.preferredProvider === 'openrouter' && appSettings.apiKeys?.openrouter) {
+        effectiveApiKey = appSettings.apiKeys.openrouter;
+      } else if (appSettings.apiKeys?.google) {
+        effectiveApiKey = appSettings.apiKeys.google;
+      }
+    }
+    
+    // التحقق من توفر مفتاح API قبل بدء التحليل
+    if (!effectiveApiKey) {
+      setAnalysisError('يرجى إعداد مفتاح API من صفحة الإعدادات أولاً.');
+      return;
+    }
+    
+    console.log('🔧 مفتاح API المستخدم للتحليل العادي:', effectiveApiKey ? 'متوفر' : 'غير متوفر');
   };
 
   const stopAutoAnalysis = () => {
@@ -791,14 +853,27 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
 
   // دالة تحليل مرحلة واحدة
   const handleAnalyzeStage = async (idx: number) => {
+    // تحميل إعدادات التطبيق للحصول على مفتاح API الصحيح
+    const appSettings = await loadAppSettings();
+    let effectiveApiKey = apiKey; // استخدم مفتاح API الحالي كقيمة افتراضية
+    
+    // إذا لم يكن هناك مفتاح API في الحالة، فاستخدم المفتاح المناسب من الإعدادات
+    if (!effectiveApiKey) {
+      if (appSettings.preferredProvider === 'openrouter' && appSettings.apiKeys?.openrouter) {
+        effectiveApiKey = appSettings.apiKeys.openrouter;
+      } else if (appSettings.apiKeys?.google) {
+        effectiveApiKey = appSettings.apiKeys.google;
+      }
+    }
+    
     // إذا كانت المرحلة الأخيرة (العريضة النهائية)
     if (idx === CURRENT_STAGES_FINAL.length - 1) {
       setStageLoading(arr => arr.map((v, i) => i === idx ? true : v));
       setStageErrors(arr => arr.map((v, i) => i === idx ? null : v));
       setStageResults(arr => arr.map((v, i) => i === idx ? null : v));
       setStageShowResult(arr => arr.map((v, i) => i === idx ? false : v));
-      if (!apiKey) {
-        setStageErrors(arr => arr.map((v, i) => i === idx ? 'يرجى إعداد مفتاح Gemini API من صفحة الإعدادات أولاً.' : v));
+      if (!effectiveApiKey) {
+        setStageErrors(arr => arr.map((v, i) => i === idx ? 'يرجى إعداد مفتاح API من صفحة الإعدادات أولاً.' : v));
         setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
         return;
       }
@@ -813,7 +888,7 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
         const res = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-model': modelToUse },
-          body: JSON.stringify({ text: mainText, stageIndex: -1, apiKey, previousSummaries: summaries, finalPetition: true, partyRole: partyRole || undefined }),
+          body: JSON.stringify({ text: mainText, stageIndex: -1, apiKey: effectiveApiKey, previousSummaries: summaries, finalPetition: true, partyRole: partyRole || undefined }),
         });
         const data = await res.json();
         if (res.ok) {
@@ -835,8 +910,8 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
     setStageErrors(arr => arr.map((v, i) => i === idx ? null : v));
     setStageResults(arr => arr.map((v, i) => i === idx ? null : v));
     setStageShowResult(arr => arr.map((v, i) => i === idx ? false : v));
-    if (!apiKey) {
-      setStageErrors(arr => arr.map((v, i) => i === idx ? 'يرجى إعداد مفتاح Gemini API من صفحة الإعدادات أولاً.' : v));
+    if (!effectiveApiKey) {
+      setStageErrors(arr => arr.map((v, i) => i === idx ? 'يرجى إعداد مفتاح API من صفحة الإعدادات أولاً.' : v));
       setStageLoading(arr => arr.map((v, i) => i === idx ? false : v));
       return;
     }
@@ -861,7 +936,7 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-model': modelToUse },
-        body: JSON.stringify({ text, stageIndex: idx, apiKey, previousSummaries, partyRole: partyRole || undefined }),
+        body: JSON.stringify({ text, stageIndex: idx, apiKey: effectiveApiKey, previousSummaries, partyRole: partyRole || undefined }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -894,7 +969,7 @@ export const useMainAppLogic = (theme: any, isMobile: () => boolean) => {
       } else {
         const { code, message } = extractApiError(res, data);
         const mapped = code === 'RATE_LIMIT_EXCEEDED'
-          ? 'لقد تجاوزت الحد المسموح به لعدد الطلبات على خدمة Gemini API. يرجى الانتظار دقيقة ثم إعادة المحاولة.'
+          ? 'لقد تجاوزت الحد المسموح به لعدد الطلبات على خدمة API. يرجى الانتظار دقيقة ثم إعادة المحاولة.'
           : mapApiErrorToMessage(code, message || data.error);
         setStageErrors(arr => arr.map((v, i) => i === idx ? (mapped || 'حدث خطأ أثناء التحليل') : v));
       }
