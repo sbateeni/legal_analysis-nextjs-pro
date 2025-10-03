@@ -2,7 +2,11 @@ import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { isMobile } from '@utils/crypto';
 import { useMainAppLogic } from '../../hooks/useMainAppLogic';
-import { ProfessionalLegalButton, ProfessionalLegalCard } from '../../components/themes';
+import { 
+  ProfessionalLegalButton, 
+  ProfessionalLegalCard,
+  getProfessionalLegalColors
+} from '../../components/themes';
 
 // Import section components
 import { DataInputSection } from '../sections';
@@ -20,12 +24,14 @@ import EnhancedAnalysisSettings from '../EnhancedAnalysisSettings';
 import SavedProgressNotification from '../SavedProgressNotification';
 import CollabPanel from '../CollabPanel';
 
-interface HomeContentProps {
+interface ProfessionalHomeContentProps {
   onShowLandingPage: () => void;
 }
 
-export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
-  const { theme, darkMode, professionalMode } = useTheme();
+export default function ProfessionalHomeContent({ onShowLandingPage }: ProfessionalHomeContentProps) {
+  const { theme, darkMode } = useTheme();
+  const professionalColors = getProfessionalLegalColors(darkMode);
+  
   const {
     // State variables
     mounted,
@@ -144,37 +150,15 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
     return null;
   }
 
-  // إضافة CSS للأنيميشن
-  if (typeof document !== 'undefined') {
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-      @keyframes slideInRight {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
-    `;
-    if (!document.querySelector('#progressive-stages-styles')) {
-      styleElement.id = 'progressive-stages-styles';
-      document.head.appendChild(styleElement);
-    }
-  }
-
   return (
     <div style={{
-      fontFamily: 'Tajawal, Arial, sans-serif',
+      fontFamily: "'Tajawal', 'Segoe UI', sans-serif",
       direction: 'rtl',
       minHeight: '100vh',
-      background: theme.background,
-      color: theme.text,
+      background: darkMode ? professionalColors.background : '#f8fafc',
+      color: darkMode ? professionalColors.textPrimary : professionalColors.textPrimary,
       padding: 0,
       margin: 0,
-      transition: 'all 0.3s ease',
     }}>
       <main style={{
         maxWidth: 800,
@@ -182,107 +166,164 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
         margin: '0 auto',
         padding: isMobile() ? '1rem 0.5rem' : '2rem 1rem',
       }}>
-        {/* تنبيه استعادة المراحل */}
+        {/* Professional Header */}
+        <div style={{
+          background: darkMode ? professionalColors.cardBackground : '#ffffff',
+          borderRadius: '0.25rem',
+          padding: '1rem',
+          marginBottom: '1.5rem',
+          border: `1px solid ${darkMode ? professionalColors.border : '#e2e8f0'}`,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <h1 style={{
+              margin: 0,
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: darkMode ? professionalColors.textPrimary : professionalColors.primary
+            }}>
+              نظام التحليل القانوني
+            </h1>
+            
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <ProfessionalLegalButton
+                variant="outline"
+                size="sm"
+                onClick={onShowLandingPage}
+                darkMode={darkMode}
+                icon="🏠"
+              >
+                الصفحة الرئيسية
+              </ProfessionalLegalButton>
+              
+              <ProfessionalLegalButton
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  try {
+                    localStorage.clear();
+                    window.location.reload();
+                  } catch (error) {
+                    console.warn('Failed to clear localStorage:', error);
+                  }
+                }}
+                darkMode={darkMode}
+                icon="🔄"
+              >
+                إعادة تعيين
+              </ProfessionalLegalButton>
+            </div>
+          </div>
+        </div>
+
+        {/* Unlock Notification */}
         {showUnlockNotification && (
           <div style={{
             background: showUnlockNotification.includes('استعادة') ? 
-              'linear-gradient(135deg, #10b981 0%, #34d399 100%)' : 
-              'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
-            borderRadius: 12,
-            padding: '16px 20px',
-            marginBottom: 16,
-            boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
-            fontWeight: 600,
-            textAlign: 'center',
-            color: '#fff',
-            animation: 'slideInRight 0.5s ease-out'
+              (darkMode ? '#10b98130' : '#10b98110') : 
+              (darkMode ? '#f59e0b30' : '#f59e0b10'),
+            border: `1px solid ${showUnlockNotification.includes('استعادة') ? 
+              (darkMode ? '#10b981' : '#10b981') : 
+              (darkMode ? '#f59e0b' : '#f59e0b')}`,
+            borderRadius: '0.5rem',
+            padding: '1rem',
+            marginBottom: '1.5rem',
           }}>
-            <div style={{fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8}}>
+            <div style={{
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '0.5rem',
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: showUnlockNotification.includes('استعادة') ? 
+                (darkMode ? '#10b981' : '#10b981') : 
+                (darkMode ? '#f59e0b' : '#f59e0b')
+            }}>
               {showUnlockNotification.includes('استعادة') && <span>🔄</span>}
               {showUnlockNotification.includes('فتح') && <span>🎉</span>}
               <span>{showUnlockNotification}</span>
             </div>
             {showUnlockNotification.includes('استعادة') && (
-              <div style={{fontSize: '13px', marginTop: '8px', opacity: 0.9}}>
+              <div style={{
+                fontSize: '0.875rem', 
+                marginTop: '0.5rem', 
+                opacity: 0.9,
+                textAlign: 'center'
+              }}>
                 يمكنك الاستمرار من حيث توقفت باستخدام التحليل الذكي
               </div>
             )}
           </div>
         )}
 
-        {/* تنبيه الترحيب */}
+        {/* Welcome Notification */}
         {!apiKey && (
           <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: 12,
-            padding: '16px 20px',
-            marginBottom: 16,
-            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
-            fontWeight: 600,
-            textAlign: 'center',
-            color: '#fff'
+            background: darkMode ? `${professionalColors.primary}30` : `${professionalColors.primary}10`,
+            border: `1px solid ${professionalColors.primary}`,
+            borderRadius: '0.5rem',
+            padding: '1rem',
+            marginBottom: '1.5rem',
           }}>
-            <div style={{fontSize: '18px', marginBottom: '8px'}}>
+            <div style={{
+              fontSize: '1.125rem', 
+              marginBottom: '0.5rem', 
+              fontWeight: 700,
+              color: professionalColors.primary,
+              textAlign: 'center'
+            }}>
               🎉 مرحباً بك في منصة التحليل القانوني الذكية!
             </div>
-            <div style={{fontSize: '14px', opacity: 0.9, marginBottom: '12px'}}>
+            <div style={{
+              fontSize: '0.875rem', 
+              opacity: 0.9, 
+              marginBottom: '1rem',
+              textAlign: 'center'
+            }}>
               منصة مجانية للتحليل القانوني المدعوم بالذكاء الاصطناعي
             </div>
-            {/* أيقونة الوصول لصفحة الترحيب */}
-            <button
-              onClick={onShowLandingPage}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: 8,
-                padding: '8px 16px',
-                color: '#fff',
-                fontSize: 14,
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                margin: '0 auto',
-                transition: 'all 0.3s ease',
-                backdropFilter: 'blur(10px)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-              title="العودة إلى صفحة الترحيب"
-            >
-              <span>🏠</span>
-              <span>صفحة الترحيب</span>
-            </button>
+            
+            <div style={{ textAlign: 'center' }}>
+              <ProfessionalLegalButton
+                variant="primary"
+                size="sm"
+                onClick={onShowLandingPage}
+                darkMode={darkMode}
+                icon="🏠"
+              >
+                الصفحة الرئيسية
+              </ProfessionalLegalButton>
+            </div>
           </div>
         )}
 
-        {/* عرض ملخص النظام الجديد */}
-        <AutoDetectionSystemSummary
-          theme={theme}
-          isMobile={isMobile()}
-        />
+        {/* Auto Detection System Summary */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <AutoDetectionSystemSummary
+            theme={theme}
+            isMobile={isMobile()}
+          />
+        </div>
 
-        {/* نظام التبويبات */}
+        {/* Tab Navigation */}
         <div style={{
-          background: theme.card,
-          borderRadius: 16,
-          boxShadow: `0 4px 20px ${theme.shadow}`,
-          marginBottom: 24,
-          border: `1.5px solid ${theme.border}`,
-          overflow: 'hidden',
+          background: darkMode ? professionalColors.cardBackground : '#ffffff',
+          borderRadius: '0.25rem',
+          border: `1px solid ${darkMode ? professionalColors.border : '#e2e8f0'}`,
+          marginBottom: '1.5rem',
+          overflow: 'hidden'
         }}>
           <div style={{
             display: 'flex',
-            background: darkMode ? '#2a2d3e' : '#f8fafc',
-            borderBottom: `1px solid ${theme.border}`,
+            background: darkMode ? professionalColors.secondary : '#f1f5f9',
+            borderBottom: `1px solid ${darkMode ? professionalColors.border : '#e2e8f0'}`,
           }}>
             {[
               { id: 'input', label: '📝 إدخال البيانات', icon: '✍️' },
@@ -294,18 +335,18 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                 onClick={() => setActiveTab(tab.id as 'input' | 'stages' | 'results')}
                 style={{
                   flex: 1,
-                  padding: isMobile() ? '12px 8px' : '16px 12px',
-                  background: activeTab === tab.id ? theme.accent : 'transparent',
-                  color: activeTab === tab.id ? '#fff' : theme.text,
+                  padding: isMobile() ? '0.75rem 0.5rem' : '1rem 0.75rem',
+                  background: activeTab === tab.id ? professionalColors.primary : 'transparent',
+                  color: activeTab === tab.id ? '#ffffff' : darkMode ? professionalColors.textPrimary : professionalColors.textSecondary,
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: isMobile() ? 14 : 16,
+                  fontSize: isMobile() ? '0.875rem' : '1rem',
                   fontWeight: 600,
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8,
+                  gap: '0.5rem',
                 }}
               >
                 <span>{tab.icon}</span>
@@ -314,11 +355,10 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
             ))}
           </div>
 
-          {/* محتوى التبويبات */}
-          <div style={{ padding: isMobile() ? 16 : 24 }}>
+          {/* Tab Content */}
+          <div style={{ padding: isMobile() ? '1rem 0.75rem' : '1.5rem 1rem' }}>
             {activeTab === 'input' && (
               <div>
-                {/* مكون إدخال البيانات */}
                 <DataInputSection
                   mainText={mainText}
                   setMainText={setMainText}
@@ -334,15 +374,15 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   onOrganizeCase={handleOrganizeCase}
                 />
 
-                {/* إشعار التقدم المحفوظ */}
-                <SavedProgressNotification
-                  {...getSavedProgressInfo()}
-                  onLoadProgress={loadSavedStagesFromDatabase}
-                  theme={theme}
-                  isMobile={isMobile()}
-                />
+                <div style={{ margin: '1.5rem 0' }}>
+                  <SavedProgressNotification
+                    {...getSavedProgressInfo()}
+                    onLoadProgress={loadSavedStagesFromDatabase}
+                    theme={theme}
+                    isMobile={isMobile()}
+                  />
+                </div>
 
-                {/* نظام اختيار نوع القضية */}
                 <CaseTypeSelection
                   text={mainText}
                   currentType={caseType}
@@ -357,45 +397,45 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
 
             {activeTab === 'stages' && (
               <div>
-                {/* عرض معلومات النظام الثابت */}
+                {/* Fixed System Info */}
                 <div style={{
-                  background: `${theme.accent}10`,
-                  borderRadius: 12,
-                  padding: isMobile() ? 16 : 20,
-                  marginBottom: 20,
-                  border: `1px solid ${theme.accent}30`
+                  background: darkMode ? `${professionalColors.accent}20` : `${professionalColors.accent}10`,
+                  border: `1px solid ${darkMode ? `${professionalColors.accent}40` : `${professionalColors.accent}30`}`,
+                  borderRadius: '0.5rem',
+                  padding: '1rem',
+                  marginBottom: '1rem',
                 }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginBottom: 12
+                    marginBottom: '0.5rem'
                   }}>
                     <h4 style={{
-                      color: theme.accent,
-                      fontSize: 16,
+                      color: professionalColors.accent,
+                      fontSize: '1rem',
                       fontWeight: 'bold',
                       margin: 0,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8
+                      gap: '0.5rem'
                     }}>
                       ⚙️ نظام ثابت: 12 مرحلة أساسية + 4 مراحل متقدمة
                     </h4>
                     <div style={{
-                      background: theme.accent,
+                      background: professionalColors.accent,
                       color: '#fff',
-                      borderRadius: 12,
-                      padding: '4px 8px',
-                      fontSize: 12,
+                      borderRadius: '1rem',
+                      padding: '0.25rem 0.5rem',
+                      fontSize: '0.75rem',
                       fontWeight: 'bold'
                     }}>
                       17 مرحلة
                     </div>
                   </div>
                   <div style={{
-                    fontSize: 13,
-                    color: theme.text,
+                    fontSize: '0.875rem',
+                    color: darkMode ? professionalColors.textSecondary : professionalColors.textSecondary,
                     opacity: 0.8,
                     lineHeight: 1.5
                   }}>
@@ -403,35 +443,35 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   </div>
                 </div>
 
-                {/* قسم النظام التدريجي */}
+                {/* Progressive System */}
                 <div style={{
-                  background: `linear-gradient(135deg, ${theme.accent}20 0%, ${theme.accent}10 100%)`,
-                  borderRadius: 12,
-                  padding: isMobile() ? 12 : 16,
-                  marginBottom: 16,
-                  border: `1px solid ${theme.accent}30`
+                  background: darkMode ? `${professionalColors.primary}20` : `${professionalColors.primary}10`,
+                  border: `1px solid ${darkMode ? `${professionalColors.primary}40` : `${professionalColors.primary}30`}`,
+                  borderRadius: '0.5rem',
+                  padding: '1rem',
+                  marginBottom: '1rem',
                 }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
-                    gap: 12
+                    gap: '0.75rem'
                   }}>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8
+                      gap: '0.5rem'
                     }}>
                       <span style={{
-                        fontSize: 16,
-                        color: theme.accent
+                        fontSize: '1rem',
+                        color: professionalColors.primary
                       }}>
                         🎯
                       </span>
                       <span style={{
-                        color: theme.text,
-                        fontSize: isMobile() ? 14 : 16,
+                        color: darkMode ? professionalColors.textPrimary : professionalColors.primary,
+                        fontSize: isMobile() ? '0.875rem' : '1rem',
                         fontWeight: 'bold'
                       }}>
                         نظام ثابت: {unlockedStages} من 17 مرحلة
@@ -441,59 +481,43 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8
+                      gap: '0.5rem'
                     }}>
-                      {/* مؤشر التقدم */}
+                      {/* Progress Bar */}
                       <div style={{
-                        background: theme.input,
-                        borderRadius: 20,
-                        height: 8,
-                        width: 100,
+                        background: darkMode ? professionalColors.border : '#cbd5e0',
+                        borderRadius: '1rem',
+                        height: '0.5rem',
+                        width: '6rem',
                         overflow: 'hidden'
                       }}>
                         <div style={{
-                          background: `linear-gradient(90deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
+                          background: `linear-gradient(90deg, ${professionalColors.primary} 0%, ${professionalColors.accent} 100%)`,
                           height: '100%',
                           width: `${(unlockedStages / 17) * 100}%`,
                           transition: 'width 0.3s ease'
                         }} />
                       </div>
                       
-                      {/* زر فتح جميع المراحل */}
+                      {/* Unlock All Button */}
                       {unlockedStages < ALL_POSSIBLE_STAGES.length && (
-                        <button
+                        <ProfessionalLegalButton
+                          variant="primary"
+                          size="sm"
                           onClick={unlockAllStages}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: 8,
-                            border: 'none',
-                            background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
-                            color: '#fff',
-                            fontSize: 12,
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                            e.currentTarget.style.boxShadow = `0 4px 12px ${theme.accent}40`;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
+                          darkMode={darkMode}
                         >
                           🔓 فتح الكل
-                        </button>
+                        </ProfessionalLegalButton>
                       )}
                     </div>
                   </div>
                   
-                  {/* رسالة توضيحية */}
+                  {/* Info Message */}
                   <div style={{
-                    marginTop: 8,
-                    fontSize: 12,
-                    color: `${theme.text}88`,
+                    marginTop: '0.5rem',
+                    fontSize: '0.75rem',
+                    color: darkMode ? `${professionalColors.textSecondary}cc` : `${professionalColors.textSecondary}cc`,
                     lineHeight: 1.4
                   }}>
                     {currentPhase === 'essential' && 'تبدأ بالمراحل الأساسية. أكمل 80% لفتح مراحل متقدمة.'}
@@ -502,32 +526,32 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                     {currentPhase === 'complete' && 'اكتمل! جميع المراحل متاحة الآن.'}
                   </div>
                   
-                  {/* إحصائيات واقتراحات ذكية */}
+                  {/* Stats and Recommendation */}
                   <div style={{
-                    marginTop: 12,
+                    marginTop: '0.75rem',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    fontSize: 11,
-                    color: `${theme.text}66`
+                    fontSize: '0.75rem',
+                    color: darkMode ? `${professionalColors.textSecondary}aa` : `${professionalColors.textSecondary}aa`
                   }}>
                     <span>📊 معدل الإنجاز: {Math.round((stageResults.filter(r => r !== null).length / unlockedStages) * 100)}%</span>
                     <span>🎯 متبقي: {ALL_POSSIBLE_STAGES.length - unlockedStages} مرحلة</span>
                   </div>
                   
-                  {/* اقتراح المرحلة التالية */}
+                  {/* Next Stage Recommendation */}
                   {(() => {
                     const nextStage = getNextRecommendedStage();
                     return nextStage !== null ? (
                       <div style={{
-                        marginTop: 8,
-                        padding: '6px 10px',
-                        background: `${theme.accent}15`,
-                        borderRadius: 6,
-                        fontSize: 11,
-                        color: theme.accent,
+                        marginTop: '0.5rem',
+                        padding: '0.375rem 0.625rem',
+                        background: darkMode ? `${professionalColors.accent}25` : `${professionalColors.accent}15`,
+                        borderRadius: '0.375rem',
+                        fontSize: '0.75rem',
+                        color: professionalColors.accent,
                         fontWeight: 'bold',
-                        border: `1px solid ${theme.accent}30`
+                        border: `1px solid ${darkMode ? `${professionalColors.accent}40` : `${professionalColors.accent}30`}`
                       }}>
                         📝 اقتراح: ابدأ بالمرحلة {nextStage + 1}
                       </div>
@@ -535,79 +559,76 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   })()}
                 </div>
 
-                {/* قسم التحليل اليدوي المبرز - دائماً مرئي */}
+                {/* Manual Analysis Section */}
                 <div style={{
-                  background: `linear-gradient(135deg, ${theme.accent}15 0%, ${theme.accent}08 100%)`,
-                  borderRadius: 16,
-                  padding: isMobile() ? 16 : 20,
-                  marginBottom: 20,
-                  border: `2px solid ${theme.accent}30`,
-                  boxShadow: `0 4px 20px ${theme.accent}10`
+                  background: darkMode ? `${professionalColors.accent}15` : `${professionalColors.accent}08`,
+                  border: `2px solid ${darkMode ? `${professionalColors.accent}30` : `${professionalColors.accent}20`}`,
+                  borderRadius: '0.5rem',
+                  padding: '1rem',
+                  marginBottom: '1.5rem',
                 }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginBottom: 16
+                    marginBottom: '1rem'
                   }}>
                     <h3 style={{
-                      color: theme.accent,
-                      fontSize: isMobile() ? 18 : 20,
+                      color: professionalColors.accent,
+                      fontSize: isMobile() ? '1.125rem' : '1.25rem',
                       fontWeight: 'bold',
                       margin: 0,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8
+                      gap: '0.5rem'
                     }}>
                       🔍 التحليل اليدوي للمراحل
                     </h3>
                   </div>
                   
-                  {/* تحذير عند عدم توفر المتطلبات */}
+                  {/* Requirements Warning */}
                   {(!apiKey || !mainText.trim()) && (
                     <div style={{
-                      background: '#fef3c7',
-                      border: '1px solid #f59e0b',
-                      borderRadius: 8,
-                      padding: 12,
-                      marginBottom: 12,
-                      fontSize: 13,
-                      color: '#92400e',
-                      fontWeight: 'bold'
+                      background: darkMode ? '#f59e0b20' : '#f59e0b10',
+                      border: `1px solid ${darkMode ? '#f59e0b40' : '#f59e0b30'}`,
+                      borderRadius: '0.25rem',
+                      padding: '0.5rem',
+                      marginBottom: '0.75rem',
+                      color: darkMode ? '#f59e0b' : '#92400e'
                     }}>
                       ⚠️ للبدء في التحليل اليدوي، تحتاج إلى:
-                      <ul style={{ margin: '4px 0', paddingRight: 16 }}>
+                      <ul style={{ margin: '0.25rem 0', paddingRight: '1rem' }}>
                         {!apiKey && <li>إعداد مفتاح Gemini API من الإعدادات</li>}
                         {!mainText.trim() && <li>إدخال تفاصيل القضية في التبويب الأول</li>}
                       </ul>
                     </div>
                   )}
                   
-                  {/* عرض حالة الاستكمال */}
+                  {/* Completion Status */}
                   {apiKey && mainText.trim() && (() => {
                     const completedCount = stageResults.filter(r => r !== null && r !== '').length;
                     return completedCount > 0 ? (
                       <div style={{
-                        background: `${theme.accent}20`,
-                        borderRadius: 8,
-                        padding: 12,
-                        marginBottom: 12,
-                        border: `1px solid ${theme.accent}50`
+                        background: darkMode ? `${professionalColors.primary}20` : `${professionalColors.primary}10`,
+                        border: `1px solid ${darkMode ? `${professionalColors.primary}40` : `${professionalColors.primary}30`}`,
+                        borderRadius: '0.25rem',
+                        padding: '0.5rem',
+                        marginBottom: '0.75rem',
                       }}>
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 8,
-                          fontSize: 14,
+                          gap: '0.5rem',
+                          fontSize: '0.875rem',
                           fontWeight: 'bold',
-                          color: theme.accent
+                          color: professionalColors.primary
                         }}>
                           🔄 وضع الاستكمال الذكي
                         </div>
                         <div style={{
-                          fontSize: 12,
-                          color: theme.text,
-                          marginTop: 4,
+                          fontSize: '0.75rem',
+                          color: darkMode ? professionalColors.textSecondary : professionalColors.textSecondary,
+                          marginTop: '0.25rem',
                           opacity: 0.8
                         }}>
                           تم العثور على {completedCount} مراحل مكتملة. التحليل الذكي سيبدأ من المرحلة {completedCount + 1} مع الاحتفاظ بالنتائج السابقة.
@@ -617,10 +638,10 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   })()}
                   
                   <div style={{
-                    fontSize: 14,
-                    color: theme.text,
+                    fontSize: '0.875rem',
+                    color: darkMode ? professionalColors.textSecondary : professionalColors.textSecondary,
                     opacity: 0.8,
-                    marginBottom: 12,
+                    marginBottom: '0.75rem',
                     lineHeight: 1.5
                   }}>
                     💡 يمكنك الآن تحليل أي مرحلة بشكل فردي بالضغط على زر "تحليل يدوي" بجانب كل مرحلة. هذا يعطيك مرونة أكبر في التحليل ويسمح لك بإجراء تحليل مخصص لمراحل معينة.
@@ -629,24 +650,24 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: isMobile() ? '1fr 1fr' : '1fr 1fr',
-                    gap: 12,
-                    fontSize: 12,
-                    background: theme.background,
-                    borderRadius: 8,
-                    padding: 12,
-                    border: `1px solid ${theme.input}`
+                    gap: '0.75rem',
+                    fontSize: '0.75rem',
+                    background: darkMode ? professionalColors.cardBackground : '#ffffff',
+                    borderRadius: '0.25rem',
+                    padding: '0.75rem',
+                    border: `1px solid ${darkMode ? professionalColors.border : '#e2e8f0'}`
                   }}>
                     <div>
-                      <span style={{ fontWeight: 'bold', color: theme.accent }}>⚙️ ميزات التحليل اليدوي:</span>
-                      <ul style={{ margin: '4px 0', paddingRight: 16, lineHeight: 1.4 }}>
+                      <span style={{ fontWeight: 'bold', color: professionalColors.accent }}>⚙️ ميزات التحليل اليدوي:</span>
+                      <ul style={{ margin: '0.25rem 0', paddingRight: '1rem', lineHeight: 1.4 }}>
                         <li>تحكم كامل في ترتيب المراحل</li>
                         <li>إمكانية إعادة تحليل مرحلة معينة</li>
                         <li>توفير في استهلاك API</li>
                       </ul>
                     </div>
                     <div>
-                      <span style={{ fontWeight: 'bold', color: theme.accent }}>🎯 نصائح للاستخدام الأمثل:</span>
-                      <ul style={{ margin: '4px 0', paddingRight: 16, lineHeight: 1.4 }}>
+                      <span style={{ fontWeight: 'bold', color: professionalColors.accent }}>🎯 نصائح للاستخدام الأمثل:</span>
+                      <ul style={{ margin: '0.25rem 0', paddingRight: '1rem', lineHeight: 1.4 }}>
                         <li>ابدأ بالمراحل الأولى</li>
                         <li>راجع نتائج كل مرحلة</li>
                         <li>اعتمد على المراحل السابقة</li>
@@ -655,22 +676,22 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   </div>
                 </div>
 
-                {/* لوحة الوصول السريع للمراحل - دائماً مرئية */}
+                {/* Quick Access Panel */}
                 <div style={{
-                  background: theme.card,
-                  borderRadius: 12,
-                  padding: isMobile() ? 16 : 20,
-                  marginBottom: 20,
-                  border: `1px solid ${theme.border}`
+                  background: darkMode ? professionalColors.cardBackground : '#ffffff',
+                  borderRadius: '0.5rem',
+                  padding: '1rem',
+                  marginBottom: '1.5rem',
+                  border: `1px solid ${darkMode ? professionalColors.border : '#e2e8f0'}`
                 }}>
                   <h4 style={{
-                    color: theme.text,
-                    fontSize: 16,
+                    color: darkMode ? professionalColors.textPrimary : professionalColors.primary,
+                    fontSize: '1rem',
                     fontWeight: 'bold',
-                    margin: '0 0 16px 0',
+                    margin: '0 0 1rem 0',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8
+                    gap: '0.5rem'
                   }}>
                     ⚡ وصول سريع للمراحل
                   </h4>
@@ -678,7 +699,7 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: isMobile() ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: 8
+                    gap: '0.5rem'
                   }}>
                     {CURRENT_STAGES_FINAL.slice(0, 8).map((stageName, index) => {
                       const isCompleted = stageResults[index] && stageShowResult[index];
@@ -687,43 +708,32 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                       const canAnalyze = apiKey && mainText.trim();
                       
                       return (
-                        <button
+                        <ProfessionalLegalButton
                           key={index}
+                          variant={isCompleted ? "accent" : hasError ? "outline" : "primary"}
+                          size="sm"
                           onClick={() => canAnalyze ? handleAnalyzeStage(index) : null}
                           disabled={isLoading || !canAnalyze}
-                          style={{
-                            padding: '8px 12px',
-                            borderRadius: 8,
-                            border: `1px solid ${isCompleted ? theme.accent : hasError ? '#ef4444' : theme.input}`,
-                            background: isCompleted ? `${theme.accent}20` : hasError ? '#ef444415' : !canAnalyze ? '#f3f4f6' : theme.background,
-                            color: isCompleted ? theme.accent : hasError ? '#ef4444' : !canAnalyze ? '#6b7280' : theme.text,
-                            fontSize: 12,
-                            fontWeight: 'bold',
-                            cursor: isLoading ? 'not-allowed' : canAnalyze ? 'pointer' : 'not-allowed',
-                            textAlign: 'right',
-                            transition: 'all 0.2s ease',
-                            opacity: (isLoading || !canAnalyze) ? 0.6 : 1
-                          }}
-                          title={!canAnalyze ? 'يرجى إعداد API Key وإدخال تفاصيل القضية أولاً' : 'تحليل هذه المرحلة'}
+                          darkMode={darkMode}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                            <span style={{ fontSize: 10 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.25rem' }}>
+                            <span style={{ fontSize: '0.75rem' }}>
                               {isLoading ? '⟳' : isCompleted ? '✓' : hasError ? '✗' : !canAnalyze ? '⚠️' : index + 1}
                             </span>
                             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {stageName.replace('المرحلة ', '').replace(': ', ': ').substring(0, isMobile() ? 20 : 30)}...
+                              {stageName.replace('المرحلة ', '').replace(': ', ': ').substring(0, isMobile() ? 15 : 25)}...
                             </span>
                           </div>
-                        </button>
+                        </ProfessionalLegalButton>
                       );
                     })}
                   </div>
                   
                   {CURRENT_STAGES_FINAL.length > 8 && (
                     <div style={{
-                      marginTop: 12,
-                      fontSize: 12,
-                      color: theme.text,
+                      marginTop: '0.75rem',
+                      fontSize: '0.75rem',
+                      color: darkMode ? professionalColors.textSecondary : professionalColors.textSecondary,
                       opacity: 0.7,
                       textAlign: 'center'
                     }}>
@@ -732,9 +742,9 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   )}
                 </div>
 
-                {/* إعدادات النظام الذكي المحسن */}
+                {/* Smart Settings */}
                 {showSmartSettings && (
-                  <div style={{ marginBottom: 20 }}>
+                  <div style={{ marginBottom: '1.5rem' }}>
                     <EnhancedAnalysisSettings
                       onConfigChange={setSmartAnalysisConfig}
                       theme={theme}
@@ -743,43 +753,47 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
                   </div>
                 )}
 
-                {/* أزرار التحكم في التحليل */}
-                <AnalysisControls
-                  isAutoAnalyzing={isAutoAnalyzing}
-                  useSmartAnalysis={useSmartAnalysis}
-                  setUseSmartAnalysis={setUseSmartAnalysis}
-                  showSmartSettings={showSmartSettings}
-                  setShowSmartSettings={setShowSmartSettings}
-                  smartAnalysisConfig={smartAnalysisConfig}
-                  mainText={mainText}
-                  apiKey={apiKey}
-                  onStartSmartAnalysis={startSmartAnalysis}
-                  onStartStandardAnalysis={startStandardAnalysis}
-                  onStopAnalysis={stopAutoAnalysis}
-                  theme={theme}
-                  isMobile={isMobile()}
-                />
+                {/* Analysis Controls */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <AnalysisControls
+                    isAutoAnalyzing={isAutoAnalyzing}
+                    useSmartAnalysis={useSmartAnalysis}
+                    setUseSmartAnalysis={setUseSmartAnalysis}
+                    showSmartSettings={showSmartSettings}
+                    setShowSmartSettings={setShowSmartSettings}
+                    smartAnalysisConfig={smartAnalysisConfig}
+                    mainText={mainText}
+                    apiKey={apiKey}
+                    onStartSmartAnalysis={startSmartAnalysis}
+                    onStartStandardAnalysis={startStandardAnalysis}
+                    onStopAnalysis={stopAutoAnalysis}
+                    theme={theme}
+                    isMobile={isMobile()}
+                  />
+                </div>
 
-                {/* مؤشر التقدم */}
-                <ProgressIndicator
-                  isAutoAnalyzing={isAutoAnalyzing}
-                  showSequentialProgress={showSequentialProgress}
-                  smartAnalysisProgress={smartAnalysisProgress}
-                  useSmartAnalysis={useSmartAnalysis}
-                  sequentialProgress={sequentialProgress}
-                  analysisProgress={analysisProgress}
-                  currentAnalyzingStage={currentAnalyzingStage}
-                  allStages={CURRENT_STAGES_FINAL}
-                  estimatedTimeRemaining={estimatedTimeRemaining}
-                  canPauseResume={canPauseResume}
-                  onTogglePauseResume={togglePauseResume}
-                  onStopAnalysis={stopAutoAnalysis}
-                  smartAnalysisConfig={smartAnalysisConfig}
-                  theme={theme}
-                  isMobile={isMobile()}
-                />
+                {/* Progress Indicator */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <ProgressIndicator
+                    isAutoAnalyzing={isAutoAnalyzing}
+                    showSequentialProgress={showSequentialProgress}
+                    smartAnalysisProgress={smartAnalysisProgress}
+                    useSmartAnalysis={useSmartAnalysis}
+                    sequentialProgress={sequentialProgress}
+                    analysisProgress={analysisProgress}
+                    currentAnalyzingStage={currentAnalyzingStage}
+                    allStages={CURRENT_STAGES_FINAL}
+                    estimatedTimeRemaining={estimatedTimeRemaining}
+                    canPauseResume={canPauseResume}
+                    onTogglePauseResume={togglePauseResume}
+                    onStopAnalysis={stopAutoAnalysis}
+                    smartAnalysisConfig={smartAnalysisConfig}
+                    theme={theme}
+                    isMobile={isMobile()}
+                  />
+                </div>
 
-                {/* عرض المراحل التقليدي مع أزرار التحليل */}
+                {/* Stage Results */}
                 <StageResults
                   stageResults={stageResults}
                   stageShowResult={stageShowResult}
@@ -797,15 +811,20 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
 
             {activeTab === 'results' && (
               <div>
-                {/* عرض نتائج المراحل المحسن */}
                 <EnhancedStageResults
                   {...getEnhancedStageData()}
                   className="mb-6"
                 />
                 
-                {/* عرض النتائج التفصيلية التقليدية */}
                 <div style={{ marginTop: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: theme.text }}>📋 النتائج التفصيلية</h3>
+                  <h3 style={{ 
+                    fontSize: '1.125rem', 
+                    fontWeight: 'bold', 
+                    marginBottom: '1rem', 
+                    color: darkMode ? professionalColors.textPrimary : professionalColors.primary 
+                  }}>
+                    📋 النتائج التفصيلية
+                  </h3>
                   <StageResults
                     stageResults={stageResults}
                     stageShowResult={stageShowResult}
@@ -820,73 +839,64 @@ export default function HomeContent({ onShowLandingPage }: HomeContentProps) {
           </div>
         </div>
 
-        {/* رسائل الأخطاء */}
+        {/* Error Message */}
         {analysisError && (
           <div style={{
-            background: '#ef444415',
-            border: '1px solid #ef4444',
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 16,
-            color: '#ef4444',
-            fontSize: 14,
-            fontWeight: 'bold'
+            background: darkMode ? '#ef444420' : '#ef444410',
+            border: `1px solid ${darkMode ? '#ef444440' : '#ef444430'}`,
+            borderRadius: '0.5rem',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            color: darkMode ? '#ef4444' : '#ef4444'
           }}>
             ❌ خطأ: {analysisError}
           </div>
         )}
 
-        {/* إشعار فتح المراحل */}
+        {/* Unlock Notification (Floating) */}
         {showUnlockNotification && (
           <div style={{
             position: 'fixed',
-            top: 20,
-            right: 20,
-            background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`,
+            top: '1rem',
+            right: '1rem',
+            background: darkMode ? `${professionalColors.primary}dd` : `${professionalColors.primary}ee`,
             color: '#fff',
             border: 'none',
-            borderRadius: 12,
-            padding: '12px 20px',
-            fontSize: 14,
+            borderRadius: '0.5rem',
+            padding: '0.75rem 1rem',
+            fontSize: '0.875rem',
             fontWeight: 'bold',
-            boxShadow: `0 6px 20px ${theme.accent}40`,
-            zIndex: 1001,
-            animation: 'slideInRight 0.3s ease-out'
+            boxShadow: `0 4px 12px ${darkMode ? professionalColors.primary + '40' : professionalColors.primary + '30'}`,
+            zIndex: 1001
           }}>
             {showUnlockNotification}
           </div>
         )}
 
-        {/* زر التثبيت */}
+        {/* Install Prompt */}
         {showInstallPrompt && deferredPrompt && (
-          <button
-            onClick={async () => {
-              deferredPrompt.prompt();
-              const { outcome } = await deferredPrompt.userChoice;
-              setShowInstallPrompt(false);
-              setDeferredPrompt(null);
-            }}
-            style={{
-              position: 'fixed',
-              bottom: 20,
-              right: 20,
-              background: 'linear-gradient(135deg, #667eea, #764ba2)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 12,
-              padding: '12px 16px',
-              fontSize: 14,
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
-              zIndex: 1000
-            }}
-          >
-            📱 تثبيت التطبيق
-          </button>
+          <div style={{
+            position: 'fixed',
+            bottom: '1rem',
+            right: '1rem',
+            zIndex: 1000
+          }}>
+            <ProfessionalLegalButton
+              variant="primary"
+              size="md"
+              onClick={async () => {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                setShowInstallPrompt(false);
+                setDeferredPrompt(null);
+              }}
+            >
+              📱 تثبيت التطبيق
+            </ProfessionalLegalButton>
+          </div>
         )}
 
-        {/* منظم القضية */}
+        {/* Case Organizer */}
         <CaseOrganizer
           originalText={mainText}
           onOrganized={handleCaseOrganized}

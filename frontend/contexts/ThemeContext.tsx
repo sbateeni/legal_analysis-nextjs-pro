@@ -10,6 +10,8 @@ interface ThemeContextValue {
   toggleTheme: () => void;
   theme: Theme;
   mounted: boolean;
+  professionalMode: boolean;
+  setProfessionalMode: (value: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -17,19 +19,22 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [colorScheme, setColorScheme] = useState<ColorScheme>('green');
+  const [professionalMode, setProfessionalMode] = useState<boolean>(true);
   const [mounted, setMounted] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
     Promise.all([
       idbGet('legal_dark_mode'),
-      idbGet('legal_color_scheme')
-    ]).then(([savedTheme, savedColorScheme]) => {
+      idbGet('legal_color_scheme'),
+      idbGet('legal_professional_mode')
+    ]).then(([savedTheme, savedColorScheme, savedProfessionalMode]) => {
       if (!isMounted) return;
       if (savedTheme === '1') setDarkMode(true);
-      if (savedColorScheme && ['green', 'blue', 'purple', 'orange', 'pink', 'teal'].includes(savedColorScheme)) {
+      if (savedColorScheme && ['green', 'blue', 'purple', 'orange', 'pink', 'teal', 'professional'].includes(savedColorScheme)) {
         setColorScheme(savedColorScheme as ColorScheme);
       }
+      if (savedProfessionalMode === '1') setProfessionalMode(true);
       setMounted(true);
     });
     return () => {
@@ -47,7 +52,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     idbSet('legal_color_scheme', colorScheme);
   }, [colorScheme, mounted]);
 
-  const theme = useMemo<Theme>(() => getThemeByColor(colorScheme, darkMode), [colorScheme, darkMode]);
+  useEffect(() => {
+    if (!mounted) return;
+    idbSet('legal_professional_mode', professionalMode ? '1' : '0');
+  }, [professionalMode, mounted]);
+
+  const theme = useMemo<Theme>(() => {
+    // If professional mode is enabled, use professional theme
+    if (professionalMode) {
+      return getThemeByColor('professional', darkMode);
+    }
+    // Otherwise use the selected color scheme
+    return getThemeByColor(colorScheme, darkMode);
+  }, [colorScheme, darkMode, professionalMode]);
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
@@ -60,8 +77,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setColorScheme, 
     toggleTheme, 
     theme, 
-    mounted 
-  }), [darkMode, setDarkMode, colorScheme, setColorScheme, toggleTheme, theme, mounted]);
+    mounted,
+    professionalMode,
+    setProfessionalMode
+  }), [darkMode, setDarkMode, colorScheme, setColorScheme, toggleTheme, theme, mounted, professionalMode, setProfessionalMode]);
 
   return (
     <ThemeContext.Provider value={value}>

@@ -15,7 +15,7 @@ export type Theme = {
   textBright?: string;
 };
 
-export type ColorScheme = 'green' | 'blue' | 'purple' | 'orange' | 'pink' | 'teal';
+export type ColorScheme = 'green' | 'blue' | 'purple' | 'orange' | 'pink' | 'teal' | 'professional';
 
 // السمة الخضراء
 export const greenTheme: Theme = {
@@ -105,6 +105,39 @@ export const tealTheme: Theme = {
   errorBg: '#fff0f0',
   errorText: '#e53e3e',
   shadow: '#0d948822',
+};
+
+// السمة المهنية
+export const professionalTheme: Theme = {
+  background: '#FFFFFF',
+  card: '#FFFFFF',
+  border: '#CBD5E0',
+  input: '#FFFFFF',
+  text: '#2D3748',
+  accent: '#0A2A66',
+  accent2: '#2D3748',
+  resultBg: '#FFFFFF',
+  errorBg: '#fff0f0',
+  errorText: '#e53e3e',
+  shadow: '#0A2A6622',
+};
+
+// السمة المهنية الليلية
+export const professionalDarkTheme: Theme = {
+  background: '#1A202C',
+  card: '#2D3748',
+  border: '#4A5568',
+  input: '#2D3748',
+  text: '#F8FAFC',
+  accent: '#0A2A66',
+  accent2: '#4A5568',
+  resultBg: '#2D3748',
+  errorBg: '#3a1a1a',
+  errorText: '#ff6b6b',
+  shadow: '#0A2A6633',
+  textSecondary: '#E2E8F0',
+  textMuted: '#A0AEC0',
+  textBright: '#FFFFFF',
 };
 
 // الألوان الليلية لكل سمة
@@ -212,6 +245,10 @@ export const tealDarkTheme: Theme = {
 
 // الحصول على السمة حسب اللون والوضع
 export function getThemeByColor(colorScheme: ColorScheme, isDark: boolean): Theme {
+  if (colorScheme === 'professional') {
+    return isDark ? professionalDarkTheme : professionalTheme;
+  }
+  
   if (isDark) {
     switch (colorScheme) {
       case 'green': return greenDarkTheme;

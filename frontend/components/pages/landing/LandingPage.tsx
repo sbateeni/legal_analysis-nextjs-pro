@@ -15,7 +15,8 @@ import {
   LegalTitle,
   LegalHeroIcon,
   LegalButton,
-  getPalestinianLegalColors
+  getPalestinianLegalColors,
+  ProfessionalLegalButton
 } from '../../themes';
 
 interface LandingPageProps {

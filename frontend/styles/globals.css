@@ -2,6 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=PT+Sans:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+@import './professional.css';
 
 /* متغيرات الألوان (Dark Elegant) */
 :root {
@@ -17,6 +19,39 @@
   --error-bg: hsl(355 25% 18%);
   --error-text: hsl(355 100% 66%);
   --shadow: 0 8px 30px hsl(230 40% 20% / 0.35);
+}
+
+/* متغيرات الألوان المهنية */
+:root.professional-mode {
+  --background: #FFFFFF;
+  --foreground: #2D3748;
+  --primary: #0A2A66;
+  --secondary: #2D3748;
+  --accent: #B8860B;
+  --accent-2: #2D3748;
+  --card: #FFFFFF;
+  --border: #CBD5E0;
+  --input: #FFFFFF;
+  --error-bg: #fff0f0;
+  --error-text: #e53e3e;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* متغيرات الألوان المهنية الليلية */
+:root.professional-mode.dark-mode,
+:root.professional-mode[data-theme="dark"] {
+  --background: #1A202C;
+  --foreground: #F8FAFC;
+  --primary: #0A2A66;
+  --secondary: #2D3748;
+  --accent: #B8860B;
+  --accent-2: #4A5568;
+  --card: #2D3748;
+  --border: #4A5568;
+  --input: #2D3748;
+  --error-bg: #3a1a1a;
+  --error-text: #ff6b6b;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* إعادة تعيين الأنماط الافتراضية */
@@ -39,11 +74,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
   color: var(--foreground);
-  background: radial-gradient(1200px 800px at 80% -10%, hsl(230 30% 20% / 0.6), transparent 60%),
-              radial-gradient(1200px 800px at 0% 110%, hsl(245 60% 30% / 0.35), transparent 60%),
-              var(--background);
+  background: var(--background);
   font-feature-settings: 'liga' 1, 'kern' 1;
   text-rendering: optimizeLegibility;
+}
+
+/* Professional mode body */
+body.professional-mode {
+  background: var(--background);
+  /* Remove complex gradients for professional mode */
 }
 
 /* تحسين وضوح الخطوط في الوضع الليلي */

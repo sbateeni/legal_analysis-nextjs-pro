@@ -4,10 +4,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { LandingPage } from '../components/pages/landing';
+import { LandingPage, ProfessionalLandingPage } from '../components/pages/landing';
 import HomeContent from './mainapp/HomeContent';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function Home() {
+  const { professionalMode } = useTheme();
   const [showLandingPage, setShowLandingPage] = useState(true);
   
   useEffect(() => {
@@ -29,7 +31,9 @@ export default function Home() {
   };
 
   if (showLandingPage) {
-    return <LandingPage onSkip={handleSkipLanding} />;
+    return professionalMode ? 
+      <ProfessionalLandingPage onSkip={handleSkipLanding} /> : 
+      <LandingPage onSkip={handleSkipLanding} />;
   }
 
   return <HomeContent onShowLandingPage={() => setShowLandingPage(true)} />;
