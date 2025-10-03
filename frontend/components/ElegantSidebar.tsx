@@ -263,7 +263,7 @@ const ElegantSidebar: React.FC = () => {
         >
           <span>{isMobileOpen ? '✕' : '☰'}</span>
         </div>
-      )
+      )}
       
       <div 
         ref={sidebarRef}
